@@ -1,6 +1,8 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'export',
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -24,7 +26,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Forzamos el renderizado dinámico para rutas dinámicas como /obras/[id]
   typescript: {
     ignoreBuildErrors: true,
   },

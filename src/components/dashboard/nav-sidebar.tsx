@@ -6,9 +6,7 @@ import {
   LayoutDashboard, 
   Construction, 
   Users, 
-  Settings, 
-  LogOut,
-  FolderOpen
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -18,8 +16,6 @@ const navItems = [
   { name: 'Panel Principal', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Gestión de Obras', href: '/dashboard/obras', icon: Construction },
   { name: 'Usuarios Clientes', href: '/dashboard/clientes', icon: Users },
-  { name: 'Documentos', href: '/dashboard/documentos', icon: FolderOpen },
-  { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
 ];
 
 export function NavSidebar() {

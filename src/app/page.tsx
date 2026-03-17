@@ -19,7 +19,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="animate-pulse flex flex-col items-center gap-4">
         <div className="w-12 h-12 bg-primary rounded-xl"></div>
-        <p className="text-muted-foreground font-medium">Cargando TamerWorks...</p>
+        <p className="text-muted-foreground font-medium">Cargando Tamer Industrial S.A....</p>
       </div>
     </div>
   );

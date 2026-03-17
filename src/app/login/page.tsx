@@ -32,7 +32,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center p-3 bg-primary rounded-xl mb-4 shadow-lg shadow-primary/20">
             <ShieldCheck className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">TamerWorks Admin</h1>
+          <h1 className="text-3xl font-bold text-foreground">Tamer Industrial S.A.</h1>
           <p className="text-muted-foreground mt-2">Panel Administrativo de Obras</p>
         </div>
 

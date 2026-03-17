@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'TamerWorks Admin',
+  title: 'Tamer Industrial S.A. Admin',
   description: 'Sistema de Gestión de Obras y Archivos Técnicos - Tamer Industrial S.A.',
 };
 

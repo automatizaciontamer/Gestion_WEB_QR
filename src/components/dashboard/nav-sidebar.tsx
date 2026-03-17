@@ -34,7 +34,7 @@ export function NavSidebar() {
             <Construction className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg leading-tight">TamerWorks</h2>
+            <h2 className="font-bold text-lg leading-tight">Tamer Industrial S.A.</h2>
             <p className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase">Admin Panel</p>
           </div>
         </div>

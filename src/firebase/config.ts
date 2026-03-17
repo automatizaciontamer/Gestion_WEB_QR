@@ -1,6 +1,6 @@
 'use client';
 
-// Configuración de Firebase para TamerWorks
+// Configuración de Firebase para Tamer Industrial S.A.
 export const firebaseConfig = {
     apiKey: "AIzaSyCdEUN3yT7TqWgTVVCzN3GERFua2-IVQls",
     authDomain: "gestion-tamer-ind-s-a.firebaseapp.com",

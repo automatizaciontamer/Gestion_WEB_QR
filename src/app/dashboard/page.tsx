@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from 'react';
@@ -41,7 +40,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Bienvenido, Administrador</h1>
-        <p className="text-muted-foreground">Estado actual del sistema de gestión TamerWorks.</p>
+        <p className="text-muted-foreground">Estado actual del sistema de gestión Tamer Industrial S.A..</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -96,7 +95,7 @@ export default function DashboardPage() {
               <span>Conexión con Firestore activa.</span>
             </div>
             <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-              Los cambios realizados aquí se reflejan instantáneamente en la aplicación Android TamerWorks para los supervisores y clientes en campo.
+              Los cambios realizados aquí se reflejan instantáneamente en la aplicación Android de Tamer Industrial S.A. para los supervisores y clientes en campo.
             </p>
           </CardContent>
         </Card>

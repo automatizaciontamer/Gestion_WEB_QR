@@ -31,7 +31,7 @@ export function NavSidebar() {
           </div>
           <div>
             <h2 className="font-bold text-lg leading-tight">Tamer Industrial S.A.</h2>
-            <p className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase">Admin Panel</p>
+            <p className="text-[10px] text-muted-foreground font-semibold tracking-wider uppercase">Panel Admin</p>
           </div>
         </div>
       </div>

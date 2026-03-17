@@ -8,11 +8,6 @@ import { Obra } from '@/lib/types';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
-// Requerido para exportación estática con rutas dinámicas en Next.js
-export function generateStaticParams() {
-  return []; // Las páginas se generarán bajo demanda en el cliente o mediante rewrites
-}
-
 export default function QRPosterPage() {
   const params = useParams();
   const id = params?.id;
@@ -64,14 +59,11 @@ export default function QRPosterPage() {
         </div>
       </div>
 
-      {/* Poster A4 Content */}
       <div className="bg-white shadow-2xl mx-auto border overflow-hidden w-[210mm] min-h-[297mm] p-0 flex flex-col font-sans">
-        {/* Header */}
         <div className="bg-[#0a3d62] text-white py-10 px-8 text-center">
           <h1 className="text-4xl font-black tracking-widest uppercase">TAMER INDUSTRIAL S.A.</h1>
         </div>
 
-        {/* Content */}
         <div className="flex-1 px-12 py-12 flex flex-col items-center">
           <div className="w-full space-y-8 text-center mb-12">
             <div className="space-y-1">
@@ -103,7 +95,6 @@ export default function QRPosterPage() {
             </div>
           </div>
 
-          {/* QR CODE MOCKUP */}
           <div className="flex-1 flex items-center justify-center w-full my-8">
             <div className="border-[15px] border-black p-4 bg-white">
               <div className="w-[350px] h-[350px] relative">
@@ -125,7 +116,6 @@ export default function QRPosterPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="border-t-[10px] border-[#0a3d62] py-8 px-12 text-center bg-gray-50">
           <p className="text-xl font-black text-[#0a3d62] leading-tight">
             PARA ACCEDER A LA DOCUMENTACIÓN TÉCNICA Y PLANOS DE ESTA OBRA

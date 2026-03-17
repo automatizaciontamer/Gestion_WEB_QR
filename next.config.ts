@@ -1,7 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // Se elimina output: 'export' para permitir renderizado dinámico
   images: {
     unoptimized: true,
     remotePatterns: [

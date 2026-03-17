@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useParams, useRouter } from 'next/navigation';
@@ -9,8 +8,14 @@ import { Obra } from '@/lib/types';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
+// Requerido para exportación estática con rutas dinámicas en Next.js
+export function generateStaticParams() {
+  return []; // Las páginas se generarán bajo demanda en el cliente o mediante rewrites
+}
+
 export default function QRPosterPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id;
   const router = useRouter();
   const db = useFirestore();
 
@@ -102,7 +107,6 @@ export default function QRPosterPage() {
           <div className="flex-1 flex items-center justify-center w-full my-8">
             <div className="border-[15px] border-black p-4 bg-white">
               <div className="w-[350px] h-[350px] relative">
-                {/* SVG Mock of a QR Code - En producción se usaría una librería de QR */}
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                   <rect x="0" y="0" width="10" height="10" fill="black" />
                   <rect x="0" y="90" width="10" height="10" fill="black" />

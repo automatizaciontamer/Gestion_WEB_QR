@@ -1,30 +1,41 @@
-
 {
   "entities": {
     "Obra": {
       "title": "Obra",
-      "description": "Representa un proyecto de ingeniería o instalación industrial.",
+      "description": "Representa un proyecto de ingeniería o instalación industrial sincronizado con App Android.",
       "type": "object",
       "properties": {
-        "numeroOF": { "type": "string", "description": "Número de Orden de Fabricación" },
-        "numeroOT": { "type": "string", "description": "Número de Orden de Trabajo" },
-        "codigoCliente": { "type": "string", "description": "Código interno del cliente" },
-        "nombreObra": { "type": "string", "description": "Nombre descriptivo de la obra" },
+        "id": { "type": "string" },
+        "numeroOF": { "type": "string", "description": "Orden de Fabricación" },
+        "numeroOT": { "type": "string", "description": "Orden de Trabajo" },
+        "codigoCliente": { "type": "string", "description": "Identificador del cliente" },
+        "nombreObra": { "type": "string" },
         "cliente": { "type": "string", "description": "Razón social del cliente" },
-        "direccion": { "type": "string", "description": "Ubicación de la obra" },
-        "descripcion": { "type": "string", "description": "Detalles técnicos adicionales" },
-        "imageUrl": { "type": "string", "description": "URL de la imagen de portada" },
-        "usuarioAcceso": { "type": "string", "description": "Email de acceso principal para la app" },
-        "claveAcceso": { "type": "string", "description": "Contraseña de acceso para la app" },
-        "createdAt": { "type": "number", "description": "Timestamp de creación" }
+        "direccion": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "usuarioAcceso": { "type": "string", "description": "Email para login en Android" },
+        "claveAcceso": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "serverTimestamp": { "type": "object", "description": "Firebase server timestamp" },
+        "authorizedEmails": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "email": { "type": "string" },
+              "password": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["numeroOF", "numeroOT", "nombreObra", "cliente", "usuarioAcceso", "claveAcceso"]
     },
     "UsuarioCliente": {
       "title": "Usuario Cliente",
-      "description": "Usuario externo con permisos de visualización.",
+      "description": "Usuarios externos registrados en la plataforma.",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "nombre": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "password": { "type": "string" }
@@ -38,11 +49,11 @@
   "firestore": {
     "/obras/{obraId}": {
       "schema": "Obra",
-      "description": "Colección principal de proyectos industriales."
+      "description": "Proyectos industriales accesibles desde la App Android."
     },
     "/usuarios_clientes/{usuarioId}": {
       "schema": "UsuarioCliente",
-      "description": "Colección de usuarios con acceso a la plataforma."
+      "description": "Gestión de usuarios externos."
     }
   }
 }

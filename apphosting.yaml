@@ -1,3 +1,4 @@
+
 # Configuración para Firebase App Hosting (soporta Next.js dinámico)
 runConfig:
   maxInstances: 2

@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -9,9 +10,8 @@ import {
   MoreVertical, 
   Edit, 
   Trash2, 
-  FileText, 
   QrCode,
-  ExternalLink
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,48 +23,52 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection, deleteDoc, doc } from 'firebase/firestore';
 import { Obra } from '@/lib/types';
-
-// Mock Data
-const mockObras: Obra[] = [
-  {
-    id: '1',
-    numeroOF: 'OF-1002',
-    numeroOT: 'OT-5542',
-    codigoCliente: 'C001',
-    nombreObra: 'Instalación Planta Norte',
-    cliente: 'Industrial S.A.',
-    direccion: 'Av. Las Palmas 450, Lima',
-    descripcion: 'Instalación de paneles de control y automatización.',
-    usuarioAcceso: 'norte@industrial.com',
-    claveAcceso: '12345',
-    authorizedEmails: []
-  },
-  {
-    id: '2',
-    numeroOF: 'OF-1055',
-    numeroOT: 'OT-6020',
-    codigoCliente: 'C005',
-    nombreObra: 'Mantenimiento Subestación',
-    cliente: 'Energía Total',
-    direccion: 'Calle Los Robles 123, Arequipa',
-    descripcion: 'Mantenimiento preventivo de transformadores.',
-    usuarioAcceso: 'etotal@energia.com',
-    claveAcceso: '54321',
-    authorizedEmails: []
-  }
-];
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function ObrasPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [obras] = useState<Obra[]>(mockObras);
+  const db = useFirestore();
+  const { toast } = useToast();
+  
+  const obrasQuery = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'obras');
+  }, [db]);
 
-  const filteredObras = obras.filter(obra => 
-    obra.numeroOF.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obra.numeroOT.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obra.nombreObra.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: obras, loading } = useCollection<Obra>(obrasQuery);
+
+  const filteredObras = useMemo(() => {
+    if (!obras) return [];
+    return obras.filter(obra => 
+      obra.numeroOF.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.numeroOT.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.nombreObra.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [obras, searchTerm]);
+
+  const handleDelete = (id: string, nombre: string) => {
+    if (!db || !confirm(`¿Estás seguro de eliminar la obra "${nombre}"?`)) return;
+
+    const docRef = doc(db, 'obras', id);
+    deleteDoc(docRef).catch(async (error) => {
+      const permissionError = new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
+    
+    toast({
+      title: "Obra eliminada",
+      description: "El registro ha sido removido de la base de datos.",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -96,73 +100,85 @@ export default function ObrasPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <Table>
-          <TableHeader className="bg-secondary/50">
-            <TableRow>
-              <TableHead className="font-semibold">N° OF / OT</TableHead>
-              <TableHead className="font-semibold">Nombre de Obra</TableHead>
-              <TableHead className="font-semibold">Cliente</TableHead>
-              <TableHead className="font-semibold">Cod. Cliente</TableHead>
-              <TableHead className="font-semibold">Acceso App</TableHead>
-              <TableHead className="text-right font-semibold">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredObras.map((obra) => (
-              <TableRow key={obra.id} className="hover:bg-secondary/20 transition-colors">
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-bold text-primary">{obra.numeroOF}</span>
-                    <span className="text-xs text-muted-foreground">{obra.numeroOT}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">{obra.nombreObra}</TableCell>
-                <TableCell>{obra.cliente}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="font-mono">{obra.codigoCliente}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col text-xs">
-                    <span className="font-medium">{obra.usuarioAcceso}</span>
-                    <span className="text-muted-foreground">Clave: {obra.claveAcceso}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/obras/${obra.id}/edit`} className="flex items-center gap-2">
-                          <Edit className="w-4 h-4" /> Editar Obra
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/obras/${obra.id}/qr`} className="flex items-center gap-2">
-                          <QrCode className="w-4 h-4" /> Generar Ficha QR
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive flex items-center gap-2">
-                        <Trash2 className="w-4 h-4" /> Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {filteredObras.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="mx-auto w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-4">
-              <Search className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold">No se encontraron obras</h3>
-            <p className="text-muted-foreground">Intente con otros términos de búsqueda.</p>
+        {loading ? (
+          <div className="p-12 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Cargando obras...</p>
           </div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader className="bg-secondary/50">
+                <TableRow>
+                  <TableHead className="font-semibold">N° OF / OT</TableHead>
+                  <TableHead className="font-semibold">Nombre de Obra</TableHead>
+                  <TableHead className="font-semibold">Cliente</TableHead>
+                  <TableHead className="font-semibold">Cod. Cliente</TableHead>
+                  <TableHead className="font-semibold">Acceso App</TableHead>
+                  <TableHead className="text-right font-semibold">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredObras.map((obra) => (
+                  <TableRow key={obra.id} className="hover:bg-secondary/20 transition-colors">
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-primary">{obra.numeroOF}</span>
+                        <span className="text-xs text-muted-foreground">{obra.numeroOT}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{obra.nombreObra}</TableCell>
+                    <TableCell>{obra.cliente}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="font-mono">{obra.codigoCliente}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col text-xs">
+                        <span className="font-medium">{obra.usuarioAcceso}</span>
+                        <span className="text-muted-foreground">Clave: {obra.claveAcceso}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/obras/${obra.id}/edit`} className="flex items-center gap-2">
+                              <Edit className="w-4 h-4" /> Editar Obra
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/obras/${obra.id}/qr`} className="flex items-center gap-2">
+                              <QrCode className="w-4 h-4" /> Generar Ficha QR
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive flex items-center gap-2"
+                            onClick={() => handleDelete(obra.id, obra.nombreObra)}
+                          >
+                            <Trash2 className="w-4 h-4" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {filteredObras.length === 0 && (
+              <div className="p-12 text-center">
+                <div className="mx-auto w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-4">
+                  <Search className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold">No se encontraron obras</h3>
+                <p className="text-muted-foreground">Registre su primera obra para empezar.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

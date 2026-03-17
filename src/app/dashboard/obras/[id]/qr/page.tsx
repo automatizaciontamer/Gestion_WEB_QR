@@ -1,35 +1,43 @@
+
 "use client"
 
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Download } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, Printer, Download, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import { Obra } from '@/lib/types';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export default function QRPosterPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [obra, setObra] = useState<Obra | null>(null);
+  const db = useFirestore();
 
-  useEffect(() => {
-    // Mock fetch for now
-    const mockObra: Obra = {
-      id: id as string,
-      numeroOF: 'OF-1002',
-      numeroOT: 'OT-5542',
-      codigoCliente: 'C001',
-      nombreObra: 'INSTALACIÓN PLANTA NORTE',
-      cliente: 'INDUSTRIAL S.A.',
-      direccion: 'AV. LAS PALMAS 450, LIMA',
-      descripcion: 'INSTALACIÓN DE PANELES DE CONTROL Y AUTOMATIZACIÓN.',
-      usuarioAcceso: 'NORTE@INDUSTRIAL.COM',
-      claveAcceso: '12345',
-      authorizedEmails: []
-    };
-    setObra(mockObra);
-  }, [id]);
+  const obraDocRef = useMemo(() => {
+    if (!db || !id) return null;
+    return doc(db, 'obras', id as string);
+  }, [db, id]);
 
-  if (!obra) return null;
+  const { data: obra, loading } = useDoc<Obra>(obraDocRef);
+
+  if (loading) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium">Cargando datos de la obra...</p>
+      </div>
+    );
+  }
+
+  if (!obra) {
+    return (
+      <div className="text-center p-12">
+        <h2 className="text-xl font-bold">Obra no encontrada</h2>
+        <Button onClick={() => router.back()} className="mt-4">Volver</Button>
+      </div>
+    );
+  }
 
   const handlePrint = () => {
     window.print();
@@ -90,21 +98,19 @@ export default function QRPosterPage() {
             </div>
           </div>
 
-          {/* GIANT QR CODE MOCKUP */}
+          {/* QR CODE MOCKUP */}
           <div className="flex-1 flex items-center justify-center w-full my-8">
             <div className="border-[15px] border-black p-4 bg-white">
               <div className="w-[350px] h-[350px] relative">
-                {/* SVG Mock of a QR Code */}
+                {/* SVG Mock of a QR Code - En producción se usaría una librería de QR */}
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                   <rect x="0" y="0" width="10" height="10" fill="black" />
-                  <rect x="0" y="10" width="1" height="1" fill="black" />
-                  <rect x="10" y="0" width="1" height="1" fill="black" />
                   <rect x="0" y="90" width="10" height="10" fill="black" />
                   <rect x="90" y="0" width="10" height="10" fill="black" />
-                  <rect x="20" y="20" width="60" height="60" fill="black" fillOpacity="0.05" />
-                  <path d="M 20 20 h 5 v 5 h -5 z M 30 20 h 2 v 2 h -2 z M 40 20 h 8 v 2 h -8 z" fill="black" />
-                  <path d="M 25 35 h 10 v 2 h -10 z M 50 40 h 20 v 5 h -20 z M 30 60 h 5 v 10 h -5 z" fill="black" />
-                  <path d="M 70 70 h 10 v 10 h -10 z M 80 80 h 5 v 5 h -5 z M 20 80 h 5 v 5 h -5 z" fill="black" />
+                  <path d="M 20 20 h 5 v 5 h -5 z M 30 20 h 2 v 2 h -2 z" fill="black" />
+                  <path d="M 25 35 h 10 v 2 h -10 z M 50 40 h 20 v 5 h -20 z" fill="black" />
+                  <path d="M 70 70 h 10 v 10 h -10 z M 80 80 h 5 v 5 h -5 z" fill="black" />
+                  <rect x="40" y="40" width="20" height="20" fill="#0a3d62" fillOpacity="0.2" />
                 </svg>
               </div>
             </div>

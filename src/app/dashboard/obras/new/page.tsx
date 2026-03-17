@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -8,8 +9,7 @@ import {
   Image as ImageIcon, 
   Upload,
   FileText,
-  X,
-  Plus
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { uploadToDrive } from '@/lib/drive-api';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function NewObraPage() {
   const router = useRouter();
+  const db = useFirestore();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,16 +59,34 @@ export default function NewObraPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!db) return;
     setIsUploading(true);
     
     try {
-      // In a real app, we would save to Firestore here.
-      // We also upload files to Drive if any.
       const folderName = `${formData.codigoCliente}-${formData.numeroOF}-${formData.numeroOT}`;
       
+      // Subir archivos a Drive primero
       for (const file of files) {
         await uploadToDrive(file, folderName);
       }
+
+      // Guardar en Firestore
+      const obrasRef = collection(db, 'obras');
+      const obraData = {
+        ...formData,
+        createdAt: Date.now(),
+        serverTimestamp: serverTimestamp()
+      };
+
+      addDoc(obrasRef, obraData)
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: obrasRef.path,
+            operation: 'create',
+            requestResourceData: obraData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
 
       toast({
         title: "Obra creada exitosamente",

@@ -1,0 +1,48 @@
+
+{
+  "entities": {
+    "Obra": {
+      "title": "Obra",
+      "description": "Representa un proyecto de ingeniería o instalación industrial.",
+      "type": "object",
+      "properties": {
+        "numeroOF": { "type": "string", "description": "Número de Orden de Fabricación" },
+        "numeroOT": { "type": "string", "description": "Número de Orden de Trabajo" },
+        "codigoCliente": { "type": "string", "description": "Código interno del cliente" },
+        "nombreObra": { "type": "string", "description": "Nombre descriptivo de la obra" },
+        "cliente": { "type": "string", "description": "Razón social del cliente" },
+        "direccion": { "type": "string", "description": "Ubicación de la obra" },
+        "descripcion": { "type": "string", "description": "Detalles técnicos adicionales" },
+        "imageUrl": { "type": "string", "description": "URL de la imagen de portada" },
+        "usuarioAcceso": { "type": "string", "description": "Email de acceso principal para la app" },
+        "claveAcceso": { "type": "string", "description": "Contraseña de acceso para la app" },
+        "createdAt": { "type": "number", "description": "Timestamp de creación" }
+      },
+      "required": ["numeroOF", "numeroOT", "nombreObra", "cliente", "usuarioAcceso", "claveAcceso"]
+    },
+    "UsuarioCliente": {
+      "title": "Usuario Cliente",
+      "description": "Usuario externo con permisos de visualización.",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "password": { "type": "string" }
+      },
+      "required": ["nombre", "email"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/obras/{obraId}": {
+      "schema": "Obra",
+      "description": "Colección principal de proyectos industriales."
+    },
+    "/usuarios_clientes/{usuarioId}": {
+      "schema": "UsuarioCliente",
+      "description": "Colección de usuarios con acceso a la plataforma."
+    }
+  }
+}

@@ -1,12 +1,11 @@
 'use client';
 
 // Configuración de Firebase para TamerWorks
-// Estos valores se completan automáticamente al conectar con el proyecto de Firebase
 export const firebaseConfig = {
-  apiKey: "REPLACE_WITH_API_KEY",
-  authDomain: "REPLACE_WITH_PROJECT_ID.firebaseapp.com",
-  projectId: "REPLACE_WITH_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "REPLACE_WITH_MESSAGING_SENDER_ID",
-  appId: "REPLACE_WITH_APP_ID"
+    apiKey: "AIzaSyCdEUN3yT7TqWgTVVCzN3GERFua2-IVQls",
+    authDomain: "gestion-tamer-ind-s-a.firebaseapp.com",
+    projectId: "gestion-tamer-ind-s-a",
+    storageBucket: "gestion-tamer-ind-s-a.firebasestorage.app",
+    messagingSenderId: "539613263603",
+    appId: "1:539613263603:web:757094775432a55465e986"
 };

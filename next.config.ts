@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Forzamos el renderizado dinámico para rutas dinámicas como /obras/[id]
   typescript: {
     ignoreBuildErrors: true,
   },

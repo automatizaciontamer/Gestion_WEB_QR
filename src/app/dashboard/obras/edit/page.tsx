@@ -43,7 +43,20 @@ function EditObraContent() {
   const { data: obra, loading } = useDoc<Obra>(obraDocRef);
 
   useEffect(() => {
-    if (obra) setFormData(obra);
+    if (obra) {
+      setFormData({
+        ...obra,
+        codigoCliente: obra.codigoCliente || '',
+        nombreObra: obra.nombreObra || '',
+        numeroOF: obra.numeroOF || '',
+        numeroOT: obra.numeroOT || '',
+        cliente: obra.cliente || '',
+        descripcion: obra.descripcion || '',
+        usuarioAcceso: obra.usuarioAcceso || '',
+        claveAcceso: obra.claveAcceso || '',
+        driveFolderUrl: obra.driveFolderUrl || ''
+      });
+    }
   }, [obra]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -55,6 +68,10 @@ function EditObraContent() {
     if (e.target.files) {
       setNewFilesToUpload(prev => [...prev, ...Array.from(e.target.files!)]);
     }
+  };
+
+  const removeFile = (index: number) => {
+    setNewFilesToUpload(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,12 +86,10 @@ function EditObraContent() {
       if (newFilesToUpload.length > 0) {
         for (let i = 0; i < newFilesToUpload.length; i++) {
           const result = await uploadToDrive(newFilesToUpload[i], folderName);
-          if (result && result.fileId) {
-            newUploadedFiles.push({
-              name: newFilesToUpload[i].name,
-              id: result.fileId
-            });
-          }
+          newUploadedFiles.push({
+            name: newFilesToUpload[i].name,
+            id: result?.fileId || ''
+          });
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
       }
@@ -93,7 +108,7 @@ function EditObraContent() {
 
       toast({
         title: "Obra Actualizada",
-        description: `Se han guardado los cambios y subido ${newUploadedFiles.length} archivos nuevos.`,
+        description: `Se han guardado los cambios y sincronizado los nuevos archivos.`,
       });
       
       router.push('/dashboard/obras');
@@ -131,7 +146,8 @@ function EditObraContent() {
                 <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
               </div>
               <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none" /></div>
+              <div className="space-y-2"><Label>URL Carpeta Drive</Label><Input id="driveFolderUrl" value={formData.driveFolderUrl || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" placeholder="https://drive.google.com/..." /></div>
+              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[100px]" /></div>
             </CardContent>
           </Card>
 
@@ -144,9 +160,14 @@ function EditObraContent() {
                 <input id="edit-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               {newFilesToUpload.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {newFilesToUpload.map((f, i) => (
-                    <div key={i} className="p-3 bg-gray-50 rounded-xl text-[10px] font-black border truncate">{f.name}</div>
+                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border">
+                      <span className="text-xs font-black truncate">{f.name}</span>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeFile(i)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -156,8 +177,8 @@ function EditObraContent() {
 
         <div className="lg:col-span-4 space-y-8">
           <Card className="rounded-[3rem] bg-[#0a3d62] text-white p-8 space-y-6 shadow-2xl">
-            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
-            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
+            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
+            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
           </Card>
           <div className="space-y-4">
             {isSaving && <Progress value={uploadProgress} className="h-2" />}

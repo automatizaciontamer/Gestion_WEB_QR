@@ -80,17 +80,11 @@ export default function NewObraPage() {
       if (filesToUpload.length > 0) {
         for (let i = 0; i < filesToUpload.length; i++) {
           const result = await uploadToDrive(filesToUpload[i], folderName);
-          if (result && result.fileId) {
-            uploadedFiles.push({
-              name: filesToUpload[i].name,
-              id: result.fileId
-            });
-          } else {
-            uploadedFiles.push({
-              name: filesToUpload[i].name,
-              id: ''
-            });
-          }
+          // Aseguramos que el archivo se guarde incluso si el ID tarda en retornar
+          uploadedFiles.push({
+            name: filesToUpload[i].name,
+            id: result?.fileId || ''
+          });
           setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         }
       }
@@ -108,8 +102,8 @@ export default function NewObraPage() {
       await addDoc(obrasRef, obraData);
 
       toast({
-        title: "Obra Registrada v3.6.5",
-        description: `Carpeta "${folderName}" sincronizada con ${uploadedFiles.length} archivos.`,
+        title: "Obra Registrada v3.7.5",
+        description: `Proyecto "${formData.nombreObra}" sincronizado con éxito.`,
       });
       
       router.push('/dashboard/obras');
@@ -133,7 +127,7 @@ export default function NewObraPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Nuevo Proyecto Técnico</h1>
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] mt-1">Sincronización Cloud Tamer v3.6.5</p>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] mt-1">Sincronización Cloud Tamer v3.7.5</p>
           </div>
         </div>
       </div>

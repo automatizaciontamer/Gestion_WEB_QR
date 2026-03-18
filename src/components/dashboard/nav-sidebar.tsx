@@ -9,8 +9,7 @@ import {
   LogOut,
   Menu,
   UserCheck,
-  Building2,
-  Settings
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -45,10 +44,10 @@ export function NavSidebar() {
           </div>
           <div className="overflow-hidden">
             <h2 className="font-black text-xl leading-tight truncate text-[#0a3d62]">
-              {empresa?.razonSocial || 'Tamer Industrial'}
+              {empresa?.nombre || 'Tamer Industrial'}
             </h2>
             <p className="text-[9px] text-muted-foreground font-black tracking-[0.2em] uppercase truncate">
-              {isAdmin ? 'Modo Administrador' : 'Acceso Autorizado'}
+              {isAdmin ? 'Administrador' : 'Acceso Autorizado'}
             </p>
           </div>
         </div>

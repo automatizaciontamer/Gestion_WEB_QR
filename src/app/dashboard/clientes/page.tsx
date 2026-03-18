@@ -13,7 +13,8 @@ import {
   UserCheck,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,7 +37,7 @@ import { Label } from '@/components/ui/label';
 import { UsuarioHabilitado } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
@@ -46,22 +47,23 @@ export default function UsuariosHabilitadosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const db = useFirestore();
   const { toast } = useToast();
   const { isAdmin } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!isAdmin) {
-      router.push('/dashboard');
-    }
-  }, [isAdmin, router]);
 
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
     password: ''
   });
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.push('/dashboard');
+    }
+  }, [isAdmin, router]);
 
   const usersQuery = useMemo(() => {
     if (!db) return null;
@@ -78,32 +80,67 @@ export default function UsuariosHabilitadosPage() {
     );
   }, [users, searchTerm]);
 
+  const handleOpenNew = () => {
+    setEditingUserId(null);
+    setFormData({ nombre: '', email: '', password: '' });
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (user: UsuarioHabilitado) => {
+    setEditingUserId(user.id);
+    setFormData({ 
+      nombre: user.nombre || '', 
+      email: user.email || '', 
+      password: user.password || '' 
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!db) return;
 
-    // Guardamos el email en minúsculas para consistencia en la búsqueda
     const dataToSave = {
       ...formData,
       email: formData.email.toLowerCase().trim()
     };
 
-    const usersRef = collection(db, 'usuarios_clientes');
-    addDoc(usersRef, dataToSave)
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: usersRef.path,
-          operation: 'create',
-          requestResourceData: dataToSave,
+    if (editingUserId) {
+      const docRef = doc(db, 'usuarios_clientes', editingUserId);
+      updateDoc(docRef, dataToSave)
+        .then(() => {
+          toast({
+            title: "Usuario Actualizado",
+            description: `Los datos de ${formData.nombre} han sido modificados.`,
+          });
+        })
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: dataToSave,
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    } else {
+      const usersRef = collection(db, 'usuarios_clientes');
+      addDoc(usersRef, dataToSave)
+        .then(() => {
+          toast({
+            title: "Usuario Creado",
+            description: `El acceso para ${formData.nombre} ha sido habilitado.`,
+          });
+        })
+        .catch(async (error) => {
+          const permissionError = new FirestorePermissionError({
+            path: usersRef.path,
+            operation: 'create',
+            requestResourceData: dataToSave,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
+    }
 
-    toast({
-      title: "Usuario Creado",
-      description: `El acceso para ${formData.nombre} ha sido habilitado.`,
-    });
-    setFormData({ nombre: '', email: '', password: '' });
     setIsDialogOpen(false);
   };
 
@@ -133,18 +170,15 @@ export default function UsuariosHabilitadosPage() {
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Sincronización de Accesos con App Android</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) setShowPassword(false);
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
-              <UserPlus className="w-5 h-5" /> NUEVO USUARIO
-            </Button>
-          </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Button onClick={handleOpenNew} className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
+            <UserPlus className="w-5 h-5" /> NUEVO USUARIO
+          </Button>
           <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-none shadow-2xl p-8">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-[#0a3d62]">Habilitar Usuario</DialogTitle>
+              <DialogTitle className="text-2xl font-black text-[#0a3d62]">
+                {editingUserId ? 'Editar Usuario' : 'Habilitar Usuario'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSaveUser} className="space-y-5 pt-4">
               <div className="space-y-2">
@@ -199,7 +233,9 @@ export default function UsuariosHabilitadosPage() {
               </div>
               <DialogFooter className="pt-6 gap-3">
                 <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
-                <Button type="submit" className="rounded-xl font-black bg-primary px-8">HABILITAR ACCESO</Button>
+                <Button type="submit" className="rounded-xl font-black bg-primary px-8">
+                  {editingUserId ? 'GUARDAR CAMBIOS' : 'HABILITAR ACCESO'}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -247,6 +283,12 @@ export default function UsuariosHabilitadosPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
+                          <DropdownMenuItem 
+                            className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
+                            onClick={() => handleOpenEdit(user)}
+                          >
+                            <Edit className="w-4 h-4 text-primary" /> EDITAR USUARIO
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
                             onClick={() => handleDelete(user.id, user.nombre)}

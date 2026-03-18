@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { 
   Plus, 
   Search, 
-  Filter, 
   MoreVertical, 
   Edit, 
   Trash2, 
@@ -25,7 +24,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, deleteDoc, doc } from 'firebase/firestore';
 import { Obra } from '@/lib/types';
@@ -61,7 +59,7 @@ export default function ObrasPage() {
     navigator.clipboard.writeText(link);
     toast({
       title: "Enlace Copiado",
-      description: "El link directo para pruebas ha sido copiado al portapapeles.",
+      description: "El link directo para el visor ha sido copiado al portapapeles.",
     });
   };
 
@@ -88,7 +86,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada v3.5.2</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada v5.0.0</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -113,7 +111,7 @@ export default function ObrasPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando proyectos...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando proyectos v5.0...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -123,7 +121,7 @@ export default function ObrasPage() {
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">N° OF / OT</TableHead>
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Obra / Proyecto</TableHead>
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Cliente</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Acceso App</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Acceso Directo</TableHead>
                   <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -144,10 +142,9 @@ export default function ObrasPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col text-xs">
-                        <span className="font-bold text-primary">{obra.usuarioAcceso}</span>
-                        <span className="text-muted-foreground font-mono">Clave: {obra.claveAcceso}</span>
-                      </div>
+                      <Badge className="bg-[#0a3d62] text-white rounded-lg text-[9px] font-black uppercase tracking-wider">
+                        ACTIVO QR
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right px-8">
                       <DropdownMenu>
@@ -171,11 +168,11 @@ export default function ObrasPage() {
                             onClick={() => handleCopyLink(obra.id)}
                             className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
                           >
-                            <Copy className="w-4 h-4 text-primary" /> COPIAR LINK PRUEBA
+                            <Copy className="w-4 h-4 text-primary" /> COPIAR LINK VISOR
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <a href={`/obra/view?id=${obra.id}`} target="_blank" className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
-                              <ExternalLink className="w-4 h-4 text-primary" /> ABRIR VISOR
+                              <ExternalLink className="w-4 h-4 text-primary" /> ABRIR VISOR PÚBLICO
                             </a>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
@@ -199,7 +196,7 @@ export default function ObrasPage() {
               <Construction className="w-10 h-10 text-muted-foreground" />
             </div>
             <h3 className="text-2xl font-black text-[#0a3d62]">Sin obras</h3>
-            <p className="text-muted-foreground font-bold mt-2">No se encontraron proyectos activos.</p>
+            <p className="text-muted-foreground font-bold mt-2">No se encontraron proyectos activos v5.0.</p>
           </div>
         )}
       </div>

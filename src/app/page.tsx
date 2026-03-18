@@ -8,7 +8,6 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Corregido: Uso de la clave de sesión unificada 'tamer_session'
     const session = sessionStorage.getItem('tamer_session');
     if (session) {
       router.push('/dashboard');
@@ -21,7 +20,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="animate-pulse flex flex-col items-center gap-4">
         <div className="w-12 h-12 bg-primary rounded-xl"></div>
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Iniciando Tamer Cloud v3.3.1...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Iniciando Tamer Cloud v5.0.0...</p>
       </div>
     </div>
   );

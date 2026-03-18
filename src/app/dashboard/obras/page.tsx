@@ -55,6 +55,7 @@ export default function ObrasPage() {
   }, [obras, searchTerm]);
 
   const handleCopyLink = (id: string) => {
+    if (typeof window === 'undefined') return;
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/obra/view?id=${id}`;
     navigator.clipboard.writeText(link);
@@ -87,7 +88,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.5 - Sincronizado</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.6 - Sincronizado Cloud</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -112,7 +113,7 @@ export default function ObrasPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando v5.0.5...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando v5.0.6...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -122,7 +123,7 @@ export default function ObrasPage() {
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">N° OF / OT</TableHead>
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Obra / Proyecto</TableHead>
                   <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Cliente</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Acceso Directo</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Estado</TableHead>
                   <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>

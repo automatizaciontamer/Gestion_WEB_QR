@@ -10,6 +10,8 @@ export interface Obra {
   imageUrl?: string;
   usuarioAcceso: string; // email principal
   claveAcceso: string;
+  createdAt: number;
+  files?: string[]; // Lista de nombres de archivos subidos
   authorizedEmails: Array<{ email: string; password?: string }>;
 }
 

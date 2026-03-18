@@ -4,7 +4,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useMemo, Suspense, useState, useEffect } from 'react';
+import { useMemo, Suspense, useState } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
@@ -18,7 +18,6 @@ import {
   EyeOff,
   FolderOpen,
   ArrowRight,
-  ChevronRight,
   LogOut
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,7 +51,8 @@ function ObraViewContent() {
     if (!isUser || !user || !obra) return false;
     if (isAdmin) return true;
     
-    if (user.id === id || user.role === 'field') {
+    // Si el usuario tiene el rol de campo (field) para esta obra específica
+    if (user.role === 'field') {
       const normalizedUserEmail = user.email?.toLowerCase().trim();
       const normalizedObraEmail = obra.usuarioAcceso?.toLowerCase().trim();
       
@@ -61,7 +61,7 @@ function ObraViewContent() {
     }
     
     return false;
-  }, [isUser, user, obra, isAdmin, id]);
+  }, [isUser, user, obra, isAdmin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +92,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center px-4">Sincronizando Datos...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center px-4">Sincronizando Datos v3.6.8...</p>
       </div>
     );
   }
@@ -119,7 +119,7 @@ function ObraViewContent() {
               <ShieldCheck className="w-7 h-7 text-primary" />
             </div>
             <h2 className="text-lg font-black uppercase tracking-tight">Acceso Técnico</h2>
-            <p className="text-[9px] font-bold opacity-60 uppercase tracking-[0.2em] mt-1">Sincronizado Cloud Tamer</p>
+            <p className="text-[9px] font-bold opacity-60 uppercase tracking-[0.2em] mt-1">Identidad Sincronizada Tamer</p>
           </div>
           <CardContent className="p-8 space-y-6">
             <div className="p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100">
@@ -129,7 +129,7 @@ function ObraViewContent() {
             
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-[9px] font-black uppercase ml-1 tracking-widest text-muted-foreground">Usuario Autorizado</Label>
+                <Label className="text-[9px] font-black uppercase ml-1 tracking-widest text-muted-foreground">Usuario de Obra</Label>
                 <Input 
                   placeholder="ej. tecnico@tamer.com"
                   value={identifier} 
@@ -139,7 +139,7 @@ function ObraViewContent() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[9px] font-black uppercase ml-1 tracking-widest text-muted-foreground">Clave</Label>
+                <Label className="text-[9px] font-black uppercase ml-1 tracking-widest text-muted-foreground">Contraseña</Label>
                 <div className="relative">
                   <Input 
                     type={showPassword ? "text" : "password"} 
@@ -161,7 +161,7 @@ function ObraViewContent() {
                 </div>
               </div>
               <Button type="submit" className="w-full h-14 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-xl font-black text-base shadow-lg shadow-[#0a3d62]/10 gap-2 mt-4" disabled={isLoggingIn}>
-                {isLoggingIn ? <Loader2 className="animate-spin" /> : <>ACCEDER A PLANOS <ArrowRight className="w-4 h-4" /></>}
+                {isLoggingIn ? <Loader2 className="animate-spin" /> : <>INGRESAR A DOCUMENTACIÓN <ArrowRight className="w-4 h-4" /></>}
               </Button>
             </form>
           </CardContent>
@@ -171,108 +171,116 @@ function ObraViewContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-16">
-      <div className="bg-[#0a3d62] text-white shadow-lg">
-        <div className="max-w-4xl mx-auto px-5 py-8 space-y-4">
+    <div className="min-h-screen bg-slate-50 pb-20">
+      {/* Cabecera sin solapamientos v3.6.8 */}
+      <header className="bg-[#0a3d62] text-white">
+        <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
           <div className="flex items-center justify-between">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-lg">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center p-2 shadow-xl border-4 border-white/10">
               {empresa?.logoUrl ? (
                 <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
               ) : (
-                <Construction className="text-[#0a3d62] w-6 h-6" />
+                <Construction className="text-[#0a3d62] w-7 h-7" />
               )}
             </div>
-            <Button variant="ghost" onClick={logout} className="text-white border border-white/20 rounded-lg h-9 px-4 font-black text-[9px] tracking-widest bg-white/5 hover:bg-white/10 transition-all uppercase">
-              <LogOut className="w-3.5 h-3.5 mr-2" /> SALIR
+            <Button 
+              variant="ghost" 
+              onClick={logout} 
+              className="text-white border border-white/20 rounded-xl h-10 px-5 font-black text-[10px] tracking-widest bg-white/5 hover:bg-white/10 transition-all uppercase"
+            >
+              <LogOut className="w-4 h-4 mr-2" /> SALIR
             </Button>
           </div>
           
-          <div className="space-y-3">
-            <h1 className="text-xl sm:text-2xl font-black uppercase leading-tight tracking-tight text-white">
+          <div className="space-y-4">
+            <h1 className="text-2xl sm:text-3xl font-black uppercase leading-tight tracking-tight text-white">
               {obra.nombreObra}
             </h1>
             
-            <div className="flex flex-wrap gap-2">
-              <div className="bg-primary text-white font-black text-[9px] px-3 py-1.5 rounded-lg uppercase tracking-wider">OF: {obra.numeroOF}</div>
-              <div className="bg-white/10 text-white font-black text-[9px] px-3 py-1.5 rounded-lg uppercase tracking-wider border border-white/10">OT: {obra.numeroOT}</div>
-              <div className="bg-white/10 text-white font-black text-[9px] px-3 py-1.5 rounded-lg uppercase tracking-wider border border-white/10">ID: {obra.codigoCliente}</div>
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-primary text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase tracking-wider shadow-lg">OF: {obra.numeroOF}</div>
+              <div className="bg-white/10 text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase tracking-wider border border-white/10 backdrop-blur-sm">OT: {obra.numeroOT}</div>
+              <div className="bg-white/10 text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase tracking-wider border border-white/10 backdrop-blur-sm">ID: {obra.codigoCliente}</div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <main className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-        <Card className="border-none shadow-xl rounded-[2rem] bg-white p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Cliente:</p>
-              <p className="font-black text-[#0a3d62] text-base uppercase leading-tight">{obra.cliente}</p>
+      <main className="max-w-4xl mx-auto px-4 -mt-6 space-y-6">
+        <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white p-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="space-y-1">
+              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em]">Cliente Solicitante:</p>
+              <p className="font-black text-[#0a3d62] text-lg uppercase leading-tight">{obra.cliente}</p>
             </div>
-            <div>
-              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Ubicación:</p>
+            <div className="space-y-1">
+              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.3em]">Ubicación del Proyecto:</p>
               <div className="flex items-start gap-2 font-bold text-[#0a3d62]">
-                <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span className="text-sm leading-snug">{obra.direccion || 'S/D'}</span>
+                <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-sm leading-snug">{obra.direccion || 'No especificada'}</span>
               </div>
             </div>
           </div>
         </Card>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-[10px] font-black text-[#0a3d62] uppercase tracking-[0.3em] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" /> PLANOS Y DOCUMENTOS
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between px-4">
+            <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
+              <FileText className="w-6 h-6 text-primary" /> REPOSITORIO DE PLANOS
             </h3>
-            {obra.files && <span className="text-[8px] font-black bg-primary/10 text-primary px-2 py-1 rounded-md uppercase">{obra.files.length} ITEMS</span>}
+            {obra.files && (
+              <span className="text-[9px] font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg uppercase tracking-widest">
+                {obra.files.length} ARCHIVOS
+              </span>
+            )}
           </div>
           
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-4">
             {obra.files && obra.files.length > 0 ? (
               obra.files.map((file, idx) => (
-                <div key={idx} className="bg-white p-4 rounded-2xl shadow-md border border-slate-50 flex items-center justify-between gap-3 group hover:border-primary/20 transition-all">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-primary shrink-0">
-                      <FileText className="w-5 h-5" />
+                <div key={idx} className="bg-white p-5 rounded-[2rem] shadow-xl border border-slate-50 flex items-center justify-between gap-4 group hover:border-primary/20 transition-all">
+                  <div className="flex items-center gap-5 min-w-0">
+                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary shrink-0 border border-slate-100">
+                      <FileText className="w-6 h-6" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-black text-[#0a3d62] text-xs sm:text-sm truncate uppercase tracking-tight">{file.name}</p>
-                      <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Sincronizado</p>
+                      <p className="font-black text-[#0a3d62] text-sm sm:text-base truncate uppercase tracking-tight">{file.name}</p>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Sincronizado Cloud</p>
                     </div>
                   </div>
                   {file.id ? (
-                    <Button asChild className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90 shadow-md shrink-0 transition-transform active:scale-90">
+                    <Button asChild className="h-12 w-12 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shrink-0 transition-transform active:scale-90">
                       <a href={`https://drive.google.com/uc?id=${file.id}&export=download`} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-4 h-4" />
+                        <Download className="w-5 h-5" />
                       </a>
                     </Button>
                   ) : (
-                    <div className="text-[8px] font-black text-muted-foreground/30 italic">N/A</div>
+                    <span className="text-[9px] font-black text-muted-foreground/30 uppercase italic">S/ID</span>
                   )}
                 </div>
               ))
             ) : (
-              <div className="bg-white p-12 rounded-[2rem] text-center border-2 border-dashed border-slate-100">
-                <FileText className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                <p className="font-black text-[#0a3d62] uppercase tracking-widest text-[10px]">No hay archivos listados</p>
-                <p className="text-[9px] text-muted-foreground font-medium mt-1 uppercase">Sincronizando con Repositorio...</p>
+              <div className="bg-white p-16 rounded-[3rem] text-center border-4 border-dashed border-slate-100">
+                <FileText className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                <p className="font-black text-[#0a3d62] uppercase tracking-[0.3em] text-[11px]">No hay archivos específicos</p>
+                <p className="text-[10px] text-muted-foreground font-bold mt-2 uppercase">Sincronización v3.6.8 en curso...</p>
               </div>
             )}
 
             {obra.driveFolderUrl && (
-              <Button asChild className="w-full h-16 rounded-2xl bg-[#0a3d62] hover:bg-[#0a3d62]/90 font-black text-sm gap-4 shadow-xl mt-4 group">
+              <Button asChild className="w-full h-20 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/90 font-black text-base gap-5 shadow-2xl mt-6 group border-t-4 border-primary">
                 <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
-                    <FolderOpen className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                    <FolderOpen className="w-6 h-6 text-primary" />
                   </div>
-                  CARPETA COMPLETA DRIVE
-                  <ChevronRight className="w-5 h-5 ml-auto text-primary" />
+                  CARPETA COMPLETA GOOGLE DRIVE
                 </a>
               </Button>
             )}
           </div>
         </div>
 
-        <p className="text-center text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.4em] pt-8">
+        <p className="text-center text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.5em] pt-12">
           © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | CLOUD v3.6.8
         </p>
       </main>
@@ -281,5 +289,9 @@ function ObraViewContent() {
 }
 
 export default function ObraViewPage() {
-  return <Suspense fallback={<div className="p-8 text-center text-[10px] font-black uppercase tracking-widest">Cargando...</div>}><ObraViewContent /></Suspense>;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-xs">Iniciando Portal Técnico...</div>}>
+      <ObraViewContent />
+    </Suspense>
+  );
 }

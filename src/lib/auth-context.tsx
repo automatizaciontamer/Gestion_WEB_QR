@@ -65,24 +65,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // CASO ESPECIAL: Login desde un QR de Obra específico
+      // CASO ESPECIAL: Login desde un QR de Obra específico (Acceso Estricto v3.3.5)
       if (restrictedToObraId) {
         const obraRef = doc(db, 'obras', restrictedToObraId);
         const obraSnap = await getDoc(obraRef);
         
         if (obraSnap.exists()) {
           const d = obraSnap.data();
+          // Validamos que las credenciales coincidan exactamente con ESTA obra
           if (d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password) {
             const userData = { ...d, id: obraSnap.id, role: 'field' };
             setIsAdmin(false);
             setIsUser(true);
             setUser(userData);
             sessionStorage.setItem('tamer_session', JSON.stringify(userData));
-            // No redirigimos aquí, dejamos que el componente maneje su estado
             return true;
           }
         }
-        return false; // Credenciales no válidas para ESTA obra
+        return false; // Credenciales no válidas para esta obra
       }
 
       // 1. Acceso Maestro Admin

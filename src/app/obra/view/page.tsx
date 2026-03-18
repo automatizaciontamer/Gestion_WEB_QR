@@ -4,7 +4,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useMemo, Suspense, useState, useEffect } from 'react';
+import { useMemo, Suspense, useState } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
@@ -15,10 +15,9 @@ import {
   Info,
   Loader2,
   AlertCircle,
-  ExternalLink,
-  Eye,
   Lock,
   ShieldCheck,
+  Eye,
   EyeOff,
   LogOut,
   FolderOpen
@@ -32,10 +31,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
+  DialogContent 
 } from '@/components/ui/dialog';
 
 function ObraViewContent() {
@@ -66,12 +62,12 @@ function ObraViewContent() {
     // 1. Administradores: Acceso Total
     if (isAdmin) return true;
 
-    // 2. Usuarios de Campo (Field): Solo acceden si el ID coincide exactamente con esta obra
+    // 2. Usuarios de Campo (Field): Solo acceden si el ID de su sesión coincide exactamente con esta obra
     if (user.role === 'field') {
       return user.id === id;
     }
 
-    // 3. Clientes (User): Acceden si su email está en la lista de autorizados de esta obra
+    // 3. Clientes Registrados (User): Acceden si su email está en la lista de autorizados
     if (user.role === 'user') {
       const userEmail = user.email?.toLowerCase().trim();
       const isMainEmail = obra.usuarioAcceso?.toLowerCase().trim() === userEmail;
@@ -87,7 +83,7 @@ function ObraViewContent() {
     if (!id) return;
     setIsLoggingIn(true);
     
-    // Pasamos el ID de la obra para que el login sea EXCLUSIVO para este proyecto
+    // Pasamos el ID de la obra para que el login sea EXCLUSIVO para este proyecto v3.3.5
     const success = await login(identifier, password, id);
     
     if (!success) {
@@ -99,7 +95,7 @@ function ObraViewContent() {
     } else {
       toast({
         title: "Identidad Validada",
-        description: "Acceso concedido a la documentación v3.3.5.",
+        description: "Acceso concedido a la documentación técnica.",
       });
     }
     setIsLoggingIn(false);
@@ -110,8 +106,8 @@ function ObraViewContent() {
       <div className="min-h-screen flex items-center justify-center p-6 bg-[#f1f5f9]">
         <Card className="max-w-md w-full p-10 text-center rounded-[2.5rem] shadow-2xl">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
-          <h1 className="text-2xl font-black text-[#0a3d62]">QR Inválido</h1>
-          <p className="text-muted-foreground mb-6">El código escaneado no contiene un ID de obra válido.</p>
+          <h1 className="text-2xl font-black text-[#0a3d62]">Enlace Inválido</h1>
+          <p className="text-muted-foreground mb-6">El código escaneado no contiene una referencia válida.</p>
           <Button onClick={() => router.push('/login')} className="rounded-xl w-full">VOLVER</Button>
         </Card>
       </div>
@@ -133,7 +129,7 @@ function ObraViewContent() {
         <Card className="max-w-md w-full p-10 text-center rounded-[2.5rem] shadow-2xl">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
           <h1 className="text-2xl font-black text-[#0a3d62]">Obra no Registrada</h1>
-          <p className="text-muted-foreground mb-6">El registro técnico de esta obra ha sido removido o no existe.</p>
+          <p className="text-muted-foreground mb-6">La documentación técnica no está disponible actualmente.</p>
           <Button onClick={() => router.push('/login')} className="rounded-xl w-full">REGRESAR</Button>
         </Card>
       </div>
@@ -210,7 +206,7 @@ function ObraViewContent() {
           </CardContent>
           <div className="px-10 pb-10">
             <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] text-center leading-relaxed">
-              ESTAS CREDENCIALES SON EXCLUSIVAS PARA ESTE PROYECTO v3.3.5
+              ACCESO RESTRINGIDO SEGÚN POLÍTICAS DE TAMER INDUSTRIAL S.A. v3.3.5
             </p>
           </div>
         </Card>
@@ -233,7 +229,7 @@ function ObraViewContent() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase leading-none">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
-              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase mt-2">Visor de Documentación v3.3.5</p>
+              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase mt-2">Documentación Técnica v3.3.5</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-3">
@@ -241,7 +237,7 @@ function ObraViewContent() {
               OF: {obra.numeroOF}
             </Badge>
             <Button variant="ghost" onClick={logout} className="text-white/60 hover:text-white hover:bg-white/10 font-black text-[10px] tracking-widest uppercase">
-              <LogOut className="w-4 h-4 mr-2" /> Salir del Proyecto
+              <LogOut className="w-4 h-4 mr-2" /> Cerrar Sesión
             </Button>
           </div>
         </div>
@@ -256,7 +252,7 @@ function ObraViewContent() {
               </div>
               <div className="text-center md:text-left">
                 <CardTitle className="text-3xl font-black text-[#0a3d62] uppercase tracking-tighter">{obra.nombreObra}</CardTitle>
-                <CardDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Identidad Corporativa Tamer</CardDescription>
+                <CardDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Ingeniería e Instalaciones Industriales</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -266,29 +262,29 @@ function ObraViewContent() {
                 <div className="flex items-start gap-4">
                   <UserIcon className="w-5 h-5 text-primary mt-1" />
                   <div>
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cliente Autorizado</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cliente / Mandante</p>
                     <p className="font-black text-xl text-[#0a3d62] uppercase">{obra.cliente}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <MapPin className="w-5 h-5 text-primary mt-1" />
                   <div>
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Localización</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Ubicación del Proyecto</p>
                     <p className="font-bold text-lg">{obra.direccion || 'No especificada'}</p>
                   </div>
                 </div>
               </div>
               <div className="bg-[#f8fafc] p-6 rounded-[2rem] border border-secondary flex flex-col justify-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 flex items-center gap-2">
-                  <Info className="w-3 h-3" /> Información Técnica
+                  <Info className="w-3 h-3" /> Memoria Descriptiva
                 </p>
                 <p className="text-xs font-medium text-gray-700 leading-relaxed italic">
-                  {obra.descripcion || 'Planos y documentación vigente para la ejecución de tareas.'}
+                  {obra.descripcion || 'Acceso a planos y documentación técnica vigente para la ejecución de obra.'}
                 </p>
               </div>
             </div>
 
-            {/* ACCESO DIRECTO A DRIVE v3.3.5 */}
+            {/* BOTÓN DRIVE - ACCESO A PLANOS v3.3.5 */}
             {obra.driveFolderUrl && (
               <div className="mt-10 pt-10 border-t">
                 <Button 
@@ -296,11 +292,11 @@ function ObraViewContent() {
                   className="w-full h-20 bg-emerald-600 hover:bg-emerald-700 rounded-[2rem] text-xl font-black gap-4 shadow-xl shadow-emerald-600/20 active:scale-[0.98] transition-all"
                 >
                   <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                    <FolderOpen className="w-8 h-8" /> CARPETA DE PLANOS EN DRIVE
+                    <FolderOpen className="w-8 h-8" /> ACCEDER A CARPETA DE PLANOS
                   </a>
                 </Button>
                 <p className="text-center text-[10px] font-black text-emerald-600/60 uppercase tracking-widest mt-4">
-                  Solo personal autorizado por Tamer Industrial
+                  Sincronización Cloud Tamer | Documentación Oficial
                 </p>
               </div>
             )}
@@ -308,9 +304,9 @@ function ObraViewContent() {
         </Card>
 
         <div className="space-y-6">
-          <div className="px-6 flex items-center justify-between">
+          <div className="px-6">
             <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
-              <FileText className="w-5 h-5 text-primary" /> Documentación Individual
+              <FileText className="w-5 h-5 text-primary" /> Documentos del Proyecto
             </h3>
           </div>
           
@@ -340,7 +336,7 @@ function ObraViewContent() {
               ))
             ) : (
               <div className="p-20 text-center border-4 border-dashed rounded-[3rem] border-secondary bg-white/50">
-                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Sin archivos técnicos registrados.</p>
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Sin archivos individuales cargados.</p>
               </div>
             )}
           </div>
@@ -354,12 +350,12 @@ function ObraViewContent() {
       <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
         <DialogContent className="max-w-[90vw] w-full h-[85vh] p-0 rounded-[2.5rem] overflow-hidden">
           <div className="bg-[#0a3d62] text-white p-6 font-black uppercase tracking-tighter truncate flex justify-between items-center">
-            <span>VISUALIZACIÓN: {selectedFile}</span>
+            <span>PREVISUALIZACIÓN: {selectedFile}</span>
           </div>
           <div className="flex-1 bg-gray-100 flex flex-col items-center justify-center space-y-6">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-sm font-black uppercase tracking-widest text-[#0a3d62]">Conectando con Servidor Cloud...</p>
-            <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">Descargar Original</Button>
+            <p className="text-sm font-black uppercase tracking-widest text-[#0a3d62]">Cargando Documento desde Cloud...</p>
+            <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">Abrir en Pestaña Nueva</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -369,7 +365,7 @@ function ObraViewContent() {
 
 export default function ObraViewPage() {
   return (
-    <Suspense fallback={<div className="p-20 text-center font-black uppercase text-xs tracking-[0.3em]">Sincronizando con Tamer Cloud v3.3.5...</div>}>
+    <Suspense fallback={<div className="p-20 text-center font-black uppercase text-xs tracking-[0.3em]">Conectando con Tamer Cloud v3.3.5...</div>}>
       <ObraViewContent />
     </Suspense>
   );

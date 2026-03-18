@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -18,7 +17,8 @@ import {
   EyeOff,
   FolderOpen,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -173,7 +173,7 @@ function ObraViewContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
-      {/* Cabecera Corregida v3.6.8 - Sin solapamientos */}
+      {/* Cabecera Corregida v3.6.9 - Estructura limpia y sin solapamientos */}
       <div className="bg-[#0a3d62] text-white overflow-hidden shadow-2xl">
         <div className="max-w-4xl mx-auto px-6 py-12 space-y-6">
           <div className="flex items-center justify-between">
@@ -221,7 +221,7 @@ function ObraViewContent() {
           </div>
         </Card>
 
-        {/* Listado de Documentos - Visualización Directa v3.6.8 */}
+        {/* Listado de Documentos */}
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-[12px] font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
@@ -258,7 +258,7 @@ function ObraViewContent() {
               <div className="bg-white p-16 rounded-[3rem] text-center border-2 border-dashed border-slate-200">
                 <FileText className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                 <p className="font-black text-[#0a3d62] uppercase tracking-widest text-sm">Sin archivos individuales</p>
-                <p className="text-xs text-muted-foreground font-medium mt-1">Use el acceso directo a la carpeta principal a continuación.</p>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Sincronizando con Drive...</p>
               </div>
             )}
 
@@ -277,7 +277,7 @@ function ObraViewContent() {
         </div>
 
         <p className="text-center text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.5em] pt-10">
-          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | SISTEMA CLOUD v3.6.8
+          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | SISTEMA CLOUD v3.6.9
         </p>
       </main>
     </div>

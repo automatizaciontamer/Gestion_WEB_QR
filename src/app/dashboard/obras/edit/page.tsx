@@ -70,7 +70,7 @@ function EditObraContent() {
         driveFolderUrl: obra.driveFolderUrl || '',
         direccion: obra.direccion || ''
       });
-      setExistingFiles(obra.files || []);
+      setExistingFiles(obra.files || (obra as any).archivos || []);
     }
   }, [obra]);
 
@@ -142,7 +142,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha Técnica v4.5.1...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha Técnica v4.5.2...</p>
     </div>
   );
 
@@ -154,7 +154,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v4.5.1</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v4.5.2</p>
         </div>
       </div>
 

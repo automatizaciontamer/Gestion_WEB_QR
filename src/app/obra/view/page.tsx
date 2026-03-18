@@ -16,13 +16,18 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
-  Eye,
-  X
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 
 function ObraViewContent() {
   const searchParams = useSearchParams();
@@ -163,33 +168,19 @@ function ObraViewContent() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white" onClick={() => setSelectedFile(fileName)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-[95vw] w-full h-[85vh] p-0 rounded-3xl overflow-hidden border-none shadow-2xl">
-                          <DialogHeader className="p-4 bg-[#0a3d62] text-white flex flex-row items-center justify-between">
-                            <DialogTitle className="text-sm font-black uppercase tracking-widest">{fileName}</DialogTitle>
-                          </DialogHeader>
-                          <div className="flex-1 w-full h-full bg-gray-100 flex items-center justify-center relative">
-                            {/* Simulador de Visor WebView */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 space-y-6">
-                              <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]/20" />
-                              <div className="space-y-2">
-                                <h3 className="text-xl font-black text-[#0a3d62]">Visor de Planos</h3>
-                                <p className="text-sm text-muted-foreground font-medium">El archivo se está cargando desde el servidor seguro de Tamer Industrial S.A.</p>
-                              </div>
-                              <Button className="rounded-2xl bg-[#0a3d62] h-14 px-8 font-black gap-2">
-                                <Download className="w-5 h-5" /> DESCARGAR PARA VER DETALLE
-                              </Button>
-                            </div>
-                            {/* En un entorno real, aquí iría el iframe con la URL de Drive o el storage */}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button variant="outline" size="icon" className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white" 
+                        onClick={() => setSelectedFile(fileName)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white"
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </div>
@@ -204,6 +195,35 @@ function ObraViewContent() {
             )}
           </div>
         </div>
+
+        {/* Único Diálogo para el Visor (Mejor para WebView) */}
+        <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
+          <DialogContent className="max-w-[95vw] w-full h-[85vh] p-0 rounded-3xl overflow-hidden border-none shadow-2xl flex flex-col">
+            <DialogHeader className="p-4 bg-[#0a3d62] text-white shrink-0">
+              <DialogTitle className="text-sm font-black uppercase tracking-widest truncate pr-8">
+                {selectedFile}
+              </DialogTitle>
+              <DialogDescription className="text-[10px] text-white/60 font-bold">
+                Visor de documentación técnica Tamer Industrial
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 w-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 space-y-6">
+                <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]/20" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-[#0a3d62]">Visor de Documentos</h3>
+                  <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">
+                    El archivo se está cargando desde el servidor seguro. 
+                    Si la previsualización no carga, utilice el botón de descarga.
+                  </p>
+                </div>
+                <Button className="rounded-2xl bg-[#0a3d62] h-14 px-8 font-black gap-2 shadow-xl shadow-[#0a3d62]/20">
+                  <Download className="w-5 h-5" /> DESCARGAR ARCHIVO
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Footer Informativo */}
         <footer className="pt-12 text-center space-y-6">

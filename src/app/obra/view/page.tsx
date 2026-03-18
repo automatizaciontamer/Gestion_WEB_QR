@@ -58,17 +58,26 @@ function ObraViewContent() {
 
   const { data: obra, loading, error } = useDoc<Obra>(obraDocRef);
 
-  // Validación de autorización estricta v3.3.2
+  // Validación de autorización estricta v3.3.3
   const isAuthorized = useMemo(() => {
     if (!isUser || !user || !obra) return false;
-    // Admins tienen acceso total
+    
+    // 1. Administradores: Acceso Total
     if (isAdmin) return true;
-    // Usuarios de campo (field) solo acceden a SU obra
+
+    // 2. Usuarios de Campo (Field): Solo acceden si el ID de la sesión coincide con la Obra
     if (user.role === 'field') {
       return user.id === id;
     }
-    // Usuarios clientes (user) acceden si están en la lista (o por defecto si el sistema es abierto a clientes)
-    if (user.role === 'user') return true;
+
+    // 3. Usuarios Clientes (User): Acceden si su email está autorizado para esta obra específica
+    if (user.role === 'user') {
+      const userEmail = user.email?.toLowerCase().trim();
+      const isMainEmail = obra.usuarioAcceso?.toLowerCase().trim() === userEmail;
+      const isInAuthorizedList = obra.authorizedEmails?.some(e => e.email?.toLowerCase().trim() === userEmail);
+      return isMainEmail || isInAuthorizedList;
+    }
+
     return false;
   }, [isUser, user, obra, isAdmin, id]);
 
@@ -76,21 +85,18 @@ function ObraViewContent() {
     e.preventDefault();
     setIsLoggingIn(true);
     
-    // Intentamos el login
     const success = await login(identifier, password);
     
     if (!success) {
       toast({
         variant: "destructive",
         title: "Credenciales Inválidas",
-        description: "El usuario o contraseña no coinciden.",
+        description: "El usuario o contraseña no coinciden con los registros autorizados.",
       });
     } else {
-      // Si el login tuvo éxito, el useEffect de AuthContext o la redirección interna de login() actuará.
-      // Pero forzamos una verificación de si es el usuario correcto para ESTA obra.
       toast({
         title: "Acceso Validado",
-        description: "Sincronizando con el servidor de archivos...",
+        description: "Sincronizando con el servidor técnico de Tamer...",
       });
     }
     setIsLoggingIn(false);
@@ -114,7 +120,7 @@ function ObraViewContent() {
       <div className="min-h-screen flex items-center justify-center p-6 bg-secondary/20">
         <div className="text-center space-y-4">
           <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
-          <p className="text-lg font-black text-primary uppercase tracking-widest">Sincronizando v3.3.2...</p>
+          <p className="text-lg font-black text-primary uppercase tracking-widest">Validando Seguridad v3.3.3...</p>
         </div>
       </div>
     );
@@ -133,7 +139,7 @@ function ObraViewContent() {
     );
   }
 
-  // Si no está autorizado (no logueado o logueado con cuenta incorrecta para esta obra)
+  // Si no está autorizado para ESTA obra específica
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
@@ -145,8 +151,8 @@ function ObraViewContent() {
             <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/20">
               <Lock className="w-10 h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Acceso Técnico</h2>
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Tamer Industrial S.A. v3.3.2</p>
+            <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Acceso Restringido</h2>
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Tamer Industrial S.A. v3.3.3</p>
           </div>
           <CardContent className="p-10">
             <div className="mb-8 p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
@@ -162,8 +168,8 @@ function ObraViewContent() {
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-[10px] font-black text-amber-800 uppercase leading-tight">Sesión activa no autorizada</p>
-                  <p className="text-[10px] text-amber-700 font-medium">Su cuenta actual no tiene acceso a esta obra.</p>
+                  <p className="text-[10px] font-black text-amber-800 uppercase leading-tight">Sin Permisos para esta Obra</p>
+                  <p className="text-[10px] text-amber-700 font-medium">Su cuenta no está habilitada para visualizar esta documentación técnica.</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={logout} className="text-amber-600 hover:bg-amber-100 rounded-xl">
                   <LogOut className="w-4 h-4" />
@@ -173,17 +179,17 @@ function ObraViewContent() {
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">ID de Usuario Autorizado</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Email de Obra Autorizado</Label>
                 <Input 
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
                   className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-lg focus:bg-white transition-all px-6"
-                  placeholder="email@obra.com"
+                  placeholder="usuario@obra.com"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Contraseña de Campo</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Clave de Seguridad de Campo</Label>
                 <div className="relative">
                   <Input 
                     type={showPassword ? "text" : "password"}
@@ -209,13 +215,13 @@ function ObraViewContent() {
                 className="w-full h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-[1.5rem] font-black text-lg gap-3 mt-6 shadow-2xl shadow-[#0a3d62]/30 active:scale-95 transition-all"
                 disabled={isLoggingIn}
               >
-                {isLoggingIn ? <Loader2 className="animate-spin w-6 h-6" /> : <><ShieldCheck className="w-6 h-6" /> VALIDAR CREDENCIALES</>}
+                {isLoggingIn ? <Loader2 className="animate-spin w-6 h-6" /> : <><ShieldCheck className="w-6 h-6" /> VALIDAR ACCESO</>}
               </Button>
             </form>
           </CardContent>
           <div className="px-10 pb-10">
             <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] text-center leading-relaxed">
-              ESTA DOCUMENTACIÓN ES CONFIDENCIAL Y PROPIEDAD DE {empresa?.nombre || 'TAMER INDUSTRIAL'}. EL ACCESO NO AUTORIZADO ESTÁ PROHIBIDO.
+              DOCUMENTACIÓN TÉCNICA CONFIDENCIAL. ACCESO PROTEGIDO POR TAMER CLOUD.
             </p>
           </div>
         </Card>
@@ -225,7 +231,6 @@ function ObraViewContent() {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] pb-20 font-body">
-      {/* Cabecera v3.3.2 */}
       <div className="bg-[#0a3d62] text-white pt-16 pb-24 px-6 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-10 opacity-5">
           <Construction className="w-64 h-64" />
@@ -241,7 +246,7 @@ function ObraViewContent() {
             </div>
             <div className="space-y-1">
               <h1 className="text-3xl sm:text-4xl font-black tracking-tighter uppercase leading-none">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
-              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase">DOCUMENTACIÓN TÉCNICA DIGITAL</p>
+              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase">DOCUMENTACIÓN TÉCNICA DIGITAL v3.3.3</p>
             </div>
           </div>
           <div className="flex flex-col items-center md:items-end gap-3">
@@ -249,7 +254,7 @@ function ObraViewContent() {
               OF: {obra.numeroOF}
             </Badge>
             <Button variant="ghost" onClick={logout} className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl font-black text-[10px] tracking-widest gap-2">
-              <LogOut className="w-4 h-4" /> CERRAR SESIÓN TÉCNICA
+              <LogOut className="w-4 h-4" /> CERRAR SESIÓN DE OBRA
             </Button>
           </div>
         </div>
@@ -266,7 +271,7 @@ function ObraViewContent() {
                 <CardTitle className="text-3xl sm:text-5xl uppercase font-black text-[#0a3d62] leading-none tracking-tighter">
                   {obra.nombreObra}
                 </CardTitle>
-                <CardDescription className="text-sm font-bold text-muted-foreground uppercase tracking-widest">PROYECTO DE INGENIERÍA E INSTALACIONES</CardDescription>
+                <CardDescription className="text-sm font-bold text-muted-foreground uppercase tracking-widest">INGENIERÍA E INSTALACIONES INDUSTRIALES</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -280,7 +285,7 @@ function ObraViewContent() {
                   <div>
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Cliente Final</p>
                     <p className="font-black text-2xl text-[#0a3d62] leading-tight">{obra.cliente}</p>
-                    <p className="text-xs font-bold text-primary mt-1">CÓDIGO: {obra.codigoCliente}</p>
+                    <p className="text-xs font-bold text-primary mt-1">CÓDIGO INTERNO: {obra.codigoCliente}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-6">
@@ -299,16 +304,16 @@ function ObraViewContent() {
                     <Info className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Detalles del Proyecto</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Detalles Técnicos</p>
                     <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                      {obra.descripcion || 'Este proyecto cuenta con certificación de ingeniería Tamer Industrial. Los planos adjuntos representan la versión final aprobada para ejecución.'}
+                      {obra.descripcion || 'Este proyecto cuenta con certificación técnica integral. La documentación adjunta es la versión vigente para ejecución en campo.'}
                     </p>
                   </div>
                 </div>
                 <div className="pt-6 border-t">
                   <div className="flex items-center gap-3 text-emerald-600">
                     <ShieldCheck className="w-5 h-5" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Validación v3.3.2 Activa</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Validación de Acceso v3.3.3 Activa</span>
                   </div>
                 </div>
               </div>
@@ -319,7 +324,7 @@ function ObraViewContent() {
         <div className="space-y-8">
           <div className="flex items-center justify-between px-6">
             <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-4">
-              <FileText className="w-6 h-6 text-primary" /> ARCHIVOS TÉCNICOS AUTORIZADOS
+              <FileText className="w-6 h-6 text-primary" /> CARPETA TÉCNICA DIGITAL
             </h3>
             <span className="text-[10px] font-black text-muted-foreground bg-white px-4 py-2 rounded-full shadow-sm">{obra.files?.length || 0} DOCUMENTOS</span>
           </div>
@@ -339,7 +344,7 @@ function ObraViewContent() {
                         </p>
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                          <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">LISTO PARA DESCARGA / VISUALIZACIÓN</p>
+                          <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">EXPEDIENTE DISPONIBLE</p>
                         </div>
                       </div>
                     </div>
@@ -369,8 +374,8 @@ function ObraViewContent() {
                   <FileText className="w-10 h-10 text-muted-foreground/30" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-sm">Carpeta técnica vacía</p>
-                  <p className="text-xs text-muted-foreground/60 font-medium">No se han vinculado planos digitales a este proyecto aún.</p>
+                  <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-sm">Sin Documentos Cargados</p>
+                  <p className="text-xs text-muted-foreground/60 font-medium">No se han vinculado planos digitales a este proyecto.</p>
                 </div>
               </div>
             )}
@@ -385,7 +390,7 @@ function ObraViewContent() {
                   {selectedFile}
                 </DialogTitle>
                 <DialogDescription className="text-[10px] text-white/50 font-black uppercase tracking-widest mt-1">
-                  Sincronización Cloud Tamer v3.3.2
+                  Visor Técnico Tamer Industrial
                 </DialogDescription>
               </div>
             </DialogHeader>
@@ -396,13 +401,13 @@ function ObraViewContent() {
                   <FileText className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-black text-[#0a3d62] uppercase tracking-tighter">Procesando Documento</h3>
+                  <h3 className="text-2xl font-black text-[#0a3d62] uppercase tracking-tighter">Sincronizando Archivo</h3>
                   <p className="text-sm text-muted-foreground font-bold max-w-sm mx-auto uppercase tracking-wide">
-                    El archivo se está descargando desde el servidor seguro. Por favor, espere.
+                    Descargando documentación desde el almacenamiento seguro de Drive.
                   </p>
                 </div>
                 <Button className="rounded-2xl bg-[#0a3d62] h-16 px-12 font-black text-lg gap-3 shadow-2xl shadow-[#0a3d62]/20 active:scale-95 transition-all">
-                  <Download className="w-6 h-6" /> FORZAR DESCARGA
+                  <Download className="w-6 h-6" /> DESCARGAR ORIGINAL
                 </Button>
               </div>
             </div>
@@ -416,14 +421,9 @@ function ObraViewContent() {
               © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
             </p>
             <p className="text-[10px] text-muted-foreground/40 font-black uppercase tracking-widest">
-              INGENIERÍA | CALIDAD | INNOVACIÓN | v3.3.2
+              SISTEMA DE GESTIÓN TÉCNICA | v3.3.3
             </p>
           </div>
-          <Button variant="ghost" className="text-primary font-black text-[10px] tracking-[0.3em] gap-3 opacity-40 hover:opacity-100 hover:bg-white rounded-2xl px-8 h-12 transition-all" asChild>
-            <a href={empresa?.web || "https://tamer.com.ar"} target="_blank" rel="noopener noreferrer">
-              PORTAL WEB OFICIAL <ExternalLink className="w-3 h-3" />
-            </a>
-          </Button>
         </footer>
       </div>
     </div>

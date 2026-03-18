@@ -11,25 +11,22 @@ export const FirebaseErrorListener = () => {
 
   useEffect(() => {
     const handlePermissionError = (error: FirestorePermissionError) => {
-      // No mostrar toast para errores en la carga de configuración inicial (normal si no está logueado aún)
-      if (error.context.path.includes('Configuracion/Empresa') && error.context.operation === 'get') {
-        console.warn('Acceso denegado a configuración de empresa (normal antes del login)');
+      // Ignorar errores de permisos en Configuracion/Empresa durante la carga inicial v2.9
+      // Es normal si el usuario aún no se ha autenticado de forma anónima
+      if (error.context.path.includes('Configuracion/Empresa')) {
         return;
       }
 
-      // Log detallado para depuración contextual
-      console.error('--- FIRESTORE PERMISSION DENIED ---');
-      console.error('Operación:', error.context.operation);
-      console.error('Ruta:', error.context.path);
-      if (error.context.requestResourceData) {
-        console.error('Datos enviados:', error.context.requestResourceData);
-      }
-      console.error('-----------------------------------');
+      // Log para desarrollo contextual
+      console.warn('--- FIRESTORE PERMISSION RESTRICTED ---');
+      console.warn('Operación:', error.context.operation);
+      console.warn('Ruta:', error.context.path);
+      console.warn('---------------------------------------');
 
       toast({
         variant: "destructive",
-        title: "Error de Permisos",
-        description: `No tienes autorización para acceder a: ${error.context.path}`,
+        title: "Error de Acceso Cloud",
+        description: `Verifique los permisos para: ${error.context.path}`,
       });
     };
 

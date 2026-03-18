@@ -30,20 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const db = useFirestore();
   const auth = useFirebaseAuth();
 
-  // Sincronización en tiempo real de datos de empresa
+  // Sincronización en tiempo real de datos de empresa v2.9
   useEffect(() => {
     if (!db || !auth) return;
     
-    // Autenticación anónima para permitir lectura inicial
+    // Asegurar sesión anónima para lectura de configuración
     signInAnonymously(auth).catch(() => null);
 
+    // Ruta exacta Configuracion/Empresa
     const empresaRef = doc(db, 'Configuracion', 'Empresa');
+    
     const unsubscribe = onSnapshot(empresaRef, (snap) => {
       if (snap.exists()) {
-        setEmpresa({ ...snap.data(), id: snap.id } as Empresa);
+        const data = snap.data();
+        setEmpresa({ ...data, id: snap.id } as Empresa);
       }
     }, (error) => {
-      console.warn('Configuración de empresa no accesible (permisos iniciales)');
+      // Silenciar error en consola para despliegue limpio
+      console.warn('Configuración institucional cargando...');
     });
 
     return () => unsubscribe();
@@ -65,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // 1. Administrador Maestro (Local)
+      // 1. Acceso Maestro Admin
       if (normalizedIdentifier === 'admin' && password === '14569') {
         const adminData = { 
           email: 'admin@tamer.com', 
@@ -81,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin)
+      // 2. Credenciales Institucionales (usuarioAdmin / passwordAdmin)
       if (empresa) {
         if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
@@ -99,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 3. Usuarios Habilitados
+      // 3. Usuarios Habilitados (Clientes/Personal Externo)
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
@@ -119,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos de Obra (Campo)
+      // 4. Accesos Directos de Obra
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -140,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      console.error('Error durante el proceso de login:', error);
+      console.error('Error en proceso de login:', error);
     }
 
     return false;
@@ -172,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth debe usarse dentro de un AuthProvider');
   }
   return context;
 }

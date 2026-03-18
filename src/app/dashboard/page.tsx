@@ -50,33 +50,49 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional Dinámica v2.8 */}
-      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-12 shadow-xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[300px]">
-        {/* Logo de Fondo Detrás del Texto (Watermark Superior) */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.12] pointer-events-none z-0">
+      {/* Cabecera Institucional Dinámica v2.9 */}
+      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-16 shadow-2xl shadow-blue-900/10 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[400px]">
+        {/* Logo de Fondo Institucional (Watermark de Alta Visibilidad) */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
           {empresa?.logoUrl && (
             <img 
               src={empresa.logoUrl} 
-              alt="Background Logo" 
-              className="w-[400px] sm:w-[600px] object-contain transition-all duration-1000"
+              alt="Logo Marca de Agua" 
+              className="w-[500px] sm:w-[800px] opacity-[0.15] scale-110 object-contain transition-all duration-1000 grayscale hover:grayscale-0"
               onError={(e) => (e.currentTarget.style.display = 'none')}
             />
           )}
         </div>
         
-        {/* Contenido Superior */}
-        <div className="relative z-10 space-y-4">
-          <div className="inline-flex items-center gap-2 bg-[#0a3d62]/5 px-4 py-1.5 rounded-full border border-[#0a3d62]/10 mb-4">
-            <Building2 className="w-3 h-3 text-[#0a3d62]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Portal Institucional v2.8</span>
+        {/* Contenido Frontal Superior */}
+        <div className="relative z-10 space-y-6 max-w-4xl">
+          <div className="inline-flex items-center gap-3 bg-[#0a3d62]/10 px-6 py-2 rounded-full border border-[#0a3d62]/20 mb-4 backdrop-blur-sm">
+            <Building2 className="w-4 h-4 text-[#0a3d62]" />
+            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-[#0a3d62]">Portal Institucional v2.9</span>
           </div>
-          <h2 className="text-4xl sm:text-6xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase drop-shadow-sm">
-            {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
-          </h2>
-          <div className="h-1.5 w-24 bg-primary mx-auto rounded-full" />
-          <p className="text-sm sm:text-lg text-muted-foreground font-bold max-w-2xl mx-auto uppercase tracking-wider opacity-60">
-            {empresa?.direccion || 'Gestión Técnica Avanzada'}
+          
+          <div className="space-y-2">
+            <h2 className="text-5xl sm:text-7xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase drop-shadow-2xl">
+              {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
+            </h2>
+            <div className="h-2 w-32 bg-primary mx-auto rounded-full shadow-lg" />
+          </div>
+          
+          <p className="text-sm sm:text-xl text-muted-foreground font-black max-w-3xl mx-auto uppercase tracking-[0.2em] opacity-80">
+            {empresa?.direccion || 'Gestión Técnica Avanzada en Ingeniería'}
           </p>
+
+          <div className="flex items-center justify-center gap-6 pt-4">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUIL / NIT</span>
+              <span className="text-sm font-bold text-[#0a3d62]">{empresa?.nit || '30707867309'}</span>
+            </div>
+            <div className="w-px h-8 bg-[#0a3d62]/10" />
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">SITIO WEB</span>
+              <span className="text-sm font-bold text-primary">{empresa?.web ? empresa.web.replace('https://', '') : 'tamer.com.ar'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -85,10 +101,10 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.8</p>
+          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | Sincronización v2.9</p>
         </div>
         {isAdmin && (
-          <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit">
+          <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit shadow-sm">
             <ShieldCheck className="w-4 h-4" /> Modo Administrador
           </div>
         )}
@@ -96,7 +112,7 @@ export default function DashboardPage() {
 
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat) => (
-          <Card key={stat.name} className="border-none shadow-xl shadow-gray-200/50 overflow-hidden rounded-[2rem] bg-white">
+          <Card key={stat.name} className="border-none shadow-xl shadow-gray-200/50 overflow-hidden rounded-[2.5rem] bg-white transition-transform hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stat.name}</CardTitle>
               <div className={`p-2 rounded-xl ${stat.bg}`}>
@@ -113,22 +129,26 @@ export default function DashboardPage() {
       </div>
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-        <Card className="border-none shadow-xl shadow-gray-200/50 rounded-[2.5rem] bg-white overflow-hidden">
+        <Card className="border-none shadow-xl shadow-gray-200/50 rounded-[3rem] bg-white overflow-hidden">
           <CardHeader className="border-b bg-gray-50/50 p-8">
-            <CardTitle className="text-lg font-black uppercase tracking-widest text-[#0a3d62]">Últimas Obras Registradas</CardTitle>
+            <CardTitle className="text-lg font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-3">
+              <Activity className="w-5 h-5 text-primary" /> Últimas Obras Registradas
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
             {recentObras && recentObras.length > 0 ? (
               <div className="space-y-4">
                 {recentObras.map(obra => (
-                  <div key={obra.id} className="flex items-center justify-between p-5 bg-secondary/20 rounded-[1.5rem] hover:bg-secondary/30 transition-all border border-transparent hover:border-primary/10">
+                  <div key={obra.id} className="flex items-center justify-between p-5 bg-secondary/20 rounded-[1.8rem] hover:bg-secondary/30 transition-all border border-transparent hover:border-primary/20 cursor-pointer group">
                     <div className="flex flex-col overflow-hidden">
-                      <span className="font-black text-base text-[#0a3d62] truncate">{obra.nombreObra}</span>
+                      <span className="font-black text-base text-[#0a3d62] truncate group-hover:text-primary transition-colors">{obra.nombreObra}</span>
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">{obra.cliente}</span>
                     </div>
-                    <span className="text-xs font-black font-mono text-primary bg-primary/10 px-3 py-1.5 rounded-xl shrink-0">
-                      {obra.numeroOF}
-                    </span>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-black font-mono text-primary bg-primary/10 px-4 py-2 rounded-xl">
+                        {obra.numeroOF}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -140,37 +160,49 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <Card className="border-none shadow-2xl rounded-[2.5rem] bg-[#0a3d62] text-white">
-          <CardHeader className="p-8">
+        <Card className="border-none shadow-2xl rounded-[3rem] bg-[#0a3d62] text-white relative overflow-hidden group">
+          {/* Logo Sutil en el fondo de la card de conectividad */}
+          {empresa?.logoUrl && (
+            <img 
+              src={empresa.logoUrl} 
+              alt="Logo Fondo Card" 
+              className="absolute -right-20 -bottom-20 w-80 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700"
+            />
+          )}
+          
+          <CardHeader className="p-8 relative z-10">
             <CardTitle className="text-lg font-black uppercase tracking-[0.2em] opacity-80">Conectividad Cloud</CardTitle>
           </CardHeader>
-          <CardContent className="p-8 space-y-6">
-            <div className="flex items-center gap-4 bg-white/10 p-5 rounded-2xl backdrop-blur-sm border border-white/5">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
-              <span className="text-sm font-black tracking-widest uppercase">Firestore Sincronizado</span>
+          <CardContent className="p-8 space-y-8 relative z-10">
+            <div className="flex items-center gap-4 bg-white/10 p-5 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(52,211,153,0.6)]"></div>
+              <span className="text-sm font-black tracking-widest uppercase">Firestore Sincronizado v2.9</span>
             </div>
+            
             <div className="space-y-6">
-              <p className="text-xs text-white/60 leading-relaxed font-bold uppercase tracking-wider">
-                Los cambios en planos y documentación técnica realizados aquí se reflejan instantáneamente en la App Android de campo y se respaldan en Google Drive.
+              <p className="text-xs text-white/70 leading-relaxed font-bold uppercase tracking-wider">
+                La plataforma gestiona planos y documentación técnica sincronizada en tiempo real con la App Android de campo y respaldada en Google Drive.
               </p>
-              <div className="pt-6 border-t border-white/10">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Identidad Institucional</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl overflow-hidden">
+              
+              <div className="pt-8 border-t border-white/10">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-4">Identidad Corporativa</p>
+                <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center p-3 shadow-2xl overflow-hidden border-2 border-white/20">
                     {empresa?.logoUrl ? (
                       <img 
                         src={empresa.logoUrl} 
-                        alt="Logo" 
+                        alt="Logo Empresa" 
                         className="w-full h-full object-contain"
                         onError={(e) => (e.currentTarget.style.display = 'none')}
                       />
                     ) : (
-                      <Building2 className="text-[#0a3d62] w-8 h-8" />
+                      <Building2 className="text-[#0a3d62] w-10 h-10" />
                     )}
                   </div>
                   <div className="overflow-hidden">
-                    <p className="text-sm font-black truncate">{empresa?.nombre || 'Tamer Industrial S.A.'}</p>
-                    <p className="text-[9px] font-black text-white/50 tracking-widest uppercase">{empresa?.nit || 'NIT PENDIENTE'}</p>
+                    <p className="text-lg font-black truncate drop-shadow-sm">{empresa?.nombre || 'Tamer Industrial S.A.'}</p>
+                    <p className="text-[10px] font-black text-white/50 tracking-[0.2em] uppercase">{empresa?.nit || '30707867309'}</p>
+                    <p className="text-[9px] font-bold text-primary-foreground/40 mt-1 uppercase">Sincronización Cloud Activa</p>
                   </div>
                 </div>
               </div>

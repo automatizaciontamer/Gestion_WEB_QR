@@ -1,49 +1,90 @@
+
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFirestore } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 interface AuthContextType {
   isAdmin: boolean;
-  login: (password: string) => boolean;
+  isUser: boolean;
+  user: any | null;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isUser, setIsUser] = useState(false);
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const db = useFirestore();
 
   const logout = useCallback(() => {
     setIsAdmin(false);
-    sessionStorage.removeItem('tamer_admin_session');
+    setIsUser(false);
+    setUser(null);
+    sessionStorage.removeItem('tamer_session');
     router.push('/login');
   }, [router]);
 
-  const login = (password: string) => {
-    if (password === '14569') {
+  const login = async (email: string, password: string) => {
+    // Check for hardcoded Admin
+    if (email === 'admin@tamer.com' && password === '14569') {
+      const adminData = { email, role: 'admin', nombre: 'Administrador' };
       setIsAdmin(true);
-      sessionStorage.setItem('tamer_admin_session', 'true');
+      setIsUser(true);
+      setUser(adminData);
+      sessionStorage.setItem('tamer_session', JSON.stringify(adminData));
       router.push('/dashboard');
       return true;
     }
+
+    // Check in Firestore for Habilitados
+    try {
+      const q = query(
+        collection(db, 'usuarios_clientes'),
+        where('email', '==', email),
+        where('password', '==', password)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userData = { ...querySnapshot.docs[0].data(), id: querySnapshot.docs[0].id, role: 'user' };
+        setIsAdmin(false);
+        setIsUser(true);
+        setUser(userData);
+        sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+        router.push('/dashboard');
+        return true;
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+
     return false;
   };
 
   useEffect(() => {
-    const session = sessionStorage.getItem('tamer_admin_session');
-    if (session === 'true') {
-      setIsAdmin(true);
-    } else {
-      router.push('/login');
+    const session = sessionStorage.getItem('tamer_session');
+    if (session) {
+      const data = JSON.parse(session);
+      setUser(data);
+      setIsUser(true);
+      setIsAdmin(data.role === 'admin');
     }
-  }, [router]);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isUser) return;
 
     let timeout: NodeJS.Timeout;
 
@@ -63,10 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timeout);
       events.forEach(event => window.removeEventListener(event, resetTimer));
     };
-  }, [isAdmin, logout]);
+  }, [isUser, logout]);
 
   return (
-    <AuthContext.Provider value={{ isAdmin, login, logout }}>
+    <AuthContext.Provider value={{ isAdmin, isUser, user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

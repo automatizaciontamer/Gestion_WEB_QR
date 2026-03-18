@@ -10,7 +10,8 @@ import {
   UserPlus,
   Mail,
   Key,
-  Loader2
+  Loader2,
+  UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,12 +37,23 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const db = useFirestore();
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.push('/dashboard');
+    }
+  }, [isAdmin, router]);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -80,7 +92,7 @@ export default function ClientesPage() {
       });
 
     toast({
-      title: "Cliente registrado",
+      title: "Usuario habilitado",
       description: `El usuario ${formData.nombre} ha sido creado correctamente.`,
     });
     setFormData({ nombre: '', email: '', password: '' });
@@ -100,23 +112,28 @@ export default function ClientesPage() {
     });
   };
 
+  if (!isAdmin) return null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pt-10 lg:pt-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Usuarios Clientes</h1>
-          <p className="text-sm text-muted-foreground">Gestionar accesos individuales para visualización de documentos.</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
+            <UserCheck className="w-8 h-8 text-primary" />
+            Usuarios Habilitados
+          </h1>
+          <p className="text-sm text-muted-foreground font-medium">Gestionar accesos web para visualización de documentos técnicos.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2">
-              <UserPlus className="w-4 h-4" /> Nuevo Cliente
+            <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
+              <UserPlus className="w-4 h-4" /> Nuevo Usuario
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px] rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Registrar Nuevo Usuario Cliente</DialogTitle>
+              <DialogTitle className="text-xl font-black">Habilitar Nuevo Usuario</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSaveClient} className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -124,6 +141,7 @@ export default function ClientesPage() {
                 <Input 
                   id="nombre" 
                   placeholder="Ej. Roberto Sánchez" 
+                  className="rounded-xl"
                   value={formData.nombre}
                   onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
                   required 
@@ -137,7 +155,7 @@ export default function ClientesPage() {
                     id="email" 
                     type="email" 
                     placeholder="cliente@empresa.com" 
-                    className="pl-10" 
+                    className="pl-10 rounded-xl" 
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     required 
@@ -145,93 +163,95 @@ export default function ClientesPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña Provisional</Label>
+                <Label htmlFor="password">Contraseña de Acceso</Label>
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="pl-10"
+                    className="pl-10 rounded-xl"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     required 
                   />
                 </div>
               </div>
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit">Guardar Usuario</Button>
+              <DialogFooter className="pt-4 gap-2">
+                <Button type="button" variant="outline" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                <Button type="submit" className="rounded-xl font-bold">Guardar Usuario</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
+      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-secondary">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por nombre o email..." 
-            className="pl-10 h-10 bg-secondary/50 border-none"
+            className="pl-10 h-11 bg-secondary/30 border-none rounded-xl"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-secondary overflow-hidden">
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Cargando usuarios...</p>
+            <p className="text-muted-foreground font-bold">Cargando usuarios...</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader className="bg-secondary/50">
-              <TableRow>
-                <TableHead className="font-semibold">Nombre</TableHead>
-                <TableHead className="font-semibold">Email</TableHead>
-                <TableHead className="text-right font-semibold">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id} className="hover:bg-secondary/20 transition-colors">
-                  <TableCell className="font-medium">{client.nombre}</TableCell>
-                  <TableCell>{client.email}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="flex items-center gap-2">
-                          <Edit className="w-4 h-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive flex items-center gap-2"
-                          onClick={() => handleDelete(client.id, client.nombre)}
-                        >
-                          <Trash2 className="w-4 h-4" /> Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-secondary/20">
+                <TableRow>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest">Nombre</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-widest">Email</TableHead>
+                  <TableHead className="text-right font-black uppercase text-[10px] tracking-widest">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.map((client) => (
+                  <TableRow key={client.id} className="hover:bg-secondary/10 transition-colors">
+                    <TableCell className="font-bold text-gray-800">{client.nombre}</TableCell>
+                    <TableCell className="text-muted-foreground font-medium">{client.email}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="rounded-full">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuItem className="flex items-center gap-2 font-medium">
+                            <Edit className="w-4 h-4" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive flex items-center gap-2 font-bold"
+                            onClick={() => handleDelete(client.id, client.nombre)}
+                          >
+                            <Trash2 className="w-4 h-4" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
         {!loading && filteredClients.length === 0 && (
           <div className="p-12 text-center">
-            <div className="mx-auto w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-4">
-              <Search className="w-6 h-6 text-muted-foreground" />
+            <div className="mx-auto w-16 h-16 bg-secondary/30 rounded-2xl flex items-center justify-center mb-4">
+              <Search className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold">No hay usuarios</h3>
-            <p className="text-muted-foreground">Registre su primer usuario cliente para empezar.</p>
+            <h3 className="text-xl font-black">No hay usuarios</h3>
+            <p className="text-muted-foreground font-medium">Registre su primer usuario habilitado para empezar.</p>
           </div>
         )}
       </div>

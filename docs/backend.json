@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Obra": {
@@ -30,9 +31,9 @@
       },
       "required": ["numeroOF", "numeroOT", "nombreObra", "cliente", "usuarioAcceso", "claveAcceso"]
     },
-    "UsuarioCliente": {
-      "title": "Usuario Cliente",
-      "description": "Usuarios externos registrados en la plataforma.",
+    "UsuarioHabilitado": {
+      "title": "Usuario Habilitado",
+      "description": "Usuarios externos registrados con acceso a la plataforma web.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -40,7 +41,7 @@
         "email": { "type": "string", "format": "email" },
         "password": { "type": "string" }
       },
-      "required": ["nombre", "email"]
+      "required": ["nombre", "email", "password"]
     }
   },
   "auth": {
@@ -52,8 +53,8 @@
       "description": "Proyectos industriales accesibles desde la App Android."
     },
     "/usuarios_clientes/{usuarioId}": {
-      "schema": "UsuarioCliente",
-      "description": "Gestión de usuarios externos."
+      "schema": "UsuarioHabilitado",
+      "description": "Gestión de usuarios con acceso web."
     }
   }
 }

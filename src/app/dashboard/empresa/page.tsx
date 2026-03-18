@@ -77,19 +77,19 @@ export default function EmpresaConfigPage() {
     try {
       const result = await uploadToDrive(file, "Datos Empresa");
       
-      // Sincronización automática de URL v2.7
+      // Sincronización automática de URL v2.8
       if (result && result.fileId) {
         const driveUrl = `https://drive.google.com/uc?id=${result.fileId}&export=download`;
         setFormData(prev => ({ ...prev, logoUrl: driveUrl }));
         
         toast({
-          title: "Logo Actualizado",
-          description: "La imagen se ha subido a Drive y se ha vinculado automáticamente.",
+          title: "Logo Cargado",
+          description: "La imagen se ha vinculado automáticamente. Guarde los cambios para aplicar.",
         });
       } else {
         toast({
           title: "Archivo en Drive",
-          description: "El logo se guardó en Drive. Si no se actualiza, verifique el ID del archivo.",
+          description: "El logo se guardó en Drive. Asegúrese de guardar los cambios generales.",
         });
       }
     } catch (error) {
@@ -119,8 +119,8 @@ export default function EmpresaConfigPage() {
       await uploadToDrive(configFile, "Datos Empresa");
 
       toast({
-        title: "Sincronización v2.7 Exitosa",
-        description: "Datos institucionales actualizados y respaldados en Drive.",
+        title: "Sincronización v2.8 Exitosa",
+        description: "Datos institucionales y logo actualizados correctamente.",
       });
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -138,7 +138,7 @@ export default function EmpresaConfigPage() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.7...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.8...</p>
       </div>
     );
   }
@@ -154,7 +154,7 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Gestión Institucional Sincronizada (v2.7)
+            Gestión Institucional Sincronizada (v2.8)
           </p>
         </div>
         <Button 
@@ -170,12 +170,12 @@ export default function EmpresaConfigPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
-            <CardDescription className="font-bold">Datos sincronizados automáticamente con Google Drive.</CardDescription>
+            <CardDescription className="font-bold">El logo cargado se mostrará como fondo institucional en el dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <Upload className="w-3 h-3" /> Identidad Visual (Logo)
+                <Upload className="w-3 h-3" /> Identidad Visual (Logo Drive)
               </Label>
               <div className="flex flex-col sm:flex-row gap-8 items-center bg-secondary/10 p-8 rounded-[2rem] border border-dashed border-primary/20">
                 <div className="w-40 h-40 bg-white rounded-3xl flex items-center justify-center overflow-hidden border-4 border-white shadow-xl p-3 shrink-0">
@@ -187,7 +187,7 @@ export default function EmpresaConfigPage() {
                 </div>
                 <div className="flex-1 w-full space-y-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Carga Automática v2.7</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Carga Automática v2.8</p>
                     <div className="flex flex-wrap gap-3">
                       <Button 
                         variant="outline" 
@@ -208,12 +208,12 @@ export default function EmpresaConfigPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Enlace Institucional</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Enlace Institucional (Auto)</p>
                     <Input 
                       value={formData.logoUrl}
                       onChange={e => setFormData({...formData, logoUrl: e.target.value})}
                       className="h-12 rounded-xl bg-white border-none font-bold shadow-sm" 
-                      placeholder="URL del logo (se genera automáticamente al subir)"
+                      placeholder="URL del logo (sincronizada con Drive)"
                     />
                   </div>
                 </div>

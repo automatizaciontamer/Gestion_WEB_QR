@@ -50,15 +50,15 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional Dinámica v2.7 */}
-      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-12 shadow-xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center">
+      {/* Cabecera Institucional Dinámica v2.8 */}
+      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-12 shadow-xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[300px]">
         {/* Logo de Fondo Detrás del Texto (Watermark Superior) */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.12] pointer-events-none z-0">
           {empresa?.logoUrl && (
             <img 
               src={empresa.logoUrl} 
               alt="Background Logo" 
-              className="w-[300px] sm:w-[500px] object-contain transition-transform duration-1000"
+              className="w-[400px] sm:w-[600px] object-contain transition-all duration-1000"
               onError={(e) => (e.currentTarget.style.display = 'none')}
             />
           )}
@@ -68,9 +68,9 @@ export default function DashboardPage() {
         <div className="relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 bg-[#0a3d62]/5 px-4 py-1.5 rounded-full border border-[#0a3d62]/10 mb-4">
             <Building2 className="w-3 h-3 text-[#0a3d62]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Portal Institucional v2.7</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Portal Institucional v2.8</span>
           </div>
-          <h2 className="text-4xl sm:text-6xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase">
+          <h2 className="text-4xl sm:text-6xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase drop-shadow-sm">
             {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
           </h2>
           <div className="h-1.5 w-24 bg-primary mx-auto rounded-full" />
@@ -85,7 +85,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.7</p>
+          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.8</p>
         </div>
         {isAdmin && (
           <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit">
@@ -156,7 +156,7 @@ export default function DashboardPage() {
               <div className="pt-6 border-t border-white/10">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Identidad Institucional</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl overflow-hidden">
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl overflow-hidden">
                     {empresa?.logoUrl ? (
                       <img 
                         src={empresa.logoUrl} 
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                         onError={(e) => (e.currentTarget.style.display = 'none')}
                       />
                     ) : (
-                      <Building2 className="text-[#0a3d62] w-6 h-6" />
+                      <Building2 className="text-[#0a3d62] w-8 h-8" />
                     )}
                   </div>
                   <div className="overflow-hidden">

@@ -142,7 +142,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.5...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha Técnica v4.5.1...</p>
     </div>
   );
 
@@ -153,8 +153,8 @@ function EditObraContent() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.5</p>
+          <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v4.5.1</p>
         </div>
       </div>
 
@@ -162,51 +162,51 @@ function EditObraContent() {
         <div className="lg:col-span-8 space-y-8">
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b">
-              <CardTitle className="text-xl font-black text-[#0a3d62]">Información de Ingeniería</CardTitle>
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Información General</CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Código Cliente</Label>
-                  <Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                  <Input id="codigoCliente" value={formData.codigoCliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Nombre Obra</Label>
-                  <Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                  <Input id="nombreObra" value={formData.nombreObra || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Número OF</Label>
-                  <Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                  <Input id="numeroOF" value={formData.numeroOF || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Número OT</Label>
-                  <Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                  <Input id="numeroOT" value={formData.numeroOT || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Cliente / Razón Social</Label>
-                <Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                <Input id="cliente" value={formData.cliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Dirección de Obra</Label>
-                <Input id="direccion" value={formData.direccion} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                <Input id="direccion" value={formData.direccion || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">URL Carpeta Drive (Repositorio General)</Label>
-                <Input id="driveFolderUrl" value={formData.driveFolderUrl} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" placeholder="https://drive.google.com/..." />
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">URL Carpeta Drive</Label>
+                <Input id="driveFolderUrl" value={formData.driveFolderUrl || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" placeholder="https://drive.google.com/..." />
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Descripción Técnica</Label>
-                <Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[120px] rounded-2xl" />
+                <Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[120px] rounded-2xl" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b">
-              <CardTitle className="text-xl font-black text-[#0a3d62]">Documentación Sincronizada</CardTitle>
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Sincronización de Archivos</CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div 
@@ -214,18 +214,18 @@ function EditObraContent() {
                 onClick={() => document.getElementById('edit-file-input')?.click()}
               >
                 <Upload className="mx-auto w-12 h-12 text-primary opacity-40 mb-3" />
-                <p className="font-black text-[#0a3d62]">SUBIR PLANOS ADICIONALES</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1">Sincronización automática con Drive</p>
+                <p className="font-black text-[#0a3d62]">SUBIR NUEVOS PLANOS</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1">Vinculación automática con Drive</p>
                 <input id="edit-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               
               {(existingFiles.length > 0 || newFilesToUpload.length > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {existingFiles.map((f, i) => (
-                    <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <FileText className="w-5 h-5 text-primary shrink-0" />
-                        <span className="text-xs font-black truncate text-[#0a3d62]">{f.name || 'Documento Técnico'}</span>
+                        <span className="text-xs font-black truncate text-[#0a3d62]">{f.name || 'Documento'}</span>
                       </div>
                       <Button type="button" variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => removeExistingFile(i)}>
                         <X className="w-4 h-4" />
@@ -233,7 +233,7 @@ function EditObraContent() {
                     </div>
                   ))}
                   {newFilesToUpload.map((f, i) => (
-                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-pulse">
+                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border animate-pulse">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <Upload className="w-5 h-5 text-blue-500 shrink-0" />
                         <span className="text-xs font-black truncate text-blue-900">{f.name}</span>
@@ -256,12 +256,12 @@ function EditObraContent() {
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Usuario de Obra</Label>
-                <Input id="usuarioAcceso" value={formData.usuarioAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Usuario / Email</Label>
+                <Input id="usuarioAcceso" value={formData.usuarioAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Clave Maestra</Label>
-                <Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Contraseña</Label>
+                <Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
               </div>
             </div>
           </Card>
@@ -270,7 +270,7 @@ function EditObraContent() {
             {isSaving && <Progress value={uploadProgress} className="h-2 rounded-full" />}
             <Button type="submit" className="w-full h-24 rounded-[2.5rem] font-black text-2xl bg-primary shadow-2xl shadow-primary/30 transition-all active:scale-95" disabled={isSaving}>
               {isSaving ? <Loader2 className="animate-spin w-8 h-8" /> : <Save className="w-8 h-8 mr-3" />}
-              {isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+              {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
             </Button>
           </div>
         </div>

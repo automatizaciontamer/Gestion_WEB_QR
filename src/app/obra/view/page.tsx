@@ -4,18 +4,16 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useMemo, Suspense, useState } from 'react';
+import { useMemo, Suspense, useState, useEffect } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
   Download, 
   Construction, 
   MapPin, 
-  User as UserIcon, 
   Info,
   Loader2,
   AlertCircle,
-  Lock,
   ShieldCheck,
   Eye,
   EyeOff,
@@ -23,7 +21,7 @@ import {
   FolderOpen,
   ArrowRight
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +37,7 @@ function ObraViewContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const db = useFirestore();
-  const { isUser, user, isAdmin, login, logout, empresa } = useAuth();
+  const { isUser, user, isAdmin, login, logout, empresa, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   
@@ -54,29 +52,24 @@ function ObraViewContent() {
     return doc(db, 'obras', id);
   }, [db, id]);
 
-  const { data: obra, loading, error } = useDoc<Obra>(obraDocRef);
+  const { data: obra, loading: docLoading, error } = useDoc<Obra>(obraDocRef);
 
-  // Validación de autorización estricta v3.3.7
+  // Validación de autorización unificada v3.5.0
   const isAuthorized = useMemo(() => {
     if (!isUser || !user || !obra) return false;
-    
-    // 1. Administradores: Acceso Total
     if (isAdmin) return true;
-
-    // 2. Usuarios de Campo (Field): Solo acceden si su sesión está vinculada EXACTAMENTE a esta obra
+    
+    const normalizedUserEmail = user.email?.toLowerCase().trim();
+    const normalizedObraEmail = obra.usuarioAcceso?.toLowerCase().trim();
+    
+    // Si el usuario es 'field' (acceso directo de obra), debe coincidir el ID
     if (user.role === 'field') {
-      return user.id === id;
+      return user.id === id || normalizedUserEmail === normalizedObraEmail;
     }
 
-    // 3. Clientes Registrados (User): Acceden si su email está en la lista de autorizados de este proyecto
-    if (user.role === 'user') {
-      const userEmail = user.email?.toLowerCase().trim();
-      const isMainEmail = obra.usuarioAcceso?.toLowerCase().trim() === userEmail;
-      const isInAuthorizedList = obra.authorizedEmails?.some(e => e.email?.toLowerCase().trim() === userEmail);
-      return isMainEmail || isInAuthorizedList;
-    }
-
-    return false;
+    // Para otros roles, verificar email en lista o email principal
+    return normalizedUserEmail === normalizedObraEmail || 
+           obra.authorizedEmails?.some(e => e.email?.toLowerCase().trim() === normalizedUserEmail);
   }, [isUser, user, obra, isAdmin, id]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -84,285 +77,242 @@ function ObraViewContent() {
     if (!id) return;
     setIsLoggingIn(true);
     
-    // Login restringido estrictamente al ID de esta obra v3.3.7
     const success = await login(identifier, password, id);
     
     if (!success) {
       toast({
         variant: "destructive",
         title: "Credenciales Incorrectas",
-        description: "El usuario o clave no corresponden a esta obra específica.",
-      });
-    } else {
-      toast({
-        title: "Acceso Concedido",
-        description: "Documentación técnica desbloqueada.",
+        description: "El usuario o clave no corresponden a esta obra.",
       });
     }
     setIsLoggingIn(false);
   };
 
-  if (!id) {
+  // Pantalla de carga inicial
+  if (authLoading || (docLoading && !obra)) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100">
-        <Card className="max-w-md w-full p-10 text-center rounded-[2.5rem] shadow-2xl border-none">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0a3d62]">Sincronizando Documentación v3.5.0...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error: No hay ID o no existe la obra
+  if (!id || (!obra && !docLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+        <Card className="max-w-md w-full p-8 text-center rounded-[2rem] shadow-2xl border-none">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
-          <h1 className="text-2xl font-black text-[#0a3d62]">Enlace Erróneo</h1>
-          <p className="text-muted-foreground mb-6">El código QR escaneado no contiene una referencia válida de obra.</p>
-          <Button onClick={() => router.push('/login')} className="rounded-xl w-full h-12 font-black">VOLVER AL INICIO</Button>
+          <h1 className="text-xl font-black text-[#0a3d62] uppercase">Obra no encontrada</h1>
+          <p className="text-sm text-muted-foreground mt-2 mb-8 italic">El enlace QR no es válido o la obra fue removida.</p>
+          <Button onClick={() => router.push('/login')} className="w-full h-12 rounded-xl font-black bg-[#0a3d62]">IR AL INICIO</Button>
         </Card>
       </div>
     );
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Validando Identidad Tamer Cloud v3.3.7...</p>
-      </div>
-    </div>
-  );
-
-  if (!obra || error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100">
-        <Card className="max-w-md w-full p-10 text-center rounded-[2.5rem] shadow-2xl border-none">
-          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
-          <h1 className="text-2xl font-black text-[#0a3d62]">Obra no Encontrada</h1>
-          <p className="text-muted-foreground mb-6">Este proyecto no existe o ha sido retirado del sistema.</p>
-          <Button onClick={() => router.push('/login')} className="rounded-xl w-full h-12 font-black">REGRESAR</Button>
-        </Card>
-      </div>
-    );
-  }
-
-  // Interfaz de Login Específico por Obra
+  // Interfaz de Login si no está autorizado
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-none shadow-[0_35px_60px_-15px_rgba(10,61,98,0.3)] rounded-[3rem] overflow-hidden bg-white">
-          <div className="bg-[#0a3d62] p-12 text-center text-white">
-            <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/20">
-              <ShieldCheck className="w-12 h-12 text-white" />
-            </div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">Acceso Técnico QR</h2>
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.4em] mt-3">Validación de Obra v3.3.7</p>
+        <Card className="max-w-md w-full border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
+          <div className="bg-[#0a3d62] p-8 text-center text-white">
+            <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-black uppercase tracking-tight">Acceso Restringido</h2>
+            <p className="text-[9px] font-black opacity-40 uppercase tracking-[0.3em] mt-2">Validación de Seguridad v3.5.0</p>
           </div>
-          <CardContent className="p-10">
-            <div className="mb-10 p-6 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 text-center">
-              <p className="text-[10px] font-black text-[#0a3d62] uppercase tracking-[0.2em] mb-1">PROYECTO SELECCIONADO</p>
-              <h3 className="font-black text-2xl text-[#0a3d62] leading-none uppercase truncate">{obra.nombreObra}</h3>
-              <div className="flex items-center justify-center gap-2 mt-4">
-                <Badge className="bg-[#0a3d62] text-white border-none text-[10px] font-black px-3 py-1">OF: {obra.numeroOF}</Badge>
-              </div>
+          <CardContent className="p-8">
+            <div className="mb-8 p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+              <span className="text-[9px] font-black text-[#0a3d62] uppercase tracking-widest opacity-60">PROYECTO</span>
+              <h3 className="font-black text-xl text-[#0a3d62] uppercase truncate mt-1">{obra.nombreObra}</h3>
             </div>
 
-            {isUser && (
-              <div className="mb-8 p-5 bg-amber-50 border border-amber-200 rounded-3xl flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-[10px] text-amber-800 font-black uppercase leading-tight mb-2">Su sesión actual no pertenece a esta obra.</p>
-                  <Button variant="outline" size="sm" onClick={logout} className="h-8 rounded-xl text-[9px] font-black border-amber-300 text-amber-900 uppercase bg-white hover:bg-amber-100">Cerrar sesión e ingresar</Button>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-3 tracking-widest">Email de Obra</Label>
+                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Email Autorizado</Label>
                 <Input 
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
-                  className="h-16 rounded-[1.5rem] bg-secondary/30 border-none font-black text-lg px-6"
-                  placeholder="obra@tamer.com"
+                  className="h-14 rounded-xl bg-secondary/30 border-none font-bold text-base px-5"
+                  placeholder="usuario@tamer.com"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-3 tracking-widest">Contraseña Técnica</Label>
+                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Clave Técnica</Label>
                 <div className="relative">
                   <Input 
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="h-16 rounded-[1.5rem] bg-secondary/30 border-none font-black text-lg px-6 pr-14"
+                    className="h-14 rounded-xl bg-secondary/30 border-none font-bold text-base px-5 pr-12"
                     placeholder="••••••••"
                     required
                   />
-                  <Button type="button" variant="ghost" size="icon" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff className="w-5 h-5 text-primary" /> : <Eye className="w-5 h-5 text-primary" />}
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
               <Button 
                 type="submit" 
-                className="w-full h-18 py-8 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-[2rem] font-black text-xl gap-4 shadow-xl shadow-[#0a3d62]/20 active:scale-95 transition-all group"
+                className="w-full h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-2xl font-black text-lg gap-3 shadow-lg active:scale-95 transition-all mt-4"
                 disabled={isLoggingIn}
               >
-                {isLoggingIn ? <Loader2 className="animate-spin w-6 h-6" /> : <><ShieldCheck className="w-7 h-7" /> INGRESAR A OBRA <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
+                {isLoggingIn ? <Loader2 className="animate-spin" /> : <><ShieldCheck className="w-6 h-6" /> DESBLOQUEAR OBRA</>}
               </Button>
             </form>
           </CardContent>
-          <div className="px-10 pb-10 text-center">
-            <p className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.3em] leading-relaxed">
-              TAMER INDUSTRIAL S.A. | SEGURIDAD TÉCNICA CLOUD
-            </p>
-          </div>
         </Card>
       </div>
     );
   }
 
-  // Interfaz Técnica Autorizada (v3.3.7)
+  // VISTA TÉCNICA AUTORIZADA
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 font-body">
-      <div className="bg-[#0a3d62] text-white pt-20 pb-32 px-6 shadow-2xl relative overflow-hidden">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 relative z-10">
-          <div className="flex items-center gap-8">
-            <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center p-4 shadow-2xl">
-              {empresa?.logoUrl ? (
-                <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
-              ) : (
-                <Construction className="w-12 h-12 text-[#0a3d62]" />
-              )}
-            </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tighter uppercase leading-none">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
-              <p className="text-[11px] font-black opacity-40 tracking-[0.4em] uppercase mt-3">Documentación Técnica v3.3.7</p>
-            </div>
+    <div className="min-h-screen bg-[#f8fafc] pb-20 overflow-x-hidden">
+      {/* Header Responsivo */}
+      <div className="bg-[#0a3d62] text-white pt-16 pb-24 px-6 relative">
+        <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-6">
+          <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-3 shadow-xl">
+            {empresa?.logoUrl ? (
+              <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <Construction className="w-10 h-10 text-[#0a3d62]" />
+            )}
           </div>
-          <div className="flex flex-col items-end gap-4">
-            <div className="flex flex-col items-end bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-               <span className="text-[10px] font-black uppercase opacity-60 mb-1">Orden de Fabricación</span>
-               <span className="text-2xl font-black font-mono tracking-tighter">{obra.numeroOF}</span>
-            </div>
-            <Button variant="ghost" onClick={logout} className="text-white/50 hover:text-white hover:bg-white/10 font-black text-[10px] tracking-[0.2em] uppercase">
-              <LogOut className="w-4 h-4 mr-3" /> Finalizar Sesión Técnica
-            </Button>
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight uppercase leading-tight">
+              {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
+            </h1>
+            <p className="text-[9px] font-black opacity-40 tracking-[0.3em] uppercase">Documentación Técnica v3.5.0</p>
           </div>
+          <Button variant="outline" size="sm" onClick={logout} className="bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-full h-10 px-6 font-black text-[10px] uppercase tracking-widest">
+            <LogOut className="w-3.5 h-3.5 mr-2" /> Salir del Visor
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 sm:px-10 -mt-20 space-y-12 relative z-20">
-        <Card className="border-none shadow-[0_40px_80px_-20px_rgba(10,61,98,0.2)] rounded-[3.5rem] bg-white overflow-hidden">
-          <CardHeader className="p-12 border-b bg-gray-50/30">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="p-6 bg-primary/10 rounded-[2.5rem] shadow-inner">
-                <Construction className="w-12 h-12 text-primary" />
+      {/* Contenido Principal Ajustado */}
+      <div className="max-w-4xl mx-auto px-4 -mt-16 space-y-6">
+        <Card className="border-none shadow-2xl rounded-[2rem] bg-white overflow-hidden">
+          <CardHeader className="p-8 border-b bg-gray-50/50">
+            <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+              <div className="p-4 bg-primary/10 rounded-2xl">
+                <Construction className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-center md:text-left flex-1">
-                <CardTitle className="text-4xl font-black text-[#0a3d62] uppercase tracking-tighter leading-none mb-3">{obra.nombreObra}</CardTitle>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                  <Badge variant="outline" className="border-primary/20 text-primary font-black px-4 py-1.5 rounded-full text-[10px]">CLIENTE: {obra.cliente}</Badge>
-                  <Badge variant="outline" className="border-primary/20 text-primary font-black px-4 py-1.5 rounded-full text-[10px]">OT: {obra.numeroOT}</Badge>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xl sm:text-2xl font-black text-[#0a3d62] uppercase truncate leading-none mb-2">
+                  {obra.nombreObra}
+                </CardTitle>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                  <Badge className="bg-primary/10 text-primary border-none font-black text-[9px] px-3">OF: {obra.numeroOF}</Badge>
+                  <Badge className="bg-primary/10 text-primary border-none font-black text-[9px] px-3">OT: {obra.numeroOT}</Badge>
                 </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div className="space-y-8">
-                <div className="flex items-start gap-5">
-                  <MapPin className="w-6 h-6 text-primary mt-1" />
+          <CardContent className="p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <MapPin className="w-5 h-5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[11px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">Ubicación de Obra</p>
-                    <p className="font-black text-xl text-[#0a3d62]">{obra.direccion || 'No especificada'}</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">Ubicación</p>
+                    <p className="font-bold text-[#0a3d62] text-sm leading-tight">{obra.direccion || 'No especificada'}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-5">
-                  <Info className="w-6 h-6 text-primary mt-1" />
+                <div className="flex items-start gap-4">
+                  <Info className="w-5 h-5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[11px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-1">Descripción del Proyecto</p>
-                    <p className="font-bold text-gray-700 leading-relaxed italic text-sm">
-                      {obra.descripcion || 'Sin descripción técnica detallada.'}
-                    </p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">Detalles del Proyecto</p>
+                    <p className="text-xs text-gray-600 leading-relaxed font-medium">{obra.descripcion || 'Sin descripción adicional.'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* ACCESO A GOOGLE DRIVE v3.3.7 */}
-              <div className="bg-[#f8fafc] p-8 rounded-[3rem] border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-center">
+              {/* Botón Principal de Descarga v3.5.0 */}
+              <div className="bg-secondary/20 p-6 rounded-3xl border border-secondary flex flex-col items-center justify-center text-center">
+                <FolderOpen className="w-10 h-10 text-emerald-600 mb-3" />
+                <h4 className="font-black text-[#0a3d62] text-sm uppercase mb-4">Carpeta de Planos en Drive</h4>
                 {obra.driveFolderUrl ? (
-                  <>
-                    <FolderOpen className="w-12 h-12 text-emerald-600 mb-4" />
-                    <h4 className="font-black text-[#0a3d62] text-lg uppercase leading-tight mb-4">Carpeta de Planos y Documentación</h4>
-                    <Button 
-                      asChild
-                      className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 rounded-[1.5rem] text-lg font-black gap-3 shadow-xl shadow-emerald-600/20"
-                    >
-                      <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                        ABRIR EN DRIVE <ArrowRight className="w-5 h-5" />
-                      </a>
-                    </Button>
-                  </>
+                  <Button asChild className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-base font-black gap-2 shadow-lg active:scale-95 transition-all">
+                    <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
+                      <Download className="w-5 h-5" /> DESCARGAR TODO
+                    </a>
+                  </Button>
                 ) : (
-                  <div className="text-center space-y-3 opacity-40">
-                    <FolderOpen className="w-12 h-12 mx-auto" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Sin enlace a Drive configurado</p>
-                  </div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase">Acceso no configurado</p>
                 )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-8">
-          <div className="px-8">
-            <h3 className="text-sm font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-4">
-              <FileText className="w-6 h-6 text-primary" /> Archivos Individuales Sincronizados
-            </h3>
-          </div>
+        {/* Listado de Archivos Individuales */}
+        <div className="space-y-4 px-2">
+          <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.3em] flex items-center gap-3">
+            <FileText className="w-5 h-5 text-primary" /> Documentación Sincronizada
+          </h3>
           
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-3">
             {obra.files && obra.files.length > 0 ? (
               obra.files.map((fileName, idx) => (
-                <Card key={idx} className="border-none shadow-xl hover:shadow-2xl transition-all bg-white group rounded-[2.5rem] overflow-hidden">
-                  <CardContent className="p-8 flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-slate-50 rounded-[1.5rem] flex items-center justify-center text-primary group-hover:bg-[#0a3d62] group-hover:text-white transition-all shadow-inner">
-                        <FileText className="w-8 h-8" />
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="font-black text-[#0a3d62] text-xl truncate max-w-[200px] sm:max-w-md">
-                          {fileName}
-                        </p>
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronizado vía Cloud</span>
-                      </div>
+                <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-secondary flex items-center justify-between gap-4 group hover:border-primary/30 transition-all">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                      <FileText className="w-5 h-5" />
                     </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="icon" className="w-14 h-14 rounded-[1.2rem] border-2 border-slate-100 hover:bg-slate-50" onClick={() => setSelectedFile(fileName)}>
-                        <Eye className="w-6 h-6 text-[#0a3d62]" />
-                      </Button>
-                      <Button variant="outline" size="icon" className="w-14 h-14 rounded-[1.2rem] border-2 border-slate-100 hover:bg-slate-50">
-                        <Download className="w-6 h-6 text-[#0a3d62]" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <p className="font-bold text-[#0a3d62] text-sm truncate pr-2">{fileName}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" onClick={() => setSelectedFile(fileName)}>
+                      <Eye className="w-5 h-5 text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-emerald-600">
+                      <Download className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
               ))
             ) : (
-              <div className="p-24 text-center border-4 border-dashed rounded-[4rem] border-slate-200 bg-white/50">
-                <p className="text-muted-foreground font-black uppercase tracking-[0.3em] text-[11px]">No hay archivos técnicos cargados individualmente.</p>
+              <div className="p-12 text-center border-2 border-dashed rounded-3xl border-slate-200 bg-white/50">
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-[9px]">No hay archivos individuales cargados.</p>
               </div>
             )}
           </div>
         </div>
 
-        <footer className="pt-16 text-center text-[10px] font-black text-muted-foreground/30 uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'} | INGENIERÍA Y CALIDAD v3.3.7
+        <footer className="pt-10 text-center">
+          <p className="text-[9px] font-black text-muted-foreground opacity-30 uppercase tracking-[0.5em]">
+            TAMER INDUSTRIAL S.A. | v3.5.0
+          </p>
         </footer>
       </div>
 
+      {/* Visor de Planos v3.5.0 */}
       <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
-        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 rounded-[3rem] overflow-hidden border-none shadow-2xl">
-          <div className="bg-[#0a3d62] text-white p-8 font-black uppercase tracking-tight flex justify-between items-center">
-            <span className="text-xl">VISOR TÉCNICO: {selectedFile}</span>
+        <DialogContent className="max-w-[95vw] w-full h-[85vh] p-0 rounded-3xl overflow-hidden border-none shadow-2xl">
+          <div className="bg-[#0a3d62] text-white p-6 font-black uppercase text-sm flex justify-between items-center">
+            <span className="truncate mr-4">PLANO: {selectedFile}</span>
           </div>
-          <div className="flex-1 bg-gray-100 flex flex-col items-center justify-center space-y-8">
-            <Loader2 className="w-16 h-16 animate-spin text-primary" />
-            <p className="text-lg font-black uppercase tracking-widest text-[#0a3d62]">Conectando con Servidor de Planos...</p>
-            <Button className="rounded-[1.5rem] h-16 px-12 font-black uppercase tracking-widest text-lg bg-[#0a3d62] shadow-xl">Visualizar en Pantalla Completa</Button>
+          <div className="flex-1 bg-gray-100 flex flex-col items-center justify-center p-8 text-center space-y-6">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-lg">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-lg font-black text-[#0a3d62] uppercase tracking-tight">Abriendo visor de planos...</p>
+              <p className="text-xs text-muted-foreground font-bold italic">Sincronizando con el servidor de Tamer Cloud</p>
+            </div>
+            {obra.driveFolderUrl && (
+              <Button asChild className="rounded-xl h-14 px-8 font-black uppercase bg-[#0a3d62] shadow-xl">
+                <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">VER EN PANTALLA COMPLETA</a>
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -372,7 +322,11 @@ function ObraViewContent() {
 
 export default function ObraViewPage() {
   return (
-    <Suspense fallback={<div className="p-24 text-center font-black uppercase text-[11px] tracking-[0.5em]">Conectando con Identidad Cloud Tamer v3.3.7...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="animate-spin text-primary w-10 h-10" />
+      </div>
+    }>
       <ObraViewContent />
     </Suspense>
   );

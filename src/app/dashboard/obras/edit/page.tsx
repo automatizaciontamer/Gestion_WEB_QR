@@ -7,14 +7,9 @@ import {
   ArrowLeft, 
   Save, 
   Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  FolderOpen,
   Upload,
   X,
-  FileText,
-  CloudUpload
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +32,6 @@ function EditObraContent() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<Partial<Obra>>({});
   const [newFilesToUpload, setNewFilesToUpload] = useState<File[]>([]);
 
@@ -90,7 +84,7 @@ function EditObraContent() {
 
       const dataToUpdate = {
         ...formData,
-        usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim(),
+        usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim() || '',
         files: updatedFiles,
         updatedAt: Date.now()
       };
@@ -98,15 +92,15 @@ function EditObraContent() {
       await updateDoc(doc(db, 'obras', id), dataToUpdate);
 
       toast({
-        title: "Obra Actualizada v3.6.5",
-        description: `Se han añadido ${newUploadedFiles.length} archivos al repositorio técnico.`,
+        title: "Obra Actualizada",
+        description: `Se han guardado los cambios y subido ${newUploadedFiles.length} archivos nuevos.`,
       });
       
       router.push('/dashboard/obras');
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo actualizar la obra en la nube.",
+        description: "No se pudo actualizar la obra.",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +111,7 @@ function EditObraContent() {
   if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto w-12 h-12" /></div>;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-20">
+    <div className="space-y-8 max-w-6xl mx-auto pb-20 pt-16 lg:pt-0">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl border"><ArrowLeft className="w-5 h-5" /></Button>
         <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
@@ -128,21 +122,21 @@ function EditObraContent() {
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Información de Obra</CardTitle></CardHeader>
             <CardContent className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Código Cliente</Label><Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-                <div className="space-y-2"><Label>Obra</Label><Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2"><Label>Código Cliente</Label><Input id="codigoCliente" value={formData.codigoCliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+                <div className="space-y-2"><Label>Obra</Label><Input id="nombreObra" value={formData.nombreObra || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Número OF</Label><Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-                <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2"><Label>Número OF</Label><Input id="numeroOF" value={formData.numeroOF || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+                <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
               </div>
-              <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="bg-secondary/30 border-none" /></div>
+              <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none" /></div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
-            <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Añadir Documentación</CardTitle></CardHeader>
+            <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Documentación</CardTitle></CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="border-4 border-dashed rounded-[2.5rem] p-10 text-center cursor-pointer bg-secondary/10" onClick={() => document.getElementById('edit-file-input')?.click()}>
                 <Upload className="mx-auto w-12 h-12 text-primary opacity-40 mb-2" />
@@ -162,13 +156,16 @@ function EditObraContent() {
 
         <div className="lg:col-span-4 space-y-8">
           <Card className="rounded-[3rem] bg-[#0a3d62] text-white p-8 space-y-6 shadow-2xl">
-            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
-            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
+            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
+            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none" /></div>
           </Card>
-          <Button type="submit" className="w-full h-20 rounded-[2rem] font-black text-xl bg-primary shadow-2xl" disabled={isSaving}>
-            {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-8 h-8 mr-2" />}
-            GUARDAR CAMBIOS
-          </Button>
+          <div className="space-y-4">
+            {isSaving && <Progress value={uploadProgress} className="h-2" />}
+            <Button type="submit" className="w-full h-20 rounded-[2rem] font-black text-xl bg-primary shadow-2xl" disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-8 h-8 mr-2" />}
+              GUARDAR CAMBIOS
+            </Button>
+          </div>
         </div>
       </form>
     </div>

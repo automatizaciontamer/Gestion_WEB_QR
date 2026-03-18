@@ -50,21 +50,20 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional v3.2.0 - Marca de Agua Reforzada */}
+      {/* Cabecera Institucional v3.3.0 */}
       <div 
-        className="relative w-full bg-white rounded-[3.5rem] p-8 sm:p-20 shadow-2xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[450px] transition-all duration-700"
+        className="relative w-full bg-white rounded-[3.5rem] p-8 sm:p-20 shadow-2xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[450px]"
         style={{
-          backgroundImage: empresa?.logoUrl ? `linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url("${empresa.logoUrl}")` : 'none',
+          backgroundImage: empresa?.logoUrl ? `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url("${empresa.logoUrl}")` : 'none',
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
       >
-        {/* Contenido Frontal Superior */}
         <div className="relative z-10 space-y-8 max-w-4xl">
           <div className="inline-flex items-center gap-3 bg-[#0a3d62]/10 px-6 py-2 rounded-full border border-[#0a3d62]/20 mb-2">
             <Building2 className="w-4 h-4 text-[#0a3d62]" />
-            <span className="text-[12px] font-black uppercase tracking-[0.4em] text-[#0a3d62]">SISTEMA DE GESTIÓN v3.2.0</span>
+            <span className="text-[12px] font-black uppercase tracking-[0.4em] text-[#0a3d62]">SISTEMA DE GESTIÓN v3.3.0</span>
           </div>
           
           <div className="space-y-4">
@@ -98,7 +97,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-4 text-[#0a3d62]">
             ¡Hola, {user?.nombre?.split(' ')[0] || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-[10px] mt-1">Conexión Segura Tamer Cloud | v3.2.0</p>
+          <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-[10px] mt-1">Conexión Segura Tamer Cloud | v3.3.0</p>
         </div>
         {isAdmin && (
           <div className="bg-[#0a3d62] text-white px-6 py-3 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-[#0a3d62]/20">
@@ -158,46 +157,33 @@ export default function DashboardPage() {
         </Card>
         
         <Card className="border-none shadow-xl rounded-[3rem] bg-[#0a3d62] text-white relative overflow-hidden group">
-          {empresa?.logoUrl && (
-            <img 
-              src={empresa.logoUrl} 
-              alt="Fondo Identidad" 
-              className="absolute -right-16 -bottom-16 w-72 opacity-5 pointer-events-none grayscale brightness-200"
-            />
-          )}
-          
           <CardHeader className="p-8 relative z-10">
             <CardTitle className="text-lg font-black uppercase tracking-[0.2em] opacity-90 flex items-center gap-3">
-              <Cloud className="w-5 h-5 text-primary" /> Conectividad Cloud v3.2
+              <Cloud className="w-5 h-5 text-primary" /> Conectividad Cloud v3.3
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-8 relative z-10">
             <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
-              <span className="text-[10px] font-black tracking-[0.2em] uppercase">Sincronización en Tiempo Real Activa</span>
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase">Enlace Directo QR Activo</span>
             </div>
             
             <div className="space-y-6">
               <p className="text-[11px] text-white/70 leading-relaxed font-bold uppercase tracking-wider">
-                Gestión centralizada de planos y archivos técnicos. Los cambios realizados se reflejan de inmediato en dispositivos móviles autorizados.
+                Acceso optimizado: Los códigos QR ahora direccionan directamente al visor técnico de cada obra, evitando la página principal.
               </p>
               
               <div className="pt-6 border-t border-white/10">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary mb-4">Identidad Corporativa Sincronizada</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary mb-4">Identidad Corporativa v3.3</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-3 shadow-lg overflow-hidden border-2 border-white/20">
+                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-3 shadow-lg overflow-hidden">
                     {empresa?.logoUrl ? (
-                      <img 
-                        src={empresa.logoUrl} 
-                        alt="Logo Empresa" 
-                        className="w-full h-full object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
+                      <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                     ) : (
                       <Building2 className="text-[#0a3d62] w-10 h-10" />
                     )}
                   </div>
-                  <div className="overflow-hidden space-y-1">
+                  <div>
                     <p className="text-xl font-black truncate text-white uppercase tracking-tight">{empresa?.nombre || 'Tamer Industrial S.A.'}</p>
                     <p className="text-[10px] font-black text-white/50 tracking-[0.2em] uppercase">{empresa?.nit || '30707867309'}</p>
                   </div>

@@ -55,19 +55,20 @@ function ObraViewContent() {
 
   const { data: obra, loading, error } = useDoc<Obra>(obraDocRef);
 
-  // Validación de autorización estricta v3.3.5
+  // Validación de autorización estricta v3.3.6
+  // Solo permitimos ver la obra si es admin O si es un usuario de campo con el ID exacto de esta obra
   const isAuthorized = useMemo(() => {
     if (!isUser || !user || !obra) return false;
     
     // 1. Administradores: Acceso Total
     if (isAdmin) return true;
 
-    // 2. Usuarios de Campo (Field): Solo acceden si el ID de su sesión coincide exactamente con esta obra
+    // 2. Usuarios de Campo (Field): Solo acceden si su sesión está vinculada EXACTAMENTE a esta obra
     if (user.role === 'field') {
       return user.id === id;
     }
 
-    // 3. Clientes Registrados (User): Acceden si su email está en la lista de autorizados
+    // 3. Clientes Registrados (User): Acceden si su email está en la lista de autorizados de este proyecto
     if (user.role === 'user') {
       const userEmail = user.email?.toLowerCase().trim();
       const isMainEmail = obra.usuarioAcceso?.toLowerCase().trim() === userEmail;
@@ -83,7 +84,7 @@ function ObraViewContent() {
     if (!id) return;
     setIsLoggingIn(true);
     
-    // Pasamos el ID de la obra para que el login sea EXCLUSIVO para este proyecto v3.3.5
+    // Login con restricción estricta al ID de esta obra v3.3.6
     const success = await login(identifier, password, id);
     
     if (!success) {
@@ -108,7 +109,7 @@ function ObraViewContent() {
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
           <h1 className="text-2xl font-black text-[#0a3d62]">Enlace Inválido</h1>
           <p className="text-muted-foreground mb-6">El código escaneado no contiene una referencia válida.</p>
-          <Button onClick={() => router.push('/login')} className="rounded-xl w-full">VOLVER</Button>
+          <Button onClick={() => router.push('/login')} className="rounded-xl w-full">VOLVER AL INICIO</Button>
         </Card>
       </div>
     );
@@ -118,7 +119,7 @@ function ObraViewContent() {
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Validando Seguridad v3.3.5</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Sincronizando Tamer Cloud v3.3.6...</p>
       </div>
     </div>
   );
@@ -146,7 +147,7 @@ function ObraViewContent() {
               <Lock className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-black uppercase tracking-tighter leading-none">Acceso por QR</h2>
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Tamer Industrial S.A. v3.3.5</p>
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Tamer Industrial S.A. v3.3.6</p>
           </div>
           <CardContent className="p-10">
             <div className="mb-8 p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
@@ -170,7 +171,7 @@ function ObraViewContent() {
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Email de Obra</Label>
+                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Email de Autorización</Label>
                 <Input 
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
@@ -180,7 +181,7 @@ function ObraViewContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Clave de Acceso</Label>
+                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2 tracking-widest">Clave de Obra</Label>
                 <div className="relative">
                   <Input 
                     type={showPassword ? "text" : "password"}
@@ -206,7 +207,7 @@ function ObraViewContent() {
           </CardContent>
           <div className="px-10 pb-10">
             <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] text-center leading-relaxed">
-              ACCESO RESTRINGIDO SEGÚN POLÍTICAS DE TAMER INDUSTRIAL S.A. v3.3.5
+              ACCESO RESTRINGIDO SEGÚN POLÍTICAS DE TAMER INDUSTRIAL S.A. v3.3.6
             </p>
           </div>
         </Card>
@@ -229,7 +230,7 @@ function ObraViewContent() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase leading-none">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
-              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase mt-2">Documentación Técnica v3.3.5</p>
+              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase mt-2">Sincronización Cloud v3.3.6</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-3">
@@ -237,7 +238,7 @@ function ObraViewContent() {
               OF: {obra.numeroOF}
             </Badge>
             <Button variant="ghost" onClick={logout} className="text-white/60 hover:text-white hover:bg-white/10 font-black text-[10px] tracking-widest uppercase">
-              <LogOut className="w-4 h-4 mr-2" /> Cerrar Sesión
+              <LogOut className="w-4 h-4 mr-2" /> Cerrar Sesión Técnica
             </Button>
           </div>
         </div>
@@ -276,7 +277,7 @@ function ObraViewContent() {
               </div>
               <div className="bg-[#f8fafc] p-6 rounded-[2rem] border border-secondary flex flex-col justify-center">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2 flex items-center gap-2">
-                  <Info className="w-3 h-3" /> Memoria Descriptiva
+                  <Info className="w-3 h-3" /> Memoria Técnica
                 </p>
                 <p className="text-xs font-medium text-gray-700 leading-relaxed italic">
                   {obra.descripcion || 'Acceso a planos y documentación técnica vigente para la ejecución de obra.'}
@@ -284,7 +285,7 @@ function ObraViewContent() {
               </div>
             </div>
 
-            {/* BOTÓN DRIVE - ACCESO A PLANOS v3.3.5 */}
+            {/* ACCESO A GOOGLE DRIVE v3.3.6 */}
             {obra.driveFolderUrl && (
               <div className="mt-10 pt-10 border-t">
                 <Button 
@@ -296,7 +297,7 @@ function ObraViewContent() {
                   </a>
                 </Button>
                 <p className="text-center text-[10px] font-black text-emerald-600/60 uppercase tracking-widest mt-4">
-                  Sincronización Cloud Tamer | Documentación Oficial
+                  Conexión Cloud Drive | Documentación Técnica Oficial
                 </p>
               </div>
             )}
@@ -306,7 +307,7 @@ function ObraViewContent() {
         <div className="space-y-6">
           <div className="px-6">
             <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
-              <FileText className="w-5 h-5 text-primary" /> Documentos del Proyecto
+              <FileText className="w-5 h-5 text-primary" /> Documentos Asociados
             </h3>
           </div>
           
@@ -336,26 +337,26 @@ function ObraViewContent() {
               ))
             ) : (
               <div className="p-20 text-center border-4 border-dashed rounded-[3rem] border-secondary bg-white/50">
-                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Sin archivos individuales cargados.</p>
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Sin archivos técnicos individuales.</p>
               </div>
             )}
           </div>
         </div>
 
         <footer className="pt-10 text-center text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">
-          © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'} | v3.3.5
+          © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'} | v3.3.6
         </footer>
       </div>
 
       <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
         <DialogContent className="max-w-[90vw] w-full h-[85vh] p-0 rounded-[2.5rem] overflow-hidden">
           <div className="bg-[#0a3d62] text-white p-6 font-black uppercase tracking-tighter truncate flex justify-between items-center">
-            <span>PREVISUALIZACIÓN: {selectedFile}</span>
+            <span>VISOR: {selectedFile}</span>
           </div>
           <div className="flex-1 bg-gray-100 flex flex-col items-center justify-center space-y-6">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-sm font-black uppercase tracking-widest text-[#0a3d62]">Cargando Documento desde Cloud...</p>
-            <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">Abrir en Pestaña Nueva</Button>
+            <p className="text-sm font-black uppercase tracking-widest text-[#0a3d62]">Sincronizando Archivo desde Drive...</p>
+            <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">Visualizar en Pantalla Completa</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -365,7 +366,7 @@ function ObraViewContent() {
 
 export default function ObraViewPage() {
   return (
-    <Suspense fallback={<div className="p-20 text-center font-black uppercase text-xs tracking-[0.3em]">Conectando con Tamer Cloud v3.3.5...</div>}>
+    <Suspense fallback={<div className="p-20 text-center font-black uppercase text-xs tracking-[0.3em]">Conectando con Identidad Cloud v3.3.6...</div>}>
       <ObraViewContent />
     </Suspense>
   );

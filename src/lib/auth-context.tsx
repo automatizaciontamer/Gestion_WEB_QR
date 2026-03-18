@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // CASO ESPECIAL: Login desde un QR de Obra específico (Acceso Estricto v3.3.5)
+      // CASO ESPECIAL: Login desde un QR de Obra específico (Acceso Estricto v3.3.6)
       if (restrictedToObraId) {
         const obraRef = doc(db, 'obras', restrictedToObraId);
         const obraSnap = await getDoc(obraRef);
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return true;
           }
         }
-        return false; // Credenciales no válidas para esta obra
+        return false; // Credenciales inválidas para esta obra específica
       }
 
       // 1. Acceso Maestro Admin
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra (General - si no viene de un ID específico)
+      // 4. Accesos Directos de Obra (General)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('Error en proceso de login:', error);
     }
 
     return false;

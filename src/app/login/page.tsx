@@ -125,7 +125,7 @@ export default function LoginPage() {
         </Card>
         
         <p className="text-center text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black opacity-50">
-          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.1
+          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.2
         </p>
       </div>
     </div>

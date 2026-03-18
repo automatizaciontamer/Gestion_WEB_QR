@@ -106,7 +106,6 @@ function ObraViewContent() {
     );
   }
 
-  // Si no está logueado, mostrar pantalla de acceso
   if (!isUser) {
     return (
       <div className="min-h-screen bg-secondary/20 flex items-center justify-center p-4">
@@ -192,7 +191,7 @@ function ObraViewContent() {
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tighter uppercase">{empresa?.razonSocial || 'TAMER INDUSTRIAL S.A.'}</h1>
+              <h1 className="text-3xl font-black tracking-tighter uppercase">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
               <p className="text-[10px] font-black opacity-60 tracking-[0.4em] mt-1 uppercase">SISTEMA DIGITAL DE PLANOS Y DOCUMENTACIÓN</p>
             </div>
           </div>
@@ -311,7 +310,7 @@ function ObraViewContent() {
                 {selectedFile}
               </DialogTitle>
               <DialogDescription className="text-[10px] text-white/60 font-bold">
-                Visor de documentación técnica {empresa?.razonSocial || 'Tamer Industrial'}
+                Visor de documentación técnica {empresa?.nombre || 'Tamer Industrial'}
               </DialogDescription>
             </DialogHeader>
             <div className="flex-1 w-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
@@ -336,7 +335,7 @@ function ObraViewContent() {
           <div className="h-1 bg-[#0a3d62]/10 rounded-full w-24 mx-auto" />
           <div>
             <p className="text-[10px] text-muted-foreground font-black tracking-[0.4em] uppercase">
-              © {new Date().getFullYear()} {empresa?.razonSocial || 'TAMER INDUSTRIAL S.A.'}
+              © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
             </p>
             <p className="text-[9px] text-muted-foreground/60 font-medium mt-1">
               Desarrollo de Ingeniería | Control de Calidad | Sincronización en Tiempo Real

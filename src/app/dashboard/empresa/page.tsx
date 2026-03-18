@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Save, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudSync } from 'lucide-react';
+import { Building2, Save, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudUpload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,7 +75,6 @@ export default function EmpresaConfigPage() {
 
     setUploadingLogo(true);
     try {
-      // Subir imagen a Drive en carpeta Datos Empresa
       await uploadToDrive(file, "Datos Empresa");
       
       toast({
@@ -85,7 +84,7 @@ export default function EmpresaConfigPage() {
 
       toast({
         title: "Nota de Visualización",
-        description: "Debido a las políticas de Drive, si desea previsualizarlo aquí, asegúrese de que el archivo sea público y pegue su ID en el campo de URL.",
+        description: "Para previsualizarlo aquí, pegue el ID público en el campo de URL.",
       });
     } catch (error) {
       toast({
@@ -105,18 +104,16 @@ export default function EmpresaConfigPage() {
     setSaving(true);
 
     try {
-      // 1. Guardar en Firestore
       const docRef = doc(db, 'Configuracion', 'Empresa');
       await setDoc(docRef, formData, { merge: true });
 
-      // 2. Respaldar datos en Drive como JSON
       const configBlob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
       const configFile = new File([configBlob], "config_empresa.json", { type: 'application/json' });
       await uploadToDrive(configFile, "Datos Empresa");
 
       toast({
         title: "Sincronización v2.6 Exitosa",
-        description: "Datos actualizados en Firestore y respaldados en Google Drive (Datos Empresa).",
+        description: "Datos actualizados en Firestore y respaldados en Google Drive.",
       });
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -158,7 +155,7 @@ export default function EmpresaConfigPage() {
           className="h-14 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-2xl font-black px-8 shadow-xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95"
           disabled={saving}
         >
-          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CloudSync className="w-6 h-6" /> GUARDAR Y RESPALDAR</>}
+          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CloudUpload className="w-6 h-6" /> GUARDAR Y RESPALDAR</>}
         </Button>
       </div>
 

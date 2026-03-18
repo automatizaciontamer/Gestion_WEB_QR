@@ -33,7 +33,6 @@ function EditObraContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
-  // Inicialización segura para evitar "uncontrolled input" error v4.0
   const [formData, setFormData] = useState({
     codigoCliente: '',
     nombreObra: '',
@@ -108,7 +107,7 @@ function EditObraContent() {
           const result = await uploadToDrive(newFilesToUpload[i], folderName);
           newUploadedFiles.push({
             name: newFilesToUpload[i].name,
-            id: result?.fileId || ''
+            id: result?.fileId || result?.id || ''
           });
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
@@ -143,7 +142,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.0...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.1...</p>
     </div>
   );
 
@@ -155,7 +154,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.0</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.1</p>
         </div>
       </div>
 

@@ -47,7 +47,6 @@ function ObraViewContent() {
 
   const { data: obra, loading: docLoading } = useDoc<Obra>(obraDocRef);
 
-  // Validación de autorización robusta v4.0.0
   const isAuthorized = useMemo(() => {
     if (!isUser || !user || !obra) return false;
     if (isAdmin) return true;
@@ -91,7 +90,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando con Tamer Cloud v4.0...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Iniciando Visor v4.1...</p>
       </div>
     );
   }
@@ -173,12 +172,11 @@ function ObraViewContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Header Limpio v4.0.0 - Sin solapamientos */}
-      <header className="bg-[#0a3d62] text-white p-6 sm:p-12 space-y-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+      <header className="bg-[#0a3d62] text-white p-6 sm:p-12">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl shrink-0">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl">
                 {empresa?.logoUrl ? (
                   <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
@@ -186,7 +184,7 @@ function ObraViewContent() {
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v4.0</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v4.1</p>
                 <h2 className="text-[9px] font-bold text-white/50 uppercase">{empresa?.nombre || 'Tamer Industrial S.A.'}</h2>
               </div>
             </div>
@@ -196,10 +194,10 @@ function ObraViewContent() {
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-3xl sm:text-5xl font-black uppercase leading-tight text-white">
+            <h1 className="text-3xl sm:text-5xl font-black uppercase leading-tight text-white break-words">
               {obra.nombreObra}
             </h1>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap gap-2">
               <span className="bg-primary text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase shadow-lg shadow-primary/20">OF: {obra.numeroOF}</span>
               <span className="bg-white/10 text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase border border-white/10">OT: {obra.numeroOT}</span>
               <span className="bg-white/10 text-white font-black text-[10px] px-4 py-2 rounded-xl uppercase border border-white/10">CLIENTE: {obra.codigoCliente}</span>
@@ -208,10 +206,7 @@ function ObraViewContent() {
         </div>
       </header>
 
-      {/* Contenido Principal - Sin márgenes negativos */}
       <main className="max-w-4xl mx-auto w-full px-6 py-10 space-y-10 flex-1">
-        
-        {/* Información del Proyecto */}
         <section className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="p-8 border-b md:border-b-0 md:border-r border-slate-100">
@@ -233,7 +228,6 @@ function ObraViewContent() {
           </div>
         </section>
 
-        {/* Documentación Sincronizada */}
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.5em] flex items-center gap-3">
@@ -243,7 +237,7 @@ function ObraViewContent() {
           </div>
           
           <div className="grid grid-cols-1 gap-4">
-            {hasFiles ? files.map((file, idx) => (
+            {hasFiles && files.map((file, idx) => (
               <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-50 flex items-center justify-between gap-4 transition-all hover:translate-x-1">
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-primary shrink-0 border border-slate-100">
@@ -263,31 +257,31 @@ function ObraViewContent() {
                   </a>
                 </Button>
               </div>
-            )) : !hasFolderUrl && (
-              <div className="bg-white p-16 rounded-[3rem] text-center border-4 border-dashed border-slate-100">
-                <AlertCircle className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                <h4 className="font-black text-[#0a3d62] uppercase text-xs tracking-widest">Sin Planos Específicos</h4>
-                <p className="text-[10px] text-muted-foreground font-bold mt-2 uppercase max-w-[250px] mx-auto">Sincronización v4.0 en curso. Consulte el repositorio general.</p>
-              </div>
-            )}
+            ))}
 
             {hasFolderUrl && (
-              <Button asChild className="w-full h-28 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 font-black text-lg gap-6 shadow-2xl mt-4 border-l-8 border-primary group relative overflow-hidden transition-all active:scale-95">
-                <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                  <FolderOpen className="w-10 h-10 text-primary z-10" />
-                  <div className="text-left flex-1 z-10">
-                    <p className="uppercase tracking-tight leading-none text-white text-2xl">REPOSITORIO GENERAL DRIVE</p>
-                    <p className="text-[10px] opacity-60 font-black tracking-widest uppercase mt-2">Acceso a Carpeta Completa de Planos</p>
+              <Button asChild className="w-full h-auto min-h-[112px] p-6 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 font-black text-lg gap-6 shadow-2xl mt-4 border-l-8 border-primary group relative overflow-hidden transition-all active:scale-95">
+                <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
+                  <FolderOpen className="w-10 h-10 text-primary shrink-0" />
+                  <div className="text-left flex-1 ml-6">
+                    <p className="uppercase tracking-tight leading-none text-white text-2xl">ACCEDER A REPOSITORIO DE PLANOS</p>
+                    <p className="text-[10px] opacity-60 font-black tracking-widest uppercase mt-2">Sincronización Automática Google Drive</p>
                   </div>
-                  <ChevronRight className="w-8 h-8 opacity-40 group-hover:translate-x-2 transition-transform z-10" />
-                  <div className="absolute top-0 right-0 w-32 h-full bg-white/5 skew-x-[-20deg] translate-x-16"></div>
+                  <ChevronRight className="w-8 h-8 opacity-40 group-hover:translate-x-2 transition-transform shrink-0" />
                 </a>
               </Button>
+            )}
+
+            {!hasFiles && !hasFolderUrl && (
+              <div className="bg-white p-16 rounded-[3rem] text-center border-4 border-dashed border-slate-100">
+                <AlertCircle className="w-14 h-14 text-slate-200 mx-auto mb-4" />
+                <h4 className="font-black text-[#0a3d62] uppercase text-xs tracking-widest">Sin Archivos Vinculados</h4>
+                <p className="text-[10px] text-muted-foreground font-bold mt-2 uppercase max-w-[250px] mx-auto">Contacte con soporte técnico para sincronizar planos.</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Sección de Ayuda */}
         <section className="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 flex items-start gap-4">
           <Info className="w-6 h-6 text-blue-500 shrink-0" />
           <div className="space-y-1">
@@ -301,7 +295,7 @@ function ObraViewContent() {
 
       <footer className="p-10 text-center bg-white border-t mt-auto">
         <p className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v4.0
+          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v4.1
         </p>
       </footer>
     </div>
@@ -310,7 +304,7 @@ function ObraViewContent() {
 
 export default function ObraViewPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 font-black uppercase text-[10px] tracking-widest">Iniciando Visor Técnico v4.0...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 font-black uppercase text-[10px] tracking-widest">Iniciando Visor Técnico v4.1...</div>}>
       <ObraViewContent />
     </Suspense>
   );

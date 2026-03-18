@@ -65,15 +65,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // CASO ESPECIAL: Login desde un QR de Obra específico (Acceso Estricto v3.3.6)
+      // CASO ESPECIAL: Login desde un QR de Obra específico (Aislamiento Estricto v3.3.7)
       if (restrictedToObraId) {
         const obraRef = doc(db, 'obras', restrictedToObraId);
         const obraSnap = await getDoc(obraRef);
         
         if (obraSnap.exists()) {
           const d = obraSnap.data();
-          // Validamos que las credenciales coincidan exactamente con ESTA obra
-          if (d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password) {
+          // 1. Validar contra credenciales PRINCIPALES de la obra
+          const isMainMatch = d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password;
+          
+          // 2. Validar contra lista de AUTORIZADOS secundarios
+          const isAuthorizedMatch = d.authorizedEmails?.some((e: any) => 
+            e.email?.toLowerCase().trim() === normalizedIdentifier && e.password === password
+          );
+
+          if (isMainMatch || isAuthorizedMatch) {
             const userData = { ...d, id: obraSnap.id, role: 'field' };
             setIsAdmin(false);
             setIsUser(true);
@@ -82,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return true;
           }
         }
-        return false; // Credenciales inválidas para esta obra específica
+        return false; // Credenciales inválidas para ESTA obra
       }
 
       // 1. Acceso Maestro Admin
@@ -139,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra (General)
+      // 4. Accesos Directos de Obra (General - Redirige al visor)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),

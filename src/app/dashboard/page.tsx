@@ -50,47 +50,47 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional Dinámica v2.9 */}
-      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-16 shadow-2xl shadow-blue-900/10 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[400px]">
-        {/* Logo de Fondo Institucional (Watermark de Alta Visibilidad) */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-          {empresa?.logoUrl && (
+      {/* Cabecera Institucional v2.9.5 con Visibilidad Mejorada */}
+      <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-20 shadow-2xl shadow-blue-900/10 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[450px]">
+        
+        {/* Logo de Fondo Institucional (Marca de Agua con Alta Visibilidad) */}
+        {empresa?.logoUrl && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
             <img 
               src={empresa.logoUrl} 
               alt="Logo Marca de Agua" 
-              className="w-[500px] sm:w-[800px] opacity-[0.15] scale-110 object-contain transition-all duration-1000 grayscale hover:grayscale-0"
-              onError={(e) => (e.currentTarget.style.display = 'none')}
+              className="w-[400px] sm:w-[700px] opacity-[0.25] scale-125 object-contain transition-all duration-1000"
+              style={{ filter: 'drop-shadow(0 0 20px rgba(10, 61, 98, 0.1))' }}
             />
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Contenido Frontal Superior */}
-        <div className="relative z-10 space-y-6 max-w-4xl">
-          <div className="inline-flex items-center gap-3 bg-[#0a3d62]/10 px-6 py-2 rounded-full border border-[#0a3d62]/20 mb-4 backdrop-blur-sm">
-            <Building2 className="w-4 h-4 text-[#0a3d62]" />
-            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-[#0a3d62]">Portal Institucional v2.9</span>
+        <div className="relative z-10 space-y-8 max-w-4xl">
+          <div className="inline-flex items-center gap-3 bg-[#0a3d62]/10 px-8 py-3 rounded-full border border-[#0a3d62]/20 mb-4 backdrop-blur-md">
+            <Building2 className="w-5 h-5 text-[#0a3d62]" />
+            <span className="text-[12px] font-black uppercase tracking-[0.5em] text-[#0a3d62]">SISTEMA DE GESTIÓN v2.9.5</span>
           </div>
           
-          <div className="space-y-2">
-            <h2 className="text-5xl sm:text-7xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase drop-shadow-2xl">
+          <div className="space-y-4">
+            <h2 className="text-5xl sm:text-8xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase drop-shadow-xl">
               {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
             </h2>
-            <div className="h-2 w-32 bg-primary mx-auto rounded-full shadow-lg" />
+            <div className="h-2.5 w-48 bg-primary mx-auto rounded-full shadow-lg" />
           </div>
           
-          <p className="text-sm sm:text-xl text-muted-foreground font-black max-w-3xl mx-auto uppercase tracking-[0.2em] opacity-80">
-            {empresa?.direccion || 'Gestión Técnica Avanzada en Ingeniería'}
+          <p className="text-sm sm:text-2xl text-muted-foreground font-black max-w-3xl mx-auto uppercase tracking-[0.3em] opacity-90">
+            {empresa?.direccion || 'Ingeniería e Instalaciones Industriales'}
           </p>
 
-          <div className="flex items-center justify-center gap-6 pt-4">
-            <div className="flex flex-col items-center">
+          <div className="flex items-center justify-center gap-8 pt-6">
+            <div className="flex flex-col items-center bg-white/50 px-6 py-3 rounded-2xl backdrop-blur-sm shadow-sm border">
               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUIL / NIT</span>
-              <span className="text-sm font-bold text-[#0a3d62]">{empresa?.nit || '30707867309'}</span>
+              <span className="text-lg font-black text-[#0a3d62]">{empresa?.nit || '30707867309'}</span>
             </div>
-            <div className="w-px h-8 bg-[#0a3d62]/10" />
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center bg-white/50 px-6 py-3 rounded-2xl backdrop-blur-sm shadow-sm border">
               <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">SITIO WEB</span>
-              <span className="text-sm font-bold text-primary">{empresa?.web ? empresa.web.replace('https://', '') : 'tamer.com.ar'}</span>
+              <span className="text-lg font-black text-primary">{empresa?.web ? empresa.web.replace('https://', '') : 'tamer.com.ar'}</span>
             </div>
           </div>
         </div>
@@ -101,11 +101,11 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | Sincronización v2.9</p>
+          <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px] font-black">Estado del Sistema Tamer | Sincronización v2.9.5</p>
         </div>
         {isAdmin && (
-          <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit shadow-sm">
-            <ShieldCheck className="w-4 h-4" /> Modo Administrador
+          <div className="bg-[#0a3d62] text-white px-6 py-3 rounded-2xl border border-[#0a3d62]/20 flex items-center gap-3 text-xs font-black uppercase tracking-widest shadow-xl shadow-[#0a3d62]/20">
+            <ShieldCheck className="w-5 h-5" /> Acceso Administrador
           </div>
         )}
       </div>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             <img 
               src={empresa.logoUrl} 
               alt="Logo Fondo Card" 
-              className="absolute -right-20 -bottom-20 w-80 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700"
+              className="absolute -right-20 -bottom-20 w-80 opacity-20 pointer-events-none group-hover:scale-110 transition-transform duration-700"
             />
           )}
           
@@ -176,7 +176,7 @@ export default function DashboardPage() {
           <CardContent className="p-8 space-y-8 relative z-10">
             <div className="flex items-center gap-4 bg-white/10 p-5 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_15px_rgba(52,211,153,0.6)]"></div>
-              <span className="text-sm font-black tracking-widest uppercase">Firestore Sincronizado v2.9</span>
+              <span className="text-sm font-black tracking-widest uppercase">Firestore Sincronizado v2.9.5</span>
             </div>
             
             <div className="space-y-6">

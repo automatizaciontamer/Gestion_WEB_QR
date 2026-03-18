@@ -75,7 +75,6 @@ export default function EmpresaConfigPage() {
 
     setUploadingLogo(true);
     try {
-      // Subir a la carpeta específica "Datos Empresa"
       await uploadToDrive(file, "Datos Empresa");
       
       toast({
@@ -83,8 +82,6 @@ export default function EmpresaConfigPage() {
         description: "La imagen se ha guardado en la carpeta 'Datos Empresa' de Google Drive.",
       });
       
-      // Nota: Debido a CORS en Apps Script no podemos obtener la URL directa automáticamente.
-      // Instruimos al usuario sobre cómo proceder si el script no actualiza Firestore.
       toast({
         title: "Paso Final",
         description: "Si el logo no se actualiza automáticamente, por favor pegue la URL pública del archivo en el campo correspondiente.",
@@ -130,7 +127,7 @@ export default function EmpresaConfigPage() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.3...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.4...</p>
       </div>
     );
   }
@@ -146,7 +143,7 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Gestión Institucional (v2.3)
+            Gestión Institucional (v2.4)
           </p>
         </div>
         <Button 
@@ -165,8 +162,6 @@ export default function EmpresaConfigPage() {
             <CardDescription className="font-bold">Datos para reportes, portal QR y App Android.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
-            
-            {/* Sección de Logo */}
             <div className="space-y-4">
               <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                 <Upload className="w-3 h-3" /> Identidad Visual (Logo)
@@ -209,15 +204,11 @@ export default function EmpresaConfigPage() {
                       className="h-12 rounded-xl bg-white border-none font-bold shadow-sm" 
                       placeholder="https://drive.google.com/uc?id=..."
                     />
-                    <p className="text-[9px] text-muted-foreground font-medium italic">
-                      * El archivo se guardará en la carpeta "Datos Empresa" de Drive.
-                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Datos Generales */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">

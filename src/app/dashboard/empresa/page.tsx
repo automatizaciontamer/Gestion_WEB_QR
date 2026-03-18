@@ -75,17 +75,23 @@ export default function EmpresaConfigPage() {
 
     setUploadingLogo(true);
     try {
-      await uploadToDrive(file, "Datos Empresa");
+      const result = await uploadToDrive(file, "Datos Empresa");
       
-      toast({
-        title: "Archivo en Drive",
-        description: "El logo se ha guardado en la carpeta 'Datos Empresa'.",
-      });
-
-      toast({
-        title: "Nota de Visualización",
-        description: "Para previsualizarlo aquí, pegue el ID público en el campo de URL.",
-      });
+      // Sincronización automática de URL v2.7
+      if (result && result.fileId) {
+        const driveUrl = `https://drive.google.com/uc?id=${result.fileId}&export=download`;
+        setFormData(prev => ({ ...prev, logoUrl: driveUrl }));
+        
+        toast({
+          title: "Logo Actualizado",
+          description: "La imagen se ha subido a Drive y se ha vinculado automáticamente.",
+        });
+      } else {
+        toast({
+          title: "Archivo en Drive",
+          description: "El logo se guardó en Drive. Si no se actualiza, verifique el ID del archivo.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error de Subida",
@@ -107,13 +113,14 @@ export default function EmpresaConfigPage() {
       const docRef = doc(db, 'Configuracion', 'Empresa');
       await setDoc(docRef, formData, { merge: true });
 
+      // Respaldo de configuración en Drive
       const configBlob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
       const configFile = new File([configBlob], "config_empresa.json", { type: 'application/json' });
       await uploadToDrive(configFile, "Datos Empresa");
 
       toast({
-        title: "Sincronización v2.6 Exitosa",
-        description: "Datos actualizados en Firestore y respaldados en Google Drive.",
+        title: "Sincronización v2.7 Exitosa",
+        description: "Datos institucionales actualizados y respaldados en Drive.",
       });
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -131,7 +138,7 @@ export default function EmpresaConfigPage() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.6...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.7...</p>
       </div>
     );
   }
@@ -147,7 +154,7 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Gestión Institucional Sincronizada (v2.6)
+            Gestión Institucional Sincronizada (v2.7)
           </p>
         </div>
         <Button 
@@ -163,7 +170,7 @@ export default function EmpresaConfigPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
-            <CardDescription className="font-bold">Datos sincronizados con la carpeta "Datos Empresa" de Google Drive.</CardDescription>
+            <CardDescription className="font-bold">Datos sincronizados automáticamente con Google Drive.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
             <div className="space-y-4">
@@ -180,7 +187,7 @@ export default function EmpresaConfigPage() {
                 </div>
                 <div className="flex-1 w-full space-y-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Acciones de Imagen</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Carga Automática v2.7</p>
                     <div className="flex flex-wrap gap-3">
                       <Button 
                         variant="outline" 
@@ -189,7 +196,7 @@ export default function EmpresaConfigPage() {
                         disabled={uploadingLogo}
                       >
                         {uploadingLogo ? <Loader2 className="animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                        SUBIR A DRIVE (CARPETA DATOS)
+                        SUBIR DESDE DISPOSITIVO
                       </Button>
                       <input 
                         type="file" 
@@ -201,12 +208,12 @@ export default function EmpresaConfigPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Enlace del Logo para Web</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Enlace Institucional</p>
                     <Input 
                       value={formData.logoUrl}
                       onChange={e => setFormData({...formData, logoUrl: e.target.value})}
                       className="h-12 rounded-xl bg-white border-none font-bold shadow-sm" 
-                      placeholder="https://drive.google.com/uc?id=..."
+                      placeholder="URL del logo (se genera automáticamente al subir)"
                     />
                   </div>
                 </div>

@@ -50,15 +50,16 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional Dinámica v2.4 */}
+      {/* Cabecera Institucional Dinámica v2.5 */}
       <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-12 shadow-xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center">
         {/* Logo de Fondo Detrás del Texto */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.07] pointer-events-none z-0">
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
           {empresa?.logoUrl && (
             <img 
               src={empresa.logoUrl} 
               alt="Background Logo" 
               className="w-[300px] sm:w-[500px] object-contain transition-transform duration-1000"
+              onError={(e) => (e.currentTarget.style.display = 'none')}
             />
           )}
         </div>
@@ -84,7 +85,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.4</p>
+          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.5</p>
         </div>
         {isAdmin && (
           <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit">
@@ -155,9 +156,14 @@ export default function DashboardPage() {
               <div className="pt-6 border-t border-white/10">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Identidad Institucional</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-2 shadow-xl overflow-hidden">
                     {empresa?.logoUrl ? (
-                      <img src={empresa.logoUrl} alt="Logo Small" className="w-full h-full object-contain" />
+                      <img 
+                        src={empresa.logoUrl} 
+                        alt="Logo" 
+                        className="w-full h-full object-contain"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
                     ) : (
                       <Building2 className="text-[#0a3d62] w-6 h-6" />
                     )}

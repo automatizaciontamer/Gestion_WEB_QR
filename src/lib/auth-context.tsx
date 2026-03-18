@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 import { Empresa } from './types';
 
@@ -30,24 +30,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const db = useFirestore();
   const auth = useFirebaseAuth();
 
-  // Cargar datos de empresa al inicio
+  // Sincronización en tiempo real de datos de empresa
   useEffect(() => {
     if (!db || !auth) return;
     
-    const loadConfig = async () => {
-      try {
-        await signInAnonymously(auth).catch(() => null);
-        const empresaRef = doc(db, 'Configuracion', 'Empresa');
-        const snap = await getDoc(empresaRef);
-        if (snap.exists()) {
-          setEmpresa({ ...snap.data(), id: snap.id } as Empresa);
-        }
-      } catch (error) {
-        console.warn('Configuración de empresa no accesible inicialmente.');
-      }
-    };
+    // Autenticación anónima para permitir lectura inicial
+    signInAnonymously(auth).catch(() => null);
 
-    loadConfig();
+    const empresaRef = doc(db, 'Configuracion', 'Empresa');
+    const unsubscribe = onSnapshot(empresaRef, (snap) => {
+      if (snap.exists()) {
+        setEmpresa({ ...snap.data(), id: snap.id } as Empresa);
+      }
+    }, (error) => {
+      console.warn('Configuración de empresa no accesible (permisos iniciales)');
+    });
+
+    return () => unsubscribe();
   }, [db, auth]);
 
   const logout = useCallback(() => {
@@ -82,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin del documento Configuracion/Empresa)
+      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin)
       if (empresa) {
         if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
@@ -120,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos de Obra (Campo) - También permite ver la obra individualmente
+      // 4. Accesos de Obra (Campo)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),

@@ -11,7 +11,9 @@ import {
   Key,
   Loader2,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +45,7 @@ import { useRouter } from 'next/navigation';
 export default function UsuariosHabilitadosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const db = useFirestore();
   const { toast } = useToast();
   const { isAdmin } = useAuth();
@@ -79,13 +82,19 @@ export default function UsuariosHabilitadosPage() {
     e.preventDefault();
     if (!db) return;
 
+    // Guardamos el email en minúsculas para consistencia en la búsqueda
+    const dataToSave = {
+      ...formData,
+      email: formData.email.toLowerCase().trim()
+    };
+
     const usersRef = collection(db, 'usuarios_clientes');
-    addDoc(usersRef, formData)
+    addDoc(usersRef, dataToSave)
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: usersRef.path,
           operation: 'create',
-          requestResourceData: formData,
+          requestResourceData: dataToSave,
         });
         errorEmitter.emit('permission-error', permissionError);
       });
@@ -124,7 +133,10 @@ export default function UsuariosHabilitadosPage() {
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Sincronización de Accesos con App Android</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setShowPassword(false);
+        }}>
           <DialogTrigger asChild>
             <Button className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
               <UserPlus className="w-5 h-5" /> NUEVO USUARIO
@@ -167,13 +179,22 @@ export default function UsuariosHabilitadosPage() {
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
                     id="password" 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     placeholder="••••••••" 
-                    className="pl-12 rounded-xl h-12 bg-secondary/30"
+                    className="pl-12 pr-12 rounded-xl h-12 bg-secondary/30"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     required 
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
                 </div>
               </div>
               <DialogFooter className="pt-6 gap-3">

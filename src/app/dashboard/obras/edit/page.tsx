@@ -7,7 +7,9 @@ import {
   ArrowLeft, 
   Save, 
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +31,7 @@ function EditObraContent() {
   const { toast } = useToast();
   
   const [isSaving, setIsSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<Partial<Obra>>({});
 
   const obraDocRef = useMemo(() => {
@@ -54,8 +57,14 @@ function EditObraContent() {
     if (!db || !id) return;
     setIsSaving(true);
     
+    // Email en minúsculas
+    const dataToUpdate = {
+      ...formData,
+      usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim()
+    };
+
     const docRef = doc(db, 'obras', id);
-    updateDoc(docRef, formData)
+    updateDoc(docRef, dataToUpdate)
       .then(() => {
         toast({
           title: "Obra actualizada",
@@ -67,7 +76,7 @@ function EditObraContent() {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'update',
-          requestResourceData: formData,
+          requestResourceData: dataToUpdate,
         });
         errorEmitter.emit('permission-error', permissionError);
       })
@@ -176,7 +185,25 @@ function EditObraContent() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="claveAcceso">Contraseña de Acceso</Label>
-                <Input id="claveAcceso" type="text" value={formData.claveAcceso || ''} onChange={handleInputChange} required />
+                <div className="relative">
+                  <Input 
+                    id="claveAcceso" 
+                    type={showPassword ? "text" : "password"} 
+                    value={formData.claveAcceso || ''} 
+                    onChange={handleInputChange} 
+                    className="pr-12"
+                    required 
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

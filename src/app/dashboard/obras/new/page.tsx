@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -5,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, 
   Save, 
-  Image as ImageIcon, 
   Upload,
   FileText,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +29,7 @@ export default function NewObraPage() {
   const db = useFirestore();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     numeroOF: '',
     numeroOT: '',
@@ -72,10 +75,11 @@ export default function NewObraPage() {
         }
       }
 
-      // Guardar registro en Firestore
+      // Guardar registro en Firestore (email en minúsculas)
       const obrasRef = collection(db, 'obras');
       const obraData = {
         ...formData,
+        usuarioAcceso: formData.usuarioAcceso.toLowerCase().trim(),
         files: fileNames,
         createdAt: Date.now(),
         serverTimestamp: serverTimestamp(),
@@ -219,7 +223,26 @@ export default function NewObraPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="claveAcceso">Clave de Acceso</Label>
-                <Input id="claveAcceso" type="text" placeholder="Contraseña de campo" value={formData.claveAcceso} onChange={handleInputChange} required />
+                <div className="relative">
+                  <Input 
+                    id="claveAcceso" 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Contraseña de campo" 
+                    className="pr-12"
+                    value={formData.claveAcceso} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

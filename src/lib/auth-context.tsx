@@ -36,8 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
+    // Normalizar identificador a minúsculas para que no discrimine mayúsculas
+    const normalizedIdentifier = identifier.toLowerCase().trim();
+
     // Administrador Maestro: Usuario "admin", Clave "14569"
-    if (identifier === 'admin' && password === '14569') {
+    if (normalizedIdentifier === 'admin' && password === '14569') {
       const adminData = { 
         email: 'admin@tamer.com', 
         role: 'admin', 
@@ -56,9 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!db) return false;
     
     try {
+      // Nota: Asumimos que los emails se guardan en minúsculas en la base de datos para búsqueda exacta
       const q = query(
         collection(db, 'usuarios_clientes'),
-        where('email', '==', identifier),
+        where('email', '==', normalizedIdentifier),
         where('password', '==', password)
       );
       const querySnapshot = await getDocs(q);

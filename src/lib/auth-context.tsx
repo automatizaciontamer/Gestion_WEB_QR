@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadConfig = async () => {
       try {
         await signInAnonymously(auth).catch(() => null);
-        const empresaRef = doc(db, 'config', 'CONFIGURACION');
+        const empresaRef = doc(db, 'Configuracion', 'Empresa');
         const snap = await getDoc(empresaRef);
         if (snap.exists()) {
           setEmpresa({ ...snap.data(), id: snap.id } as Empresa);
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin del documento CONFIGURACION)
+      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin del documento Configuracion/Empresa)
       if (empresa) {
         if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos de Obra
+      // 4. Accesos de Obra (Campo) - También permite ver la obra individualmente
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),

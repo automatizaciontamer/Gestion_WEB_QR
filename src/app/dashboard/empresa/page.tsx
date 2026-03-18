@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Mail, Phone, MapPin, Hash, Settings, Globe, Upload } from 'lucide-react';
+import { Building2, Save, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,7 +25,7 @@ export default function EmpresaConfigPage() {
   const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState<Empresa>({
-    id: 'CONFIGURACION',
+    id: 'Empresa',
     nombre: '',
     direccion: '',
     nit: '',
@@ -46,7 +46,7 @@ export default function EmpresaConfigPage() {
   useEffect(() => {
     if (!db) return;
     const loadEmpresa = async () => {
-      const docRef = doc(db, 'config', 'CONFIGURACION');
+      const docRef = doc(db, 'Configuracion', 'Empresa');
       try {
         const snap = await getDoc(docRef);
         if (snap.exists()) {
@@ -70,13 +70,8 @@ export default function EmpresaConfigPage() {
     if (!db) return;
     setSaving(true);
 
-    const dataToSave = {
-      ...formData,
-      usuarioAdmin: formData.usuarioAdmin.toLowerCase().trim()
-    };
-
-    const docRef = doc(db, 'config', 'CONFIGURACION');
-    setDoc(docRef, dataToSave, { merge: true })
+    const docRef = doc(db, 'Configuracion', 'Empresa');
+    setDoc(docRef, formData, { merge: true })
       .then(() => {
         toast({
           title: "Datos Actualizados",
@@ -87,7 +82,7 @@ export default function EmpresaConfigPage() {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
-          requestResourceData: dataToSave,
+          requestResourceData: formData,
         });
         errorEmitter.emit('permission-error', permissionError);
       })
@@ -114,7 +109,7 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Identidad Institucional (Solo Acceso Administrador)
+            Identidad Institucional (v2.2)
           </p>
         </div>
         <Button 
@@ -130,7 +125,7 @@ export default function EmpresaConfigPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
-            <CardDescription className="font-bold">Datos para reportes, portal web y QRs técnicos.</CardDescription>
+            <CardDescription className="font-bold">Datos para reportes y portal web.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-4">
@@ -163,7 +158,7 @@ export default function EmpresaConfigPage() {
                   value={formData.direccion}
                   onChange={e => setFormData({...formData, direccion: e.target.value})}
                   className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="Dirección completa"
+                  placeholder="Julio A. Roca 1899 Benegas Godoy Cruz"
                 />
               </div>
 
@@ -178,12 +173,12 @@ export default function EmpresaConfigPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email de Contacto Global</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email de Contacto</Label>
                   <Input 
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
                     className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="info@tamer.com"
+                    placeholder="automatizacion.tamer@gmail.com"
                   />
                 </div>
               </div>
@@ -200,7 +195,7 @@ export default function EmpresaConfigPage() {
 
               <div className="space-y-4">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Upload className="w-3 h-3" /> Logo de Empresa (URL)
+                  <Upload className="w-3 h-3" /> Logo Institucional (URL)
                 </Label>
                 <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center bg-secondary/10 p-6 rounded-3xl">
                   <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow-inner p-2">
@@ -211,14 +206,13 @@ export default function EmpresaConfigPage() {
                     )}
                   </div>
                   <div className="flex-1 w-full space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase">URL Directa de Imagen</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase">URL Directa del Logo</p>
                     <Input 
                       value={formData.logoUrl}
                       onChange={e => setFormData({...formData, logoUrl: e.target.value})}
                       className="h-12 rounded-xl bg-white border-none font-bold shadow-sm" 
-                      placeholder="Pegue la URL directa del logo"
+                      placeholder="Pegue la URL del logo de Drive o Web"
                     />
-                    <p className="text-[9px] text-muted-foreground italic font-medium">Recomendado: Imagen PNG con fondo transparente.</p>
                   </div>
                 </div>
               </div>

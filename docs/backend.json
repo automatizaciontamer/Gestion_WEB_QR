@@ -73,9 +73,9 @@
       "schema": "UsuarioHabilitado",
       "description": "Usuarios autorizados para acceso web y app."
     },
-    "/config/CONFIGURACION": {
+    "/Configuracion/Empresa": {
       "schema": "EmpresaConfig",
-      "description": "Documento de configuración global con las credenciales maestras y datos institucionales."
+      "description": "Documento de configuración global con los datos institucionales."
     }
   }
 }

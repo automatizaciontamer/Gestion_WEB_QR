@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // CASO ESPECIAL: Login desde un QR de Obra específico (Aislamiento Estricto v3.6.8)
+      // CASO ESPECIAL: Login desde un QR de Obra (Aislamiento v4.0.0)
       if (restrictedToObraId) {
         const obraRef = doc(db, 'obras', restrictedToObraId);
         const obraSnap = await getDoc(obraRef);
@@ -73,16 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (obraSnap.exists()) {
           const d = obraSnap.data();
           const isMainMatch = d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password;
-          const isAuthorizedMatch = d.authorizedEmails?.some((e: any) => 
+          const isAuthorizedMatch = (d.authorizedEmails || []).some((e: any) => 
             e.email?.toLowerCase().trim() === normalizedIdentifier && e.password === password
           );
 
           if (isMainMatch || isAuthorizedMatch) {
+            // CRÍTICO: Asegurar que el objeto de sesión tenga el campo 'email' para validación en visor
             const userData = { 
               ...d, 
               id: obraSnap.id, 
               role: 'field',
-              email: normalizedIdentifier,
+              email: normalizedIdentifier, // Importante para useMemo isAuthorized
               nombre: d.nombreObra || 'Personal de Obra'
             };
             setIsAdmin(false);
@@ -149,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra (General - Redirige al visor)
+      // 4. Accesos Directos de Obra (General)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -176,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      console.error('Error en proceso de login:', error);
+      console.error('Error crítico en login v4.0:', error);
     }
 
     return false;

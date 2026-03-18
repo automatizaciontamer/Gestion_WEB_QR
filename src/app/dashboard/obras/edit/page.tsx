@@ -33,6 +33,7 @@ function EditObraContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
+  // Inicialización segura para evitar "uncontrolled input" error v4.0
   const [formData, setFormData] = useState({
     codigoCliente: '',
     nombreObra: '',
@@ -124,14 +125,14 @@ function EditObraContent() {
 
       toast({
         title: "Obra Actualizada",
-        description: "Cambios sincronizados correctamente.",
+        description: "Los cambios han sido sincronizados correctamente.",
       });
       
       router.push('/dashboard/obras');
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo actualizar la obra.",
+        description: "No se pudo actualizar la obra en Firestore.",
         variant: "destructive",
       });
     } finally {
@@ -139,64 +140,106 @@ function EditObraContent() {
     }
   };
 
-  if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto w-12 h-12" /></div>;
+  if (loading) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+      <Loader2 className="animate-spin w-12 h-12 text-primary" />
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.0...</p>
+    </div>
+  );
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-20 pt-16 lg:pt-0">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl border"><ArrowLeft className="w-5 h-5" /></Button>
-        <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl border shadow-sm">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.0</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
-            <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Información de Obra</CardTitle></CardHeader>
+            <CardHeader className="bg-secondary/20 p-8 border-b">
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Información de Ingeniería</CardTitle>
+            </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Código Cliente</Label><Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
-                <div className="space-y-2"><Label>Obra</Label><Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Código Cliente</Label>
+                  <Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Nombre Obra</Label>
+                  <Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Número OF</Label><Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
-                <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Número OF</Label>
+                  <Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Número OT</Label>
+                  <Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+                </div>
               </div>
-              <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
-              <div className="space-y-2"><Label>Dirección</Label><Input id="direccion" value={formData.direccion} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
-              <div className="space-y-2"><Label>URL Carpeta Drive</Label><Input id="driveFolderUrl" value={formData.driveFolderUrl} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" placeholder="https://drive.google.com/..." /></div>
-              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[100px] rounded-xl" /></div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Cliente / Razón Social</Label>
+                <Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Dirección de Obra</Label>
+                <Input id="direccion" value={formData.direccion} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">URL Carpeta Drive (Repositorio General)</Label>
+                <Input id="driveFolderUrl" value={formData.driveFolderUrl} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" placeholder="https://drive.google.com/..." />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Descripción Técnica</Label>
+                <Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[120px] rounded-2xl" />
+              </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
-            <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Documentación</CardTitle></CardHeader>
+            <CardHeader className="bg-secondary/20 p-8 border-b">
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Documentación Sincronizada</CardTitle>
+            </CardHeader>
             <CardContent className="p-8 space-y-6">
-              <div className="border-4 border-dashed rounded-[2.5rem] p-10 text-center cursor-pointer bg-secondary/10" onClick={() => document.getElementById('edit-file-input')?.click()}>
-                <Upload className="mx-auto w-12 h-12 text-primary opacity-40 mb-2" />
-                <p className="font-black">Subir archivos adicionales</p>
+              <div 
+                className="border-4 border-dashed rounded-[2.5rem] p-12 text-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-all border-secondary" 
+                onClick={() => document.getElementById('edit-file-input')?.click()}
+              >
+                <Upload className="mx-auto w-12 h-12 text-primary opacity-40 mb-3" />
+                <p className="font-black text-[#0a3d62]">SUBIR PLANOS ADICIONALES</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1">Sincronización automática con Drive</p>
                 <input id="edit-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               
               {(existingFiles.length > 0 || newFilesToUpload.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {existingFiles.map((f, i) => (
-                    <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileText className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-xs font-bold truncate">{f.name || 'Archivo'}</span>
+                    <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <FileText className="w-5 h-5 text-primary shrink-0" />
+                        <span className="text-xs font-black truncate text-[#0a3d62]">{f.name || 'Documento Técnico'}</span>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeExistingFile(i)}>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => removeExistingFile(i)}>
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
                   ))}
                   {newFilesToUpload.map((f, i) => (
-                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <Upload className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className="text-xs font-black truncate">{f.name}</span>
+                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-pulse">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <Upload className="w-5 h-5 text-blue-500 shrink-0" />
+                        <span className="text-xs font-black truncate text-blue-900">{f.name}</span>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeNewFile(i)}>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive rounded-xl" onClick={() => removeNewFile(i)}>
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -208,15 +251,30 @@ function EditObraContent() {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
-          <Card className="rounded-[3rem] bg-[#0a3d62] text-white p-8 space-y-6 shadow-2xl">
-            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
-            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
+          <Card className="rounded-[3.5rem] bg-[#0a3d62] text-white p-10 space-y-8 shadow-2xl border-none">
+            <h3 className="font-black text-xl tracking-tight flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-primary" /> ACCESO TÉCNICO
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Usuario de Obra</Label>
+                <Input id="usuarioAcceso" value={formData.usuarioAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Clave Maestra</Label>
+                <Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+              </div>
+            </div>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-relaxed">
+              Estas credenciales permiten al personal de campo acceder al visor técnico a través del código QR.
+            </p>
           </Card>
+          
           <div className="space-y-4">
-            {isSaving && <Progress value={uploadProgress} className="h-2" />}
-            <Button type="submit" className="w-full h-20 rounded-[2rem] font-black text-xl bg-primary shadow-2xl" disabled={isSaving}>
-              {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-8 h-8 mr-2" />}
-              GUARDAR CAMBIOS
+            {isSaving && <Progress value={uploadProgress} className="h-2 rounded-full" />}
+            <Button type="submit" className="w-full h-24 rounded-[2.5rem] font-black text-2xl bg-primary shadow-2xl shadow-primary/30 transition-all active:scale-95" disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin w-8 h-8" /> : <Save className="w-8 h-8 mr-3" />}
+              {isSaving ? 'SINCRONIZANDO...' : 'GUARDAR CAMBIOS'}
             </Button>
           </div>
         </div>

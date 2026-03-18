@@ -20,12 +20,25 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+    
     setIsLoading(true);
-    const success = await login(identifier, password);
-    if (!success) {
+    try {
+      const success = await login(identifier, password);
+      if (!success) {
+        toast({
+          title: "Error de acceso",
+          description: "Credenciales incorrectas. Verifique sus datos.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+      // Si tiene éxito, el AuthProvider redirigirá automáticamente
+    } catch (error) {
+      console.error("Login Error:", error);
       toast({
-        title: "Error de acceso",
-        description: "Credenciales incorrectas. Verifique sus datos.",
+        title: "Error de sistema",
+        description: "No se pudo conectar con el servidor. Intente nuevamente.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -62,6 +75,7 @@ export default function LoginPage() {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
+                    autoComplete="username"
                   />
                 </div>
               </div>
@@ -77,6 +91,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
@@ -110,7 +125,7 @@ export default function LoginPage() {
         </Card>
         
         <p className="text-center text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black opacity-50">
-          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.0
+          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.1
         </p>
       </div>
     </div>

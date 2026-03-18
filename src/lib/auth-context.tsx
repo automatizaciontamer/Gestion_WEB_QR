@@ -36,9 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const loadConfig = async () => {
       try {
-        // Necesitamos sesión aunque sea anónima para leer de Firestore
         await signInAnonymously(auth).catch(() => null);
-        
         const empresaRef = doc(db, 'config', 'CONFIGURACION');
         const snap = await getDoc(empresaRef);
         if (snap.exists()) {
@@ -80,26 +78,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(adminData);
         sessionStorage.setItem('tamer_session', JSON.stringify(adminData));
+        router.push('/dashboard');
         return true;
       }
 
       // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin del documento CONFIGURACION)
-      const empresaRef = doc(db, 'config', 'CONFIGURACION');
-      const empresaSnap = await getDoc(empresaRef).catch(() => null);
-      
-      if (empresaSnap && empresaSnap.exists()) {
-        const empData = empresaSnap.data() as Empresa;
-        if (normalizedIdentifier === empData.usuarioAdmin?.toLowerCase().trim() && password === empData.passwordAdmin) {
+      if (empresa) {
+        if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
-            email: empData.usuarioAdmin,
-            role: 'admin', // Se trata como admin por ser la cuenta institucional
-            nombre: empData.nombre,
+            email: empresa.usuarioAdmin,
+            role: 'admin',
+            nombre: empresa.nombre,
             id: 'empresa-global'
           };
           setIsAdmin(true);
           setIsUser(true);
           setUser(empresaUserData);
           sessionStorage.setItem('tamer_session', JSON.stringify(empresaUserData));
+          router.push('/dashboard');
           return true;
         }
       }
@@ -120,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+        router.push('/dashboard');
         return true;
       }
 
@@ -139,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+        router.push('/dashboard');
         return true;
       }
 

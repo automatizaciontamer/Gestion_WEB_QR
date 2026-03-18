@@ -30,14 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const db = useFirestore();
   const auth = useFirebaseAuth();
 
-  // Sincronización robusta v2.9.5
   useEffect(() => {
     if (!db || !auth) return;
     
-    // Asegurar sesión anónima persistente para lectura de configuración
     signInAnonymously(auth).catch(() => null);
 
-    // Ruta exacta Configuracion/Empresa (Capitalizada según DB)
     const empresaRef = doc(db, 'Configuracion', 'Empresa');
     
     const unsubscribe = onSnapshot(empresaRef, (snap) => {
@@ -84,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Credenciales Institucionales desde Firestore
+      // 2. Credenciales Institucionales
       if (empresa) {
         if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
@@ -122,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra
+      // 4. Accesos Directos de Obra (Optimizado para QR v3.3.1)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -138,7 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
-        router.push('/dashboard');
+        
+        // Redirección directa al visor de la obra específica
+        router.push(`/obra/view?id=${docSnap.id}`);
         return true;
       }
 

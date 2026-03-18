@@ -25,10 +25,10 @@ function QRPosterContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && id) {
-      // URL absoluta para asegurar que el QR no falle al escanear en campo
+      // URL absoluta garantizada para el visor técnico v3.3.1
       const baseUrl = window.location.origin;
-      // Usamos la ruta limpia sin .html gracias a cleanUrls
-      setQrUrl(`${baseUrl}/obra/view?id=${id}`);
+      const targetUrl = `${baseUrl}/obra/view?id=${id}`;
+      setQrUrl(targetUrl);
     }
   }, [id]);
 
@@ -46,7 +46,7 @@ function QRPosterContent() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground font-medium">Generando Ficha QR Industrial v3.3...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Generando Acceso Técnico v3.3.1...</p>
       </div>
     );
   }
@@ -65,17 +65,20 @@ function QRPosterContent() {
     window.print();
   };
 
-  const qrImageSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&color=0a3d62`;
+  // Generación del QR con la URL del visor técnico directa
+  const qrImageSrc = qrUrl 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&color=0a3d62`
+    : '';
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between no-print px-4 lg:px-0">
-        <Button variant="ghost" onClick={() => router.back()} className="gap-2 font-bold">
-          <ArrowLeft className="w-4 h-4" /> Panel de Control
+        <Button variant="ghost" onClick={() => router.back()} className="gap-2 font-black uppercase tracking-widest text-xs text-[#0a3d62]">
+          <ArrowLeft className="w-4 h-4" /> Volver al Listado
         </Button>
         <div className="flex gap-2">
-          <Button onClick={handlePrint} className="gap-2 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-xl h-12 px-6 font-bold shadow-lg shadow-[#0a3d62]/20">
-            <Printer className="w-4 h-4" /> Imprimir Ficha A4
+          <Button onClick={handlePrint} className="gap-2 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-xl h-12 px-6 font-black shadow-lg shadow-[#0a3d62]/20">
+            <Printer className="w-4 h-4" /> IMPRIMIR FICHA A4
           </Button>
         </div>
       </div>
@@ -83,7 +86,7 @@ function QRPosterContent() {
       <div className="bg-white shadow-2xl mx-auto border overflow-hidden w-full max-w-[210mm] min-h-[297mm] p-0 flex flex-col font-sans">
         <div className="bg-[#0a3d62] text-white py-12 px-8 text-center">
           <h1 className="text-4xl font-black tracking-widest uppercase mb-2">TAMER INDUSTRIAL S.A.</h1>
-          <p className="text-sm font-bold opacity-80 tracking-[0.2em]">DOCUMENTACIÓN TÉCNICA Y PLANOS v3.3</p>
+          <p className="text-sm font-bold opacity-80 tracking-[0.2em]">DOCUMENTACIÓN TÉCNICA Y PLANOS v3.3.1</p>
         </div>
 
         <div className="flex-1 px-8 sm:px-16 py-12 flex flex-col items-center">
@@ -119,23 +122,29 @@ function QRPosterContent() {
 
           <div className="flex-1 flex flex-col items-center justify-center w-full my-6">
             <div className="border-[10px] sm:border-[15px] border-[#0a3d62] p-4 sm:p-8 bg-white shadow-xl">
-              <img 
-                src={qrImageSrc} 
-                alt="QR Code Industrial" 
-                className="w-[200px] h-[200px] sm:w-[300px] sm:h-[300px]"
-              />
+              {qrImageSrc ? (
+                <img 
+                  src={qrImageSrc} 
+                  alt="QR Code Industrial" 
+                  className="w-[200px] h-[200px] sm:w-[300px] sm:h-[300px]"
+                />
+              ) : (
+                <div className="w-[300px] h-[300px] flex items-center justify-center bg-gray-100">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              )}
             </div>
-            <p className="mt-8 text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest text-center">
-              ESCANEE PARA ACCESO DIRECTO A PLANOS Y ARCHIVOS
+            <p className="mt-8 text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest text-center max-w-md">
+              ESCANEE PARA ACCESO DIRECTO A LA CARPETA TÉCNICA DE ESTA OBRA
             </p>
           </div>
         </div>
 
         <div className="bg-[#0a3d62] text-white py-10 px-12 text-center">
-          <p className="text-lg sm:text-xl font-bold leading-tight">
+          <p className="text-lg sm:text-xl font-bold leading-tight uppercase tracking-tighter">
             ACCESO EXCLUSIVO PARA PERSONAL DE OBRA Y CLIENTES
           </p>
-          <p className="text-[10px] mt-2 opacity-60">Sincronización Cloud Tamer | v3.3.0</p>
+          <p className="text-[10px] mt-2 opacity-60 font-black uppercase tracking-widest">Sincronización Cloud Tamer | v3.3.1</p>
         </div>
       </div>
     </div>
@@ -144,7 +153,7 @@ function QRPosterContent() {
 
 export default function QRPosterPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Cargando aplicación de impresión...</div>}>
+    <Suspense fallback={<div className="p-8 text-center font-black uppercase tracking-widest text-xs">Cargando aplicación de impresión...</div>}>
       <QRPosterContent />
     </Suspense>
   );

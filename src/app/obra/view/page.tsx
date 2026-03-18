@@ -16,8 +16,7 @@ import {
   ChevronRight,
   Info,
   ArrowLeft,
-  ShieldCheck,
-  Download
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
@@ -48,16 +47,23 @@ function ObraViewContent() {
   const getDriveViewUrl = (file: any) => {
     if (!file) return '';
     let fileId = '';
+    
+    // Extracción robusta de ID de Google Drive (v5.0.5)
     if (typeof file === 'string') {
-      fileId = file;
+      if (file.includes('id=')) {
+        fileId = file.split('id=')[1].split('&')[0];
+      } else if (file.includes('/d/')) {
+        fileId = file.split('/d/')[1].split('/')[0];
+      } else {
+        fileId = file;
+      }
     } else {
       fileId = file.id || file.fileId || '';
     }
     
     if (!fileId) return '';
-    if (fileId.startsWith('http')) return fileId;
     
-    // Usamos el visor nativo de Google Drive para máxima compatibilidad (v5.0.5)
+    // Usamos el visor nativo de Google Drive para garantizar visualización y descarga oficial
     return `https://drive.google.com/file/d/${fileId}/view`;
   };
 

@@ -81,7 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
 
           if (isMainMatch || isAuthorizedMatch) {
-            const userData = { ...d, id: obraSnap.id, role: 'field' };
+            const userData = { 
+              ...d, 
+              id: obraSnap.id, 
+              role: 'field',
+              email: normalizedIdentifier // CRÍTICO: Aseguramos que el email esté en la sesión para validación
+            };
             setIsAdmin(false);
             setIsUser(true);
             setUser(userData);
@@ -137,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
-        const userData = { ...docSnap.data(), id: docSnap.id, role: 'user' };
+        const userData = { ...docSnap.data(), id: docSnap.id, role: 'user', email: normalizedIdentifier };
         setIsAdmin(false);
         setIsUser(true);
         setUser(userData);
@@ -157,7 +162,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!obraSnapshot.empty) {
         const docSnap = obraSnapshot.docs[0];
-        const userData = { ...docSnap.data(), id: docSnap.id, role: 'field' };
+        const userData = { 
+          ...docSnap.data(), 
+          id: docSnap.id, 
+          role: 'field',
+          email: normalizedIdentifier 
+        };
         setIsAdmin(false);
         setIsUser(true);
         setUser(userData);

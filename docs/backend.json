@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Obra": {
@@ -59,20 +60,20 @@
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": ["anonymous", "password"]
   },
   "firestore": {
     "/obras/{obraId}": {
       "schema": "Obra",
-      "description": "Colección principal de proyectos industriales accesibles desde la App Android y Web."
+      "description": "Colección de proyectos industriales. Lectura permitida para usuarios autenticados (incluyendo anónimos) para soportar el flujo de campo y web."
     },
     "/usuarios_clientes/{usuarioId}": {
       "schema": "UsuarioHabilitado",
-      "description": "Usuarios autorizados para acceder a la plataforma web de clientes."
+      "description": "Usuarios autorizados. Lectura permitida para validación de login anónimo."
     },
     "/config/empresa": {
       "schema": "Empresa",
-      "description": "Configuración global de la empresa accesible para lectura pública y escritura administrativa."
+      "description": "Configuración global de la empresa. Lectura permitida para branding y validación de acceso maestro."
     }
   }
 }

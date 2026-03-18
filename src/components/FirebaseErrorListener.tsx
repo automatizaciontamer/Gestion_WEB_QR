@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -10,6 +11,12 @@ export const FirebaseErrorListener = () => {
 
   useEffect(() => {
     const handlePermissionError = (error: FirestorePermissionError) => {
+      // No mostrar toast para errores en la carga de configuración inicial
+      if (error.context.path === 'config/empresa' && error.context.operation === 'get') {
+        console.warn('Acceso denegado a configuración de empresa (normal si no está logueado)');
+        return;
+      }
+
       // Log detallado para el desarrollador/agente
       console.error('--- FIRESTORE PERMISSION DENIED ---');
       console.error('Operación:', error.context.operation);
@@ -22,8 +29,8 @@ export const FirebaseErrorListener = () => {
 
       toast({
         variant: "destructive",
-        title: "Error de Seguridad",
-        description: `Acceso denegado a ${error.context.path}. Verifica las reglas de Firestore.`,
+        title: "Error de Permisos",
+        description: `No tienes autorización para realizar esta acción en: ${error.context.path}`,
       });
     };
 

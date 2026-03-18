@@ -1,9 +1,11 @@
+
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
 import { Empresa } from './types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -28,8 +30,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const router = useRouter();
   const db = useFirestore();
+  const auth = useFirebaseAuth();
 
-  // Cargar datos de empresa al inicio con captura de errores silenciosa para no bloquear el login
+  // Cargar datos de empresa al inicio de forma silenciosa
   useEffect(() => {
     if (!db) return;
     const empresaRef = doc(db, 'config', 'empresa');
@@ -40,12 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch((error) => {
-        // Emitimos el error para depuración pero no bloqueamos la app
-        const permissionError = new FirestorePermissionError({
-          path: empresaRef.path,
-          operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        // No emitimos error aquí porque es normal que falle antes del login
+        console.warn('Configuración de empresa no accesible aún.');
       });
   }, [db]);
 
@@ -58,57 +57,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
+    if (!db || !auth) return false;
+    
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
-    // 1. Administrador Maestro (Login local, no requiere Firestore)
-    if (normalizedIdentifier === 'admin' && password === '14569') {
-      const adminData = { 
-        email: 'admin@tamer.com', 
-        role: 'admin', 
-        nombre: 'Administrador Maestro',
-        id: 'admin-master'
-      };
-      setIsAdmin(true);
-      setIsUser(true);
-      setUser(adminData);
-      sessionStorage.setItem('tamer_session', JSON.stringify(adminData));
-      return true;
-    }
-
-    // 2. Email de Contacto de Empresa (Acceso Global)
-    if (empresa && normalizedIdentifier === empresa.emailContacto.toLowerCase() && password === empresa.claveContacto) {
-      const empresaUserData = {
-        email: empresa.emailContacto,
-        role: 'empresa',
-        nombre: empresa.razonSocial,
-        id: 'empresa-global'
-      };
-      setIsAdmin(false);
-      setIsUser(true);
-      setUser(empresaUserData);
-      sessionStorage.setItem('tamer_session', JSON.stringify(empresaUserData));
-      return true;
-    }
-
-    // 3. Usuarios Habilitados y Accesos de Obra
-    if (!db) return false;
-    
     try {
-      // Intento en usuarios_clientes
+      // Autenticamos anónimamente en Firebase para obtener permisos de Firestore
+      await signInAnonymously(auth);
+
+      // 1. Administrador Maestro (Local)
+      if (normalizedIdentifier === 'admin' && password === '14569') {
+        const adminData = { 
+          email: 'admin@tamer.com', 
+          role: 'admin', 
+          nombre: 'Administrador Maestro',
+          id: 'admin-master'
+        };
+        setIsAdmin(true);
+        setIsUser(true);
+        setUser(adminData);
+        sessionStorage.setItem('tamer_session', JSON.stringify(adminData));
+        return true;
+      }
+
+      // 2. Email de Contacto de Empresa (Acceso Global)
+      // Intentamos obtener el doc de empresa ahora que tenemos sesión anónima
+      const empresaRef = doc(db, 'config', 'empresa');
+      const empresaSnap = await getDoc(empresaRef).catch(() => null);
+      
+      if (empresaSnap && empresaSnap.exists()) {
+        const empData = empresaSnap.data() as Empresa;
+        if (normalizedIdentifier === empData.emailContacto.toLowerCase() && password === empData.claveContacto) {
+          const empresaUserData = {
+            email: empData.emailContacto,
+            role: 'empresa',
+            nombre: empData.razonSocial,
+            id: 'empresa-global'
+          };
+          setIsAdmin(false);
+          setIsUser(true);
+          setUser(empresaUserData);
+          sessionStorage.setItem('tamer_session', JSON.stringify(empresaUserData));
+          return true;
+        }
+      }
+
+      // 3. Usuarios Habilitados
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
         where('password', '==', password)
       );
       
-      const querySnapshot = await getDocs(q).catch((err) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'usuarios_clientes',
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw err;
-      });
+      const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
@@ -120,21 +121,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // Intento en accesos de obra
+      // 4. Accesos de Obra
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
         where('claveAcceso', '==', password)
       );
       
-      const obraSnapshot = await getDocs(qObra).catch((err) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'obras',
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw err;
-      });
+      const obraSnapshot = await getDocs(qObra);
 
       if (!obraSnapshot.empty) {
         const docSnap = obraSnapshot.docs[0];
@@ -147,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      // Los errores ya se emiten arriba
+      console.error('Error durante el proceso de login:', error);
     }
 
     return false;
@@ -161,12 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data);
         setIsUser(true);
         setIsAdmin(data.role === 'admin');
+        // Re-autenticar anónimamente si hay sesión guardada
+        if (auth) signInAnonymously(auth).catch(() => null);
       } catch (e) {
         sessionStorage.removeItem('tamer_session');
       }
     }
     setLoading(false);
-  }, []);
+  }, [auth]);
 
   return (
     <AuthContext.Provider value={{ isAdmin, isUser, user, login, logout, loading, empresa }}>

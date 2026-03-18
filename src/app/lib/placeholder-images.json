@@ -1,17 +1,10 @@
-
 {
   "placeholderImages": [
     {
       "id": "1",
-      "description": "Tamer Industrial Project",
-      "imageUrl": "https://picsum.photos/seed/tamer1/800/600",
-      "imageHint": "industrial engineering"
-    },
-    {
-      "id": "2",
-      "description": "Tamer Technical Blueprint",
-      "imageUrl": "https://picsum.photos/seed/tamer2/800/600",
-      "imageHint": "technical drawing"
+      "description": "Logo Tamer",
+      "imageUrl": "https://picsum.photos/seed/tamer-logo/200/200",
+      "imageHint": "industrial logo"
     }
   ]
 }

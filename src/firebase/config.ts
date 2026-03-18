@@ -1,6 +1,6 @@
 'use client';
 
-// Configuración de Firebase para Tamer Industrial S.A.
+// Configuración de Firebase para Gestion-Web-QR
 export const firebaseConfig = {
     apiKey: "AIzaSyCdEUN3yT7TqWgTVVCzN3GERFua2-IVQls",
     authDomain: "gestion-web-qr.firebaseapp.com",

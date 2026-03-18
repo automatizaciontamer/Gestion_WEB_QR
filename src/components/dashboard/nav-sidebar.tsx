@@ -113,6 +113,9 @@ export function NavSidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-80 border-none">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Menú de Navegación</SheetTitle>
+            </SheetHeader>
             <SidebarContent />
           </SheetContent>
         </Sheet>

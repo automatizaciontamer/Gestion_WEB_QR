@@ -74,16 +74,16 @@ export default function NewObraPage() {
     setUploadProgress(0);
     
     try {
+      // Requerimiento: Carpeta = (codigo cliente + of + ot)
       const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
       const uploadedFiles: ObraFile[] = [];
       
       if (filesToUpload.length > 0) {
         for (let i = 0; i < filesToUpload.length; i++) {
           const result = await uploadToDrive(filesToUpload[i], folderName);
-          // Aseguramos que el archivo se guarde incluso si el ID tarda en retornar
           uploadedFiles.push({
             name: filesToUpload[i].name,
-            id: result?.fileId || ''
+            id: result?.fileId || result?.id || ''
           });
           setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         }
@@ -102,7 +102,7 @@ export default function NewObraPage() {
       await addDoc(obrasRef, obraData);
 
       toast({
-        title: "Obra Registrada v3.7.5",
+        title: "Obra Registrada",
         description: `Proyecto "${formData.nombreObra}" sincronizado con éxito.`,
       });
       
@@ -110,7 +110,7 @@ export default function NewObraPage() {
     } catch (error) {
       toast({
         title: "Error en Sincronización",
-        description: "No se pudo conectar con el servidor de Drive.",
+        description: "No se pudo completar la operación en Drive/Firestore.",
         variant: "destructive",
       });
     } finally {
@@ -119,16 +119,14 @@ export default function NewObraPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl hover:bg-white shadow-sm border">
-            <ArrowLeft className="w-5 h-5 text-[#0a3d62]" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Nuevo Proyecto Técnico</h1>
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] mt-1">Sincronización Cloud Tamer v3.7.5</p>
-          </div>
+    <div className="space-y-8 max-w-6xl mx-auto pb-20 pt-16 lg:pt-0">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl border shadow-sm">
+          <ArrowLeft className="w-5 h-5 text-[#0a3d62]" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-black text-[#0a3d62]">Nuevo Proyecto</h1>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer v5.0</p>
         </div>
       </div>
 
@@ -137,40 +135,40 @@ export default function NewObraPage() {
           <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b">
               <CardTitle className="text-xl font-black text-[#0a3d62] flex items-center gap-3">
-                <FileText className="w-6 h-6 text-primary" /> Ficha Técnica de Obra
+                <FileText className="w-6 h-6 text-primary" /> Ficha Técnica
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="codigoCliente" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Código Cliente</Label>
+                  <Label htmlFor="codigoCliente" className="text-[10px] font-black uppercase tracking-widest ml-2">Código Cliente</Label>
                   <Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nombreObra" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Nombre de la Obra</Label>
+                  <Label htmlFor="nombreObra" className="text-[10px] font-black uppercase tracking-widest ml-2">Nombre de Obra</Label>
                   <Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" required />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="numeroOF" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Número OF</Label>
+                  <Label htmlFor="numeroOF" className="text-[10px] font-black uppercase tracking-widest ml-2">Número OF</Label>
                   <Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="numeroOT" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Número OT</Label>
+                  <Label htmlFor="numeroOT" className="text-[10px] font-black uppercase tracking-widest ml-2">Número OT</Label>
                   <Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" required />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cliente" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Cliente</Label>
+                <Label htmlFor="cliente" className="text-[10px] font-black uppercase tracking-widest ml-2">Razón Social Cliente</Label>
                 <Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="direccion" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Dirección</Label>
+                <Label htmlFor="direccion" className="text-[10px] font-black uppercase tracking-widest ml-2">Dirección de Obra</Label>
                 <Input id="direccion" value={formData.direccion} onChange={handleInputChange} className="h-14 rounded-2xl bg-secondary/30 border-none font-bold" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="descripcion" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Descripción</Label>
+                <Label htmlFor="descripcion" className="text-[10px] font-black uppercase tracking-widest ml-2">Descripción Técnica</Label>
                 <Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="min-h-[100px] rounded-2xl bg-secondary/30 border-none" />
               </div>
             </CardContent>
@@ -188,15 +186,19 @@ export default function NewObraPage() {
                 onClick={() => document.getElementById('new-file-input')?.click()}
               >
                 <Upload className="w-16 h-16 text-primary mx-auto opacity-40" />
-                <p className="font-black text-lg text-[#0a3d62] uppercase">Seleccionar Documentos</p>
+                <p className="font-black text-lg text-[#0a3d62] uppercase tracking-tight">Seleccionar Documentación</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.0</p>
                 <input id="new-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               {filesToUpload.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {filesToUpload.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border">
-                      <span className="text-xs font-black truncate max-w-[200px]">{f.name}</span>
-                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeFile(i)}>
+                    <div key={i} className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <FileText className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-xs font-black truncate text-[#0a3d62]">{f.name}</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => removeFile(i)}>
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -211,16 +213,16 @@ export default function NewObraPage() {
           <Card className="border-none shadow-2xl rounded-[3rem] bg-[#0a3d62] text-white overflow-hidden">
             <CardHeader className="p-8 border-b border-white/10">
               <CardTitle className="text-xl font-black flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-primary" /> Acceso App
+                <CheckCircle2 className="w-6 h-6 text-primary" /> Acceso Técnico
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase opacity-60">Email Usuario</Label>
+                <Label className="text-[10px] font-black uppercase opacity-60 ml-2">Usuario (Email)</Label>
                 <Input id="usuarioAcceso" type="email" value={formData.usuarioAcceso} onChange={handleInputChange} className="h-14 rounded-2xl bg-white/10 border-none font-bold" required />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase opacity-60">Contraseña</Label>
+                <Label className="text-[10px] font-black uppercase opacity-60 ml-2">Clave Acceso</Label>
                 <div className="relative">
                   <Input id="claveAcceso" type={showPassword ? "text" : "password"} value={formData.claveAcceso} onChange={handleInputChange} className="h-14 rounded-2xl bg-white/10 border-none font-bold pr-12" required />
                   <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)}>
@@ -233,9 +235,9 @@ export default function NewObraPage() {
 
           <div className="space-y-4">
             {isUploading && <Progress value={uploadProgress} className="h-3 rounded-full" />}
-            <Button type="submit" className="w-full h-20 bg-primary hover:bg-primary/90 rounded-[2rem] font-black text-xl shadow-2xl gap-4" disabled={isUploading}>
-              {isUploading ? <Loader2 className="animate-spin" /> : <Save className="w-8 h-8" />}
-              GUARDAR OBRA
+            <Button type="submit" className="w-full h-24 bg-primary hover:bg-primary/90 rounded-[2.5rem] font-black text-2xl shadow-2xl gap-4 transition-all active:scale-95" disabled={isUploading}>
+              {isUploading ? <Loader2 className="animate-spin w-8 h-8" /> : <Save className="w-8 h-8" />}
+              {isUploading ? 'SINCRO...' : 'GUARDAR'}
             </Button>
           </div>
         </div>

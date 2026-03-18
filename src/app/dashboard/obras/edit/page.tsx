@@ -9,7 +9,11 @@ import {
   Loader2,
   Upload,
   X,
-  FileText
+  FileText,
+  CloudUpload,
+  CheckCircle2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +36,7 @@ function EditObraContent() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     codigoCliente: '',
@@ -58,6 +63,7 @@ function EditObraContent() {
 
   useEffect(() => {
     if (obra) {
+      // Corrección error controlled/uncontrolled: asegurar valores string vacíos
       setFormData({
         codigoCliente: obra.codigoCliente || '',
         nombreObra: obra.nombreObra || '',
@@ -70,7 +76,7 @@ function EditObraContent() {
         driveFolderUrl: obra.driveFolderUrl || '',
         direccion: obra.direccion || ''
       });
-      setExistingFiles(obra.files || (obra as any).archivos || []);
+      setExistingFiles(obra.files || []);
     }
   }, [obra]);
 
@@ -99,7 +105,7 @@ function EditObraContent() {
     setIsSaving(true);
     
     try {
-      const folderName = `${formData.codigoCliente?.trim() || 'Obra'}-${formData.numeroOF?.trim() || 'OF'}-${formData.numeroOT?.trim() || 'OT'}`;
+      const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
       const newUploadedFiles: ObraFile[] = [];
       
       if (newFilesToUpload.length > 0) {
@@ -123,15 +129,15 @@ function EditObraContent() {
       await updateDoc(doc(db, 'obras', id), dataToUpdate);
 
       toast({
-        title: "Obra Actualizada",
-        description: "Los cambios han sido sincronizados correctamente.",
+        title: "Cambios Guardados",
+        description: "Sincronización v5.0 completada correctamente.",
       });
       
       router.push('/dashboard/obras');
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo actualizar la obra en Firestore.",
+        description: "No se pudo actualizar la obra.",
         variant: "destructive",
       });
     } finally {
@@ -142,7 +148,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha Técnica v4.5.2...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Conectando con Servidor v5.0...</p>
     </div>
   );
 
@@ -150,11 +156,11 @@ function EditObraContent() {
     <div className="space-y-8 max-w-6xl mx-auto pb-20 pt-16 lg:pt-0">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-2xl border shadow-sm">
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-[#0a3d62]" />
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v4.5.2</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.0</p>
         </div>
       </div>
 
@@ -162,7 +168,7 @@ function EditObraContent() {
         <div className="lg:col-span-8 space-y-8">
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b">
-              <CardTitle className="text-xl font-black text-[#0a3d62]">Información General</CardTitle>
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Información Técnica</CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,10 +200,6 @@ function EditObraContent() {
                 <Input id="direccion" value={formData.direccion || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest ml-2">URL Carpeta Drive</Label>
-                <Input id="driveFolderUrl" value={formData.driveFolderUrl || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-2xl" placeholder="https://drive.google.com/..." />
-              </div>
-              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2">Descripción Técnica</Label>
                 <Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[120px] rounded-2xl" />
               </div>
@@ -206,7 +208,7 @@ function EditObraContent() {
 
           <Card className="rounded-[3rem] border-none shadow-2xl bg-white overflow-hidden">
             <CardHeader className="bg-secondary/20 p-8 border-b">
-              <CardTitle className="text-xl font-black text-[#0a3d62]">Sincronización de Archivos</CardTitle>
+              <CardTitle className="text-xl font-black text-[#0a3d62]">Documentación Sincronizada</CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
               <div 
@@ -215,7 +217,6 @@ function EditObraContent() {
               >
                 <Upload className="mx-auto w-12 h-12 text-primary opacity-40 mb-3" />
                 <p className="font-black text-[#0a3d62]">SUBIR NUEVOS PLANOS</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1">Vinculación automática con Drive</p>
                 <input id="edit-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               
@@ -233,9 +234,9 @@ function EditObraContent() {
                     </div>
                   ))}
                   {newFilesToUpload.map((f, i) => (
-                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border animate-pulse">
+                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border animate-pulse">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <Upload className="w-5 h-5 text-blue-500 shrink-0" />
+                        <CloudUpload className="w-5 h-5 text-blue-500 shrink-0" />
                         <span className="text-xs font-black truncate text-blue-900">{f.name}</span>
                       </div>
                       <Button type="button" variant="ghost" size="icon" className="text-destructive rounded-xl" onClick={() => removeNewFile(i)}>
@@ -252,7 +253,7 @@ function EditObraContent() {
         <div className="lg:col-span-4 space-y-8">
           <Card className="rounded-[3.5rem] bg-[#0a3d62] text-white p-10 space-y-8 shadow-2xl border-none">
             <h3 className="font-black text-xl tracking-tight flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-primary" /> ACCESO TÉCNICO
+              <CheckCircle2 className="w-5 h-5 text-primary" /> ACCESO TÉCNICO
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -261,7 +262,12 @@ function EditObraContent() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Contraseña</Label>
-                <Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+                <div className="relative">
+                  <Input id="claveAcceso" type={showPassword ? "text" : "password"} value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold pr-12" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

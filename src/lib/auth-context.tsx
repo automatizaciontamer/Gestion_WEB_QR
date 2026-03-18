@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
-import { collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 import { Empresa } from './types';
 
@@ -12,7 +12,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isUser: boolean;
   user: any | null;
-  login: (identifier: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string, restrictedToObraId?: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
   empresa: Empresa | null;
@@ -57,13 +57,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  const login = async (identifier: string, password: string) => {
+  const login = async (identifier: string, password: string, restrictedToObraId?: string) => {
     if (!db || !auth) return false;
     
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
     try {
       await signInAnonymously(auth);
+
+      // CASO ESPECIAL: Login desde un QR de Obra específico
+      if (restrictedToObraId) {
+        const obraRef = doc(db, 'obras', restrictedToObraId);
+        const obraSnap = await getDoc(obraRef);
+        
+        if (obraSnap.exists()) {
+          const d = obraSnap.data();
+          if (d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password) {
+            const userData = { ...d, id: obraSnap.id, role: 'field' };
+            setIsAdmin(false);
+            setIsUser(true);
+            setUser(userData);
+            sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+            // No redirigimos aquí, dejamos que el componente maneje su estado
+            return true;
+          }
+        }
+        return false; // Credenciales no válidas para ESTA obra
+      }
 
       // 1. Acceso Maestro Admin
       if (normalizedIdentifier === 'admin' && password === '14569') {
@@ -81,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Credenciales Institucionales
+      // 2. Credenciales Institucionales (Empresa)
       if (empresa) {
         if (normalizedIdentifier === empresa.usuarioAdmin?.toLowerCase().trim() && password === empresa.passwordAdmin) {
           const empresaUserData = {
@@ -119,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra (Optimizado para QR v3.3.2)
+      // 4. Accesos Directos de Obra (General - si no viene de un ID específico)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -135,8 +155,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
-        
-        // Redirección directa al visor de la obra específica detectada por las credenciales
         router.push(`/obra/view?id=${docSnap.id}`);
         return true;
       }

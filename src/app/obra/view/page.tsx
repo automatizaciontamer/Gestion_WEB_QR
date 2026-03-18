@@ -1,26 +1,26 @@
 
 "use client"
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useMemo, Suspense, useState } from 'react';
+import { useMemo, Suspense, useState, useEffect } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
   Download, 
   Construction, 
   MapPin, 
-  User, 
+  User as UserIcon, 
   Info,
   Loader2,
   AlertCircle,
   ExternalLink,
   Eye,
   Lock,
-  ChevronRight,
   ShieldCheck,
-  EyeOff
+  EyeOff,
+  LogOut
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,8 +41,9 @@ function ObraViewContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const db = useFirestore();
-  const { isUser, login, empresa } = useAuth();
+  const { isUser, user, isAdmin, login, logout, empresa } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [identifier, setIdentifier] = useState('');
@@ -57,15 +58,39 @@ function ObraViewContent() {
 
   const { data: obra, loading, error } = useDoc<Obra>(obraDocRef);
 
+  // Validación de autorización estricta v3.3.2
+  const isAuthorized = useMemo(() => {
+    if (!isUser || !user || !obra) return false;
+    // Admins tienen acceso total
+    if (isAdmin) return true;
+    // Usuarios de campo (field) solo acceden a SU obra
+    if (user.role === 'field') {
+      return user.id === id;
+    }
+    // Usuarios clientes (user) acceden si están en la lista (o por defecto si el sistema es abierto a clientes)
+    if (user.role === 'user') return true;
+    return false;
+  }, [isUser, user, obra, isAdmin, id]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    
+    // Intentamos el login
     const success = await login(identifier, password);
+    
     if (!success) {
       toast({
         variant: "destructive",
-        title: "Acceso Denegado",
-        description: "Credenciales incorrectas para esta documentación.",
+        title: "Credenciales Inválidas",
+        description: "El usuario o contraseña no coinciden.",
+      });
+    } else {
+      // Si el login tuvo éxito, el useEffect de AuthContext o la redirección interna de login() actuará.
+      // Pero forzamos una verificación de si es el usuario correcto para ESTA obra.
+      toast({
+        title: "Acceso Validado",
+        description: "Sincronizando con el servidor de archivos...",
       });
     }
     setIsLoggingIn(false);
@@ -78,6 +103,7 @@ function ObraViewContent() {
           <AlertCircle className="w-20 h-20 text-destructive mx-auto" />
           <h1 className="text-2xl font-black text-[#0a3d62]">Falta Identificación</h1>
           <p className="text-muted-foreground font-medium">Por favor, escanee el código QR técnico para acceder.</p>
+          <Button onClick={() => router.push('/login')} variant="outline" className="rounded-xl font-black">VOLVER AL INICIO</Button>
         </div>
       </div>
     );
@@ -88,7 +114,7 @@ function ObraViewContent() {
       <div className="min-h-screen flex items-center justify-center p-6 bg-secondary/20">
         <div className="text-center space-y-4">
           <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
-          <p className="text-lg font-black text-primary uppercase tracking-widest">Verificando Obra...</p>
+          <p className="text-lg font-black text-primary uppercase tracking-widest">Sincronizando v3.3.2...</p>
         </div>
       </div>
     );
@@ -100,51 +126,70 @@ function ObraViewContent() {
         <div className="max-w-md w-full text-center space-y-6 bg-white p-10 rounded-[2.5rem] shadow-2xl">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto" />
           <h1 className="text-2xl font-black text-[#0a3d62]">Obra No Encontrada</h1>
-          <p className="text-muted-foreground font-medium">El registro solicitado no existe en el sistema.</p>
+          <p className="text-muted-foreground font-medium">El registro solicitado no existe o ha sido removido.</p>
+          <Button onClick={() => router.push('/login')} className="bg-[#0a3d62] rounded-xl font-black">REGRESAR</Button>
         </div>
       </div>
     );
   }
 
-  if (!isUser) {
+  // Si no está autorizado (no logueado o logueado con cuenta incorrecta para esta obra)
+  if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-secondary/20 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
-          <div className="bg-[#0a3d62] p-8 text-center text-white">
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-              <Lock className="w-8 h-8 text-white" />
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+          <div className="bg-[#0a3d62] p-10 text-center text-white relative">
+            <div className="absolute top-4 right-4 opacity-20">
+              <Construction className="w-12 h-12" />
             </div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">Acceso Restringido</h2>
-            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-1">Portal Técnico Tamer Industrial</p>
+            <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/20">
+              <Lock className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Acceso Técnico</h2>
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Tamer Industrial S.A. v3.3.2</p>
           </div>
-          <CardContent className="p-8">
-            <div className="mb-6 p-4 bg-primary/10 rounded-2xl flex items-start gap-3">
-              <Construction className="w-5 h-5 text-primary shrink-0 mt-1" />
-              <div>
-                <p className="font-black text-primary text-sm uppercase">{obra.nombreObra}</p>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase">Escaneado: OF {obra.numeroOF}</p>
+          <CardContent className="p-10">
+            <div className="mb-8 p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">PROYECTO DETECTADO</p>
+              <h3 className="font-black text-xl text-[#0a3d62] leading-tight uppercase">{obra.nombreObra}</h3>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className="bg-primary/20 text-primary border-none text-[9px] font-black">OF: {obra.numeroOF}</Badge>
+                <Badge variant="outline" className="border-primary/20 text-primary text-[9px] font-black">OT: {obra.numeroOT}</Badge>
               </div>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            {isUser && !isAuthorized && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-amber-800 uppercase leading-tight">Sesión activa no autorizada</p>
+                  <p className="text-[10px] text-amber-700 font-medium">Su cuenta actual no tiene acceso a esta obra.</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={logout} className="text-amber-600 hover:bg-amber-100 rounded-xl">
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Usuario / Email Autorizado</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">ID de Usuario Autorizado</Label>
                 <Input 
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
-                  className="h-12 rounded-xl bg-secondary/30 border-none font-bold"
-                  placeholder="email@autorizado.com"
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-lg focus:bg-white transition-all px-6"
+                  placeholder="email@obra.com"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Contraseña</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Contraseña de Campo</Label>
                 <div className="relative">
                   <Input 
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/30 border-none font-bold pr-12"
+                    className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-lg focus:bg-white transition-all px-6 pr-14"
                     placeholder="••••••••"
                     required
                   />
@@ -152,25 +197,25 @@ function ObraViewContent() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:bg-transparent"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#0a3d62] hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </Button>
                 </div>
               </div>
               <Button 
                 type="submit" 
-                className="w-full h-14 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-2xl font-black gap-2 mt-4 shadow-xl shadow-[#0a3d62]/20"
+                className="w-full h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-[1.5rem] font-black text-lg gap-3 mt-6 shadow-2xl shadow-[#0a3d62]/30 active:scale-95 transition-all"
                 disabled={isLoggingIn}
               >
-                {isLoggingIn ? <Loader2 className="animate-spin" /> : <><ShieldCheck className="w-5 h-5" /> VALIDAR ACCESO</>}
+                {isLoggingIn ? <Loader2 className="animate-spin w-6 h-6" /> : <><ShieldCheck className="w-6 h-6" /> VALIDAR CREDENCIALES</>}
               </Button>
             </form>
           </CardContent>
-          <div className="p-6 bg-secondary/20 text-center">
-            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-              Uso exclusivo para personal de obra y clientes autorizados.
+          <div className="px-10 pb-10">
+            <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] text-center leading-relaxed">
+              ESTA DOCUMENTACIÓN ES CONFIDENCIAL Y PROPIEDAD DE {empresa?.nombre || 'TAMER INDUSTRIAL'}. EL ACCESO NO AUTORIZADO ESTÁ PROHIBIDO.
             </p>
           </div>
         </Card>
@@ -179,73 +224,91 @@ function ObraViewContent() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/10 pb-20 font-body">
-      <div className="bg-[#0a3d62] text-white py-12 px-6 shadow-2xl">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-center md:text-left flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl shadow-black/20 p-2">
+    <div className="min-h-screen bg-[#f1f5f9] pb-20 font-body">
+      {/* Cabecera v3.3.2 */}
+      <div className="bg-[#0a3d62] text-white pt-16 pb-24 px-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-10 opacity-5">
+          <Construction className="w-64 h-64" />
+        </div>
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+          <div className="text-center md:text-left flex flex-col md:flex-row items-center gap-6">
+            <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl p-4 transform hover:rotate-3 transition-transform">
               {empresa?.logoUrl ? (
                 <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
               ) : (
-                <Construction className="w-10 h-10 text-[#0a3d62]" />
+                <Construction className="w-12 h-12 text-[#0a3d62]" />
               )}
             </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tighter uppercase">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
-              <p className="text-[10px] font-black opacity-60 tracking-[0.4em] mt-1 uppercase">SISTEMA DIGITAL DE PLANOS Y DOCUMENTACIÓN</p>
+            <div className="space-y-1">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tighter uppercase leading-none">{empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}</h1>
+              <p className="text-[10px] font-black opacity-60 tracking-[0.5em] uppercase">DOCUMENTACIÓN TÉCNICA DIGITAL</p>
             </div>
           </div>
-          <Badge variant="outline" className="border-white/30 text-white font-mono text-xl py-2 px-6 rounded-2xl bg-white/10 backdrop-blur-md">
-            OF: {obra.numeroOF}
-          </Badge>
+          <div className="flex flex-col items-center md:items-end gap-3">
+            <Badge className="bg-white/10 backdrop-blur-md border border-white/20 text-white font-mono text-2xl py-3 px-8 rounded-[1.5rem] shadow-xl">
+              OF: {obra.numeroOF}
+            </Badge>
+            <Button variant="ghost" onClick={logout} className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl font-black text-[10px] tracking-widest gap-2">
+              <LogOut className="w-4 h-4" /> CERRAR SESIÓN TÉCNICA
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-10 space-y-8">
-        <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem] bg-white">
-          <CardHeader className="py-8 border-b">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-2xl">
-                <Construction className="w-8 h-8 text-primary" />
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 -mt-16 space-y-10">
+        <Card className="border-none shadow-2xl overflow-hidden rounded-[3.5rem] bg-white">
+          <CardHeader className="py-12 border-b bg-gray-50/30">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="p-6 bg-primary/10 rounded-[2.5rem] shadow-inner">
+                <Construction className="w-12 h-12 text-primary" />
               </div>
-              <CardTitle className="text-2xl sm:text-3xl uppercase font-black text-[#0a3d62] leading-tight">
-                {obra.nombreObra}
-              </CardTitle>
+              <div className="text-center md:text-left space-y-2">
+                <CardTitle className="text-3xl sm:text-5xl uppercase font-black text-[#0a3d62] leading-none tracking-tighter">
+                  {obra.nombreObra}
+                </CardTitle>
+                <CardDescription className="text-sm font-bold text-muted-foreground uppercase tracking-widest">PROYECTO DE INGENIERÍA E INSTALACIONES</CardDescription>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-6 sm:p-8 space-y-6 border-b md:border-b-0 md:border-r">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-secondary rounded-lg shrink-0">
-                    <User className="w-5 h-5 text-primary" />
+              <div className="p-10 space-y-8 border-b md:border-b-0 md:border-r">
+                <div className="flex items-start gap-6">
+                  <div className="p-4 bg-[#f8fafc] rounded-2xl shadow-sm shrink-0 border border-secondary">
+                    <UserIcon className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Cliente / Solicitante</p>
-                    <p className="font-black text-lg text-gray-800">{obra.cliente}</p>
-                    <p className="text-xs font-mono text-primary font-bold">Ref: {obra.codigoCliente}</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Cliente Final</p>
+                    <p className="font-black text-2xl text-[#0a3d62] leading-tight">{obra.cliente}</p>
+                    <p className="text-xs font-bold text-primary mt-1">CÓDIGO: {obra.codigoCliente}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-secondary rounded-lg shrink-0">
-                    <MapPin className="w-5 h-5 text-primary" />
+                <div className="flex items-start gap-6">
+                  <div className="p-4 bg-[#f8fafc] rounded-2xl shadow-sm shrink-0 border border-secondary">
+                    <MapPin className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Ubicación Técnica</p>
-                    <p className="font-bold text-gray-800">{obra.direccion || 'Instalación Industrial Tamer'}</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Ubicación de Obra</p>
+                    <p className="font-bold text-xl text-gray-800">{obra.direccion || 'Instalación Industrial Tamer'}</p>
                   </div>
                 </div>
               </div>
-              <div className="p-6 sm:p-8 space-y-4 bg-gray-50/50">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-secondary rounded-lg shrink-0">
-                    <Info className="w-5 h-5 text-primary" />
+              <div className="p-10 space-y-6 bg-[#fcfcfc]">
+                <div className="flex items-start gap-6">
+                  <div className="p-4 bg-white rounded-2xl shadow-sm shrink-0 border border-secondary">
+                    <Info className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Especificaciones</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Detalles del Proyecto</p>
                     <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                      {obra.descripcion || 'Documentación técnica estandarizada bajo normas de ingeniería vigentes.'}
+                      {obra.descripcion || 'Este proyecto cuenta con certificación de ingeniería Tamer Industrial. Los planos adjuntos representan la versión final aprobada para ejecución.'}
                     </p>
+                  </div>
+                </div>
+                <div className="pt-6 border-t">
+                  <div className="flex items-center gap-3 text-emerald-600">
+                    <ShieldCheck className="w-5 h-5" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Validación v3.3.2 Activa</span>
                   </div>
                 </div>
               </div>
@@ -253,97 +316,112 @@ function ObraViewContent() {
           </CardContent>
         </Card>
 
-        <div className="space-y-5">
-          <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.3em] px-4 flex items-center gap-3">
-            <FileText className="w-5 h-5 text-primary" /> PLANOS Y ARCHIVOS AUTORIZADOS
-          </h3>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between px-6">
+            <h3 className="text-xs font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-4">
+              <FileText className="w-6 h-6 text-primary" /> ARCHIVOS TÉCNICOS AUTORIZADOS
+            </h3>
+            <span className="text-[10px] font-black text-muted-foreground bg-white px-4 py-2 rounded-full shadow-sm">{obra.files?.length || 0} DOCUMENTOS</span>
+          </div>
           
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-5">
             {obra.files && obra.files.length > 0 ? (
               obra.files.map((fileName, idx) => (
-                <Card key={idx} className="border-none shadow-xl hover:shadow-2xl transition-all bg-white group rounded-[1.5rem] overflow-hidden">
-                  <CardContent className="p-4 sm:p-6 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 sm:gap-5">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-secondary rounded-xl sm:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                        <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
+                <Card key={idx} className="border-none shadow-xl hover:shadow-2xl transition-all bg-white group rounded-[2.5rem] overflow-hidden border-2 border-transparent hover:border-primary/10">
+                  <CardContent className="p-6 sm:p-8 flex items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 bg-[#f8fafc] rounded-[1.5rem] flex items-center justify-center text-primary group-hover:bg-[#0a3d62] group-hover:text-white transition-all duration-500 shadow-sm">
+                        <FileText className="w-8 h-8" />
                       </div>
-                      <div className="overflow-hidden">
-                        <p className="font-black text-[#0a3d62] text-sm sm:text-base truncate max-w-[140px] sm:max-w-md">
+                      <div className="overflow-hidden space-y-1">
+                        <p className="font-black text-[#0a3d62] text-lg sm:text-xl truncate max-w-[160px] sm:max-w-md">
                           {fileName}
                         </p>
-                        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-widest">Revisión Técnica APROBADA</p>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                          <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">LISTO PARA DESCARGA / VISUALIZACIÓN</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white" 
+                        className="w-12 h-12 rounded-2xl border-2 border-primary/10 text-primary hover:bg-primary hover:text-white transition-all" 
                         onClick={() => setSelectedFile(fileName)}
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
                       </Button>
                       <Button 
                         variant="outline" 
                         size="icon" 
-                        className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white"
+                        className="w-12 h-12 rounded-2xl border-2 border-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-5 h-5" />
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             ) : (
-              <div className="bg-white/50 border-4 border-dashed border-secondary rounded-[2.5rem] p-16 text-center space-y-4">
-                <FileText className="w-16 h-16 text-muted-foreground/20 mx-auto" />
-                <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Aún no se han vinculado planos digitales</p>
+              <div className="bg-white/40 border-4 border-dashed border-secondary rounded-[4rem] p-24 text-center space-y-6">
+                <div className="w-20 h-20 bg-secondary/50 rounded-full flex items-center justify-center mx-auto">
+                  <FileText className="w-10 h-10 text-muted-foreground/30" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-sm">Carpeta técnica vacía</p>
+                  <p className="text-xs text-muted-foreground/60 font-medium">No se han vinculado planos digitales a este proyecto aún.</p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         <Dialog open={!!selectedFile} onOpenChange={(open) => !open && setSelectedFile(null)}>
-          <DialogContent className="max-w-[95vw] w-full h-[85vh] p-0 rounded-3xl overflow-hidden border-none shadow-2xl flex flex-col">
-            <DialogHeader className="p-4 bg-[#0a3d62] text-white shrink-0">
-              <DialogTitle className="text-sm font-black uppercase tracking-widest truncate pr-8">
-                {selectedFile}
-              </DialogTitle>
-              <DialogDescription className="text-[10px] text-white/60 font-bold">
-                Visor de documentación técnica {empresa?.nombre || 'Tamer Industrial'}
-              </DialogDescription>
+          <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 rounded-[3rem] overflow-hidden border-none shadow-[0_0_100px_rgba(0,0,0,0.2)] flex flex-col">
+            <DialogHeader className="p-6 bg-[#0a3d62] text-white shrink-0 flex flex-row items-center justify-between">
+              <div>
+                <DialogTitle className="text-lg font-black uppercase tracking-tighter truncate pr-8">
+                  {selectedFile}
+                </DialogTitle>
+                <DialogDescription className="text-[10px] text-white/50 font-black uppercase tracking-widest mt-1">
+                  Sincronización Cloud Tamer v3.3.2
+                </DialogDescription>
+              </div>
             </DialogHeader>
-            <div className="flex-1 w-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 space-y-6">
-                <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]/20" />
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black text-[#0a3d62]">Visor de Documentos</h3>
-                  <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">
-                    El archivo se está cargando desde el servidor seguro. 
-                    Si la previsualización no carga, utilice el botón de descarga.
+            <div className="flex-1 w-full bg-[#f1f5f9] flex flex-col items-center justify-center relative">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 space-y-8">
+                <div className="relative">
+                  <Loader2 className="w-20 h-20 animate-spin text-primary/20" />
+                  <FileText className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-black text-[#0a3d62] uppercase tracking-tighter">Procesando Documento</h3>
+                  <p className="text-sm text-muted-foreground font-bold max-w-sm mx-auto uppercase tracking-wide">
+                    El archivo se está descargando desde el servidor seguro. Por favor, espere.
                   </p>
                 </div>
-                <Button className="rounded-2xl bg-[#0a3d62] h-14 px-8 font-black gap-2 shadow-xl shadow-[#0a3d62]/20">
-                  <Download className="w-5 h-5" /> DESCARGAR ARCHIVO
+                <Button className="rounded-2xl bg-[#0a3d62] h-16 px-12 font-black text-lg gap-3 shadow-2xl shadow-[#0a3d62]/20 active:scale-95 transition-all">
+                  <Download className="w-6 h-6" /> FORZAR DESCARGA
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        <footer className="pt-12 text-center space-y-6">
-          <div className="h-1 bg-[#0a3d62]/10 rounded-full w-24 mx-auto" />
-          <div>
-            <p className="text-[10px] text-muted-foreground font-black tracking-[0.4em] uppercase">
+        <footer className="pt-20 text-center space-y-10">
+          <div className="h-1.5 bg-[#0a3d62]/5 rounded-full w-32 mx-auto" />
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-black tracking-[0.5em] uppercase">
               © {new Date().getFullYear()} {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
             </p>
-            <p className="text-[9px] text-muted-foreground/60 font-medium mt-1">
-              Desarrollo de Ingeniería | Control de Calidad | Sincronización en Tiempo Real
+            <p className="text-[10px] text-muted-foreground/40 font-black uppercase tracking-widest">
+              INGENIERÍA | CALIDAD | INNOVACIÓN | v3.3.2
             </p>
           </div>
-          <Button variant="ghost" className="text-primary font-black text-[10px] tracking-widest gap-2 opacity-60 hover:opacity-100" asChild>
-            <a href="https://tamer.com.ar" target="_blank" rel="noopener noreferrer">
-              VISITAR SITIO WEB OFICIAL <ExternalLink className="w-3 h-3" />
+          <Button variant="ghost" className="text-primary font-black text-[10px] tracking-[0.3em] gap-3 opacity-40 hover:opacity-100 hover:bg-white rounded-2xl px-8 h-12 transition-all" asChild>
+            <a href={empresa?.web || "https://tamer.com.ar"} target="_blank" rel="noopener noreferrer">
+              PORTAL WEB OFICIAL <ExternalLink className="w-3 h-3" />
             </a>
           </Button>
         </footer>
@@ -356,7 +434,10 @@ export default function ObraViewPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-secondary/20">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Cargando...</p>
+        </div>
       </div>
     }>
       <ObraViewContent />

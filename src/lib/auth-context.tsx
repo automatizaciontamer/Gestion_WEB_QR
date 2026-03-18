@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 3. Usuarios Habilitados
+      // 3. Usuarios Habilitados (Clientes Web)
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 4. Accesos Directos de Obra (Optimizado para QR v3.3.1)
+      // 4. Accesos Directos de Obra (Optimizado para QR v3.3.2)
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
         
-        // Redirección directa al visor de la obra específica
+        // Redirección directa al visor de la obra específica detectada por las credenciales
         router.push(`/obra/view?id=${docSnap.id}`);
         return true;
       }

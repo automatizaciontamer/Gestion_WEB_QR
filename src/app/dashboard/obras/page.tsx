@@ -12,7 +12,9 @@ import {
   Trash2, 
   QrCode,
   Loader2,
-  Construction
+  Construction,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +55,16 @@ export default function ObrasPage() {
     );
   }, [obras, searchTerm]);
 
+  const handleCopyLink = (id: string) => {
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/obra/view?id=${id}`;
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Enlace Copiado",
+      description: "El link directo para pruebas ha sido copiado al portapapeles.",
+    });
+  };
+
   const handleDelete = (id: string, nombre: string) => {
     if (!db || !confirm(`¿Estás seguro de eliminar la obra "${nombre}"?`)) return;
 
@@ -76,7 +88,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada v3.5.2</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -144,7 +156,7 @@ export default function ObrasPage() {
                             <MoreVertical className="w-5 h-5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
+                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl min-w-[200px]">
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
                               <Edit className="w-4 h-4 text-primary" /> EDITAR OBRA
@@ -152,8 +164,19 @@ export default function ObrasPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
-                              <QrCode className="w-4 h-4 text-primary" /> GENERAR QR
+                              <QrCode className="w-4 h-4 text-primary" /> GENERAR QR / FICHA
                             </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleCopyLink(obra.id)}
+                            className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
+                          >
+                            <Copy className="w-4 h-4 text-primary" /> COPIAR LINK PRUEBA
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <a href={`/obra/view?id=${obra.id}`} target="_blank" className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
+                              <ExternalLink className="w-4 h-4 text-primary" /> ABRIR VISOR
+                            </a>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"

@@ -1,6 +1,7 @@
 'use client';
 
 // Configuración de Firebase para Gestion-Web-QR
+// Este proyecto es compartido con la App Android
 export const firebaseConfig = {
     apiKey: "AIzaSyCdEUN3yT7TqWgTVVCzN3GERFua2-IVQls",
     authDomain: "gestion-web-qr.firebaseapp.com",

@@ -35,9 +35,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
-    // Admin Hardcoded Login
+    // Administrador Maestro: Usuario "admin", Clave "14569"
     if (identifier === 'admin' && password === '14569') {
-      const adminData = { email: 'admin@tamer.com', role: 'admin', nombre: 'Administrador del Sistema' };
+      const adminData = { 
+        email: 'admin@tamer.com', 
+        role: 'admin', 
+        nombre: 'Administrador del Sistema',
+        id: 'admin-master'
+      };
       setIsAdmin(true);
       setIsUser(true);
       setUser(adminData);
@@ -46,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    // Cliente/Usuario Habilitado Login
+    // Usuario Habilitado (Consulta en Firestore compartida con Android)
     if (!db) return false;
     
     try {
@@ -68,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Error en login:", error);
     }
 
     return false;

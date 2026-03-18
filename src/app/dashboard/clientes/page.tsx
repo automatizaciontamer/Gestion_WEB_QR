@@ -70,8 +70,8 @@ export default function ClientesPage() {
   const filteredClients = useMemo(() => {
     if (!clients) return [];
     return clients.filter(client => 
-      client.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase())
+      client.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [clients, searchTerm]);
 
@@ -121,7 +121,7 @@ export default function ClientesPage() {
             <ShieldCheck className="w-8 h-8 text-primary" />
             Usuarios Habilitados
           </h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Gestión de Accesos Web y Documentación Técnica</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Gestión de Accesos Web Compartida con Android</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -201,7 +201,7 @@ export default function ClientesPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Sincronizando Base de Datos...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Sincronizando Usuarios...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -226,9 +226,6 @@ export default function ClientesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
-                          <DropdownMenuItem className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl">
-                            <Edit className="w-4 h-4 text-primary" /> Editar Perfil
-                          </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl"
                             onClick={() => handleDelete(client.id, client.nombre)}
@@ -249,7 +246,7 @@ export default function ClientesPage() {
             <div className="mx-auto w-24 h-24 bg-secondary/30 rounded-[2rem] flex items-center justify-center mb-6">
               <UserCheck className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-2xl font-black text-[#0a3d62]">Sin resultados</h3>
+            <h3 className="text-2xl font-black text-[#0a3d62]">Sin registros</h3>
             <p className="text-muted-foreground font-bold mt-2">No se encontraron usuarios habilitados.</p>
           </div>
         )}

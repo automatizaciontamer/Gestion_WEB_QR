@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash } from 'lucide-react';
+import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,14 +35,18 @@ export default function EmpresaConfigPage() {
   useEffect(() => {
     if (!db) return;
     const loadEmpresa = async () => {
+      const docRef = doc(db, 'config', 'empresa');
       try {
-        const docRef = doc(db, 'config', 'empresa');
         const snap = await getDoc(docRef);
         if (snap.exists()) {
           setFormData(snap.data() as Empresa);
         }
       } catch (error) {
-        console.error("Error loading empresa:", error);
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       } finally {
         setLoading(false);
       }

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useFirestore } from '@/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Empresa } from './types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface AuthContextType {
   isAdmin: boolean;
@@ -19,8 +21,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hora de sesión
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isUser, setIsUser] = useState(false);
@@ -30,15 +30,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const db = useFirestore();
 
-  // Cargar datos de empresa al inicio
+  // Cargar datos de empresa al inicio con captura de errores
   useEffect(() => {
     if (!db) return;
     const empresaRef = doc(db, 'config', 'empresa');
-    getDoc(empresaRef).then((snap) => {
-      if (snap.exists()) {
-        setEmpresa(snap.data() as Empresa);
-      }
-    });
+    getDoc(empresaRef)
+      .then((snap) => {
+        if (snap.exists()) {
+          setEmpresa(snap.data() as Empresa);
+        }
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: empresaRef.path,
+          operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   }, [db]);
 
   const logout = useCallback(() => {
@@ -52,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
-    // 1. Administrador Maestro
+    // 1. Administrador Maestro (Hardcoded para emergencia/setup inicial)
     if (normalizedIdentifier === 'admin' && password === '14569') {
       const adminData = { 
         email: 'admin@tamer.com', 
@@ -91,7 +99,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         where('email', '==', normalizedIdentifier),
         where('password', '==', password)
       );
-      const querySnapshot = await getDocs(q);
+      
+      const querySnapshot = await getDocs(q).catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'usuarios_clientes',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw err;
+      });
       
       if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
@@ -108,7 +124,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         where('usuarioAcceso', '==', normalizedIdentifier),
         where('claveAcceso', '==', password)
       );
-      const obraSnapshot = await getDocs(qObra);
+      
+      const obraSnapshot = await getDocs(qObra).catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'obras',
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw err;
+      });
+
       if (!obraSnapshot.empty) {
         const doc = obraSnapshot.docs[0];
         const userData = { ...doc.data(), id: doc.id, role: 'field' };
@@ -120,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      console.error("Error en login:", error);
+      // Los errores de permiso ya se emiten arriba
     }
 
     return false;

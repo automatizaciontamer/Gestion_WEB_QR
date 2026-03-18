@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,8 +25,7 @@ function QRPosterContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && id) {
-      // URL para el portal de descarga público
-      // Aseguramos que el QR apunte al dominio del proyecto activo
+      // URL para el portal de descarga público con el dominio correcto
       const baseUrl = "https://gestion-tamer-ind-s-a.web.app";
       setQrUrl(`${baseUrl}/obra/view?id=${id}`);
     }
@@ -54,7 +54,7 @@ function QRPosterContent() {
     return (
       <div className="text-center p-12">
         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Obra no encontrada en la base compartida</h2>
+        <h2 className="text-xl font-bold">Obra no encontrada</h2>
         <Button onClick={() => router.back()} className="mt-4">Volver</Button>
       </div>
     );
@@ -69,7 +69,7 @@ function QRPosterContent() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between no-print px-4 lg:px-0">
-        <Button variant="ghost" onClick={() => router.back()} className="gap-2">
+        <Button variant="ghost" onClick={() => router.back()} className="gap-2 font-bold">
           <ArrowLeft className="w-4 h-4" /> Panel de Control
         </Button>
         <div className="flex gap-2">

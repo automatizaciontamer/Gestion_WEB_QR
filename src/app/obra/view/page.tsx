@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useMemo, Suspense } from 'react';
+import { useMemo, Suspense, useState } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
@@ -15,16 +15,20 @@ import {
   Info,
   Loader2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 function ObraViewContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const db = useFirestore();
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const obraDocRef = useMemo(() => {
     if (!db || !id) return null;
@@ -83,10 +87,10 @@ function ObraViewContent() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 -mt-10 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-10 space-y-8">
         {/* Card de Información Principal */}
-        <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
-          <CardHeader className="bg-white border-b py-8">
+        <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem] bg-white">
+          <CardHeader className="py-8 border-b">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-2xl">
                 <Construction className="w-8 h-8 text-primary" />
@@ -98,7 +102,7 @@ function ObraViewContent() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-8 space-y-6 border-b md:border-b-0 md:border-r">
+              <div className="p-6 sm:p-8 space-y-6 border-b md:border-b-0 md:border-r">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-secondary rounded-lg shrink-0">
                     <User className="w-5 h-5 text-primary" />
@@ -119,7 +123,7 @@ function ObraViewContent() {
                   </div>
                 </div>
               </div>
-              <div className="p-8 space-y-4 bg-gray-50/50">
+              <div className="p-6 sm:p-8 space-y-4 bg-gray-50/50">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-secondary rounded-lg shrink-0">
                     <Info className="w-5 h-5 text-primary" />
@@ -146,21 +150,49 @@ function ObraViewContent() {
             {obra.files && obra.files.length > 0 ? (
               obra.files.map((fileName, idx) => (
                 <Card key={idx} className="border-none shadow-xl hover:shadow-2xl transition-all bg-white group rounded-[1.5rem] overflow-hidden">
-                  <CardContent className="p-6 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                        <FileText className="w-7 h-7" />
+                  <CardContent className="p-4 sm:p-6 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-5">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-secondary rounded-xl sm:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                        <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
                       </div>
                       <div className="overflow-hidden">
-                        <p className="font-black text-[#0a3d62] text-sm sm:text-base truncate max-w-[180px] sm:max-w-md">
+                        <p className="font-black text-[#0a3d62] text-sm sm:text-base truncate max-w-[140px] sm:max-w-md">
                           {fileName}
                         </p>
-                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Revisión Técnica APROBADA</p>
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-widest">Revisión Técnica APROBADA</p>
                       </div>
                     </div>
-                    <Button variant="outline" className="rounded-xl border-2 border-primary/20 text-primary font-black gap-2 hover:bg-primary hover:text-white transition-all">
-                      <Download className="w-4 h-4" /> <span className="hidden sm:inline">DESCARGAR</span>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white" onClick={() => setSelectedFile(fileName)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[95vw] w-full h-[85vh] p-0 rounded-3xl overflow-hidden border-none shadow-2xl">
+                          <DialogHeader className="p-4 bg-[#0a3d62] text-white flex flex-row items-center justify-between">
+                            <DialogTitle className="text-sm font-black uppercase tracking-widest">{fileName}</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex-1 w-full h-full bg-gray-100 flex items-center justify-center relative">
+                            {/* Simulador de Visor WebView */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 space-y-6">
+                              <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]/20" />
+                              <div className="space-y-2">
+                                <h3 className="text-xl font-black text-[#0a3d62]">Visor de Planos</h3>
+                                <p className="text-sm text-muted-foreground font-medium">El archivo se está cargando desde el servidor seguro de Tamer Industrial S.A.</p>
+                              </div>
+                              <Button className="rounded-2xl bg-[#0a3d62] h-14 px-8 font-black gap-2">
+                                <Download className="w-5 h-5" /> DESCARGAR PARA VER DETALLE
+                              </Button>
+                            </div>
+                            {/* En un entorno real, aquí iría el iframe con la URL de Drive o el storage */}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button variant="outline" size="icon" className="rounded-xl border-2 border-primary/20 text-primary hover:bg-primary hover:text-white">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
@@ -198,7 +230,7 @@ function ObraViewContent() {
 export default function ObraViewPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-secondary/20">
         <Loader2 className="w-12 h-12 animate-spin text-primary" />
       </div>
     }>

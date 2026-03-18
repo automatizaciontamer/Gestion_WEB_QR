@@ -4,7 +4,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirestore } from '@/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { Empresa } from './types';
 
 interface AuthContextType {
   isAdmin: boolean;
@@ -13,19 +14,32 @@ interface AuthContextType {
   login: (identifier: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  empresa: Empresa | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hora de sesión
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isUser, setIsUser] = useState(false);
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const router = useRouter();
   const db = useFirestore();
+
+  // Cargar datos de empresa al inicio
+  useEffect(() => {
+    if (!db) return;
+    const empresaRef = doc(db, 'config', 'empresa');
+    getDoc(empresaRef).then((snap) => {
+      if (snap.exists()) {
+        setEmpresa(snap.data() as Empresa);
+      }
+    });
+  }, [db]);
 
   const logout = useCallback(() => {
     setIsAdmin(false);
@@ -36,10 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
-    // Normalizar identificador a minúsculas y quitar espacios
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
-    // Administrador Maestro: Usuario "admin", Clave "14569"
+    // 1. Administrador Maestro
     if (normalizedIdentifier === 'admin' && password === '14569') {
       const adminData = { 
         email: 'admin@tamer.com', 
@@ -51,15 +64,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsUser(true);
       setUser(adminData);
       sessionStorage.setItem('tamer_session', JSON.stringify(adminData));
-      router.push('/dashboard');
       return true;
     }
 
-    // Usuario Habilitado (Consulta en Firestore)
+    // 2. Email de Contacto de Empresa (Acceso Global)
+    if (empresa && normalizedIdentifier === empresa.emailContacto.toLowerCase() && password === empresa.claveContacto) {
+      const empresaUserData = {
+        email: empresa.emailContacto,
+        role: 'empresa',
+        nombre: empresa.razonSocial,
+        id: 'empresa-global'
+      };
+      setIsAdmin(false);
+      setIsUser(true);
+      setUser(empresaUserData);
+      sessionStorage.setItem('tamer_session', JSON.stringify(empresaUserData));
+      return true;
+    }
+
+    // 3. Usuarios Habilitados y Accesos de Obra
     if (!db) return false;
     
     try {
-      // Buscamos el email normalizado (siempre se guardan en minúsculas ahora)
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
@@ -74,11 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
-        router.push('/dashboard');
         return true;
       }
 
-      // También intentamos buscar en la colección de obras por si es un acceso técnico de campo
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
@@ -92,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
-        router.push('/dashboard');
         return true;
       }
 
@@ -118,31 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!isUser) return;
-
-    let timeout: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        logout();
-      }, INACTIVITY_TIMEOUT);
-    };
-
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => window.addEventListener(event, resetTimer));
-
-    resetTimer();
-
-    return () => {
-      clearTimeout(timeout);
-      events.forEach(event => window.removeEventListener(event, resetTimer));
-    };
-  }, [isUser, logout]);
-
   return (
-    <AuthContext.Provider value={{ isAdmin, isUser, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAdmin, isUser, user, login, logout, loading, empresa }}>
       {children}
     </AuthContext.Provider>
   );

@@ -42,6 +42,21 @@
         "password": { "type": "string" }
       },
       "required": ["nombre", "email", "password"]
+    },
+    "Empresa": {
+      "title": "Configuración de Empresa",
+      "description": "Datos institucionales de Tamer Industrial S.A.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "razonSocial": { "type": "string" },
+        "direccion": { "type": "string" },
+        "cuil": { "type": "string" },
+        "telefono": { "type": "string" },
+        "emailContacto": { "type": "string" },
+        "claveContacto": { "type": "string" },
+        "logoUrl": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -55,6 +70,10 @@
     "/usuarios_clientes/{usuarioId}": {
       "schema": "UsuarioHabilitado",
       "description": "Gestión de usuarios con acceso web."
+    },
+    "/config/empresa": {
+      "schema": "Empresa",
+      "description": "Datos maestros de la empresa."
     }
   }
 }

@@ -1,3 +1,4 @@
+
 export interface Obra {
   id: string;
   numeroOF: string;
@@ -15,16 +16,6 @@ export interface Obra {
   authorizedEmails: Array<{ email: string; password?: string }>;
 }
 
-export interface Archivo {
-  id: string;
-  obraId: string;
-  nombre: string;
-  urlStorage: string;
-  visibleCliente: boolean;
-  fechaSubida: number | Date;
-  usuario: string; // admin email
-}
-
 export interface UsuarioHabilitado {
   id: string;
   nombre: string;
@@ -32,8 +23,13 @@ export interface UsuarioHabilitado {
   password?: string;
 }
 
-export interface EmpresaConfig {
-  logoUrl: string;
-  email: string;
-  passwordAdmin: string;
+export interface Empresa {
+  id: string;
+  razonSocial: string;
+  direccion: string;
+  cuil: string;
+  telefono: string;
+  emailContacto: string;
+  claveContacto: string;
+  logoUrl?: string;
 }

@@ -6,12 +6,11 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Construction, 
-  Users, 
   LogOut,
   Menu,
-  X,
   UserCheck,
-  ShieldAlert
+  Building2,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -21,13 +20,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 
 export function NavSidebar() {
   const pathname = usePathname();
-  const { logout, isAdmin, user } = useAuth();
+  const { logout, isAdmin, user, empresa } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     { name: 'Panel Principal', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Gestión de Obras', href: '/dashboard/obras', icon: Construction, adminOnly: false },
     { name: 'Usuarios Habilitados', href: '/dashboard/clientes', icon: UserCheck, adminOnly: true },
+    { name: 'Datos de Empresa', href: '/dashboard/empresa', icon: Building2, adminOnly: true },
   ];
 
   const filteredItems = navItems.filter(item => !item.adminOnly || isAdmin);
@@ -37,10 +37,16 @@ export function NavSidebar() {
       <div className="p-8">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-[#0a3d62] rounded-2xl flex items-center justify-center shadow-xl shadow-[#0a3d62]/20">
-            <Construction className="w-7 h-7 text-white" />
+            {empresa?.logoUrl ? (
+              <img src={empresa.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+            ) : (
+              <Construction className="w-7 h-7 text-white" />
+            )}
           </div>
           <div className="overflow-hidden">
-            <h2 className="font-black text-xl leading-tight truncate text-[#0a3d62]">Tamer Ind.</h2>
+            <h2 className="font-black text-xl leading-tight truncate text-[#0a3d62]">
+              {empresa?.razonSocial || 'Tamer Industrial'}
+            </h2>
             <p className="text-[9px] text-muted-foreground font-black tracking-[0.2em] uppercase truncate">
               {isAdmin ? 'Modo Administrador' : 'Acceso Autorizado'}
             </p>
@@ -92,12 +98,10 @@ export function NavSidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <div className="hidden lg:flex w-72 border-r h-full flex-col no-print shrink-0 shadow-sm z-20">
         <SidebarContent />
       </div>
 
-      {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b z-40 px-4 flex items-center justify-between no-print">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-[#0a3d62] rounded-lg flex items-center justify-center">

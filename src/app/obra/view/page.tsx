@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Info,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
@@ -37,7 +38,6 @@ function ObraViewContent() {
 
   const files = useMemo(() => {
     if (!obra) return [];
-    // Soporte para múltiples nombres de campo en Firestore para máxima compatibilidad
     const source = obra.files || (obra as any).archivos || [];
     return Array.isArray(source) ? source : [];
   }, [obra]);
@@ -47,11 +47,14 @@ function ObraViewContent() {
 
   const getDownloadUrl = (file: any) => {
     if (!file) return '';
-    const fileId = file.id || (typeof file === 'string' ? file : '');
+    // Detectar el ID del archivo en múltiples formatos posibles (v5.0.3)
+    const fileId = file.id || file.fileId || (typeof file === 'string' ? file : '');
+    
     if (!fileId) return '';
-    // Si ya es una URL completa de Drive o similar, se devuelve tal cual
+    
     if (fileId.startsWith('http')) return fileId;
-    // Formato de descarga directa de Google Drive
+    
+    // Formato de exportación directa de Google Drive
     return `https://drive.google.com/uc?id=${fileId}&export=download`;
   };
 
@@ -66,7 +69,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0.3...</p>
       </div>
     );
   }
@@ -98,7 +101,7 @@ function ObraViewContent() {
                 )}
                </div>
                <div className="overflow-hidden">
-                 <p className="text-[8px] font-black uppercase tracking-[0.4em] text-primary">Sistema Tamer v5.0.2</p>
+                 <p className="text-[8px] font-black uppercase tracking-[0.4em] text-primary">Sistema Tamer v5.0.3</p>
                  <h2 className="text-xs font-black truncate max-w-[150px] uppercase opacity-80">{empresa?.nombre || 'TAMER INDUSTRIAL'}</h2>
                </div>
              </div>
@@ -138,32 +141,41 @@ function ObraViewContent() {
             <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
               <FileText className="w-5 h-5 text-primary" /> Documentación Técnica
             </h3>
-            <span className="text-[9px] font-bold text-muted-foreground uppercase bg-secondary px-3 py-1 rounded-full">v5.0.2 Public</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase bg-secondary px-3 py-1 rounded-full">PÚBLICO v5.0.3</span>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {hasFiles ? files.map((file, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border hover:border-primary/50 transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-5 overflow-hidden">
-                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0 shadow-sm border border-secondary">
-                    <FileText className="w-7 h-7" />
+            {hasFiles ? files.map((file, idx) => {
+              const downloadUrl = getDownloadUrl(file);
+              return (
+                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border hover:border-primary/50 transition-all flex items-center justify-between group">
+                  <div className="flex items-center gap-5 overflow-hidden">
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors shrink-0 shadow-sm border border-secondary">
+                      <FileText className="w-7 h-7" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-black text-[#0a3d62] text-sm uppercase truncate max-w-[200px] sm:max-w-[400px]">{getFileName(file, idx)}</p>
+                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Sincronizado Drive</p>
+                    </div>
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="font-black text-[#0a3d62] text-sm uppercase truncate max-w-[200px] sm:max-w-[400px]">{getFileName(file, idx)}</p>
-                    <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Descarga Directa Segura</p>
-                  </div>
+                  {downloadUrl ? (
+                    <a 
+                      href={downloadUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      download={getFileName(file, idx)}
+                      className="h-14 w-14 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg flex items-center justify-center text-white transition-transform active:scale-90 shrink-0"
+                    >
+                      <Download className="w-6 h-6" />
+                    </a>
+                  ) : (
+                    <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">
+                      <AlertCircle className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
-                <a 
-                  href={getDownloadUrl(file)} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="h-14 w-14 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg flex items-center justify-center text-white transition-transform active:scale-90 shrink-0"
-                  title="Descargar archivo"
-                >
-                  <Download className="w-6 h-6" />
-                </a>
-              </div>
-            )) : !hasFolderUrl && (
+              );
+            }) : !hasFolderUrl && (
               <div className="bg-white p-12 rounded-[3rem] text-center border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-4">
                 <AlertCircle className="w-12 h-12 text-slate-200" />
                 <div>
@@ -186,8 +198,8 @@ function ObraViewContent() {
                   <FolderOpen className="w-8 h-8 text-primary" />
                 </div>
                 <div className="text-left flex-1 overflow-hidden">
-                  <p className="font-black uppercase text-xl leading-none tracking-tighter">REPOSITORIO EN DRIVE</p>
-                  <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Carpeta Completa de Planos</p>
+                  <p className="font-black uppercase text-xl leading-none tracking-tighter">REPOSITORIO COMPLETO</p>
+                  <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Abrir Carpeta de Planos</p>
                 </div>
                 <ChevronRight className="w-8 h-8 opacity-20 ml-2 shrink-0" />
               </a>
@@ -198,9 +210,9 @@ function ObraViewContent() {
         <div className="bg-blue-50/70 p-8 rounded-[2rem] border border-blue-100 flex items-start gap-5 shadow-sm">
           <Info className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
           <div className="space-y-2">
-            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest">Aviso Técnico de Descargas</p>
+            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest">Nota Técnica de Descarga</p>
             <p className="text-[10px] font-bold text-blue-800/80 uppercase leading-relaxed">
-              Si al descargar una imagen recibe un archivo con formato incorrecto, asegúrese de que el archivo en Google Drive sea público o abra el "REPOSITORIO EN DRIVE" para visualización directa.
+              Si al intentar descargar un plano el sistema abre una página de Google Drive, esto se debe a que el archivo está siendo analizado por seguridad o requiere permisos públicos en la carpeta de origen. En ese caso, use el botón "REPOSITORIO COMPLETO".
             </p>
           </div>
         </div>
@@ -209,7 +221,7 @@ function ObraViewContent() {
       <footer className="p-10 text-center mt-auto">
         <div className="inline-block px-6 py-2 bg-secondary/50 rounded-full border">
           <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">
-            TAMER INDUSTRIAL S.A. | SISTEMA DE GESTIÓN v5.0.2
+            TAMER INDUSTRIAL S.A. | SISTEMA DE GESTIÓN v5.0.3
           </p>
         </div>
       </footer>
@@ -222,7 +234,7 @@ export default function ObraViewPage() {
     <Suspense fallback={
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-        <p className="font-black uppercase text-[10px] tracking-[0.4em] text-muted-foreground">Cargando Planos...</p>
+        <p className="font-black uppercase text-[10px] tracking-[0.4em] text-muted-foreground">Cargando Planos v5.0.3...</p>
       </div>
     }>
       <ObraViewContent />

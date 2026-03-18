@@ -33,7 +33,6 @@ function EditObraContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
-  // Inicialización completa para evitar error de uncontrolled inputs
   const [formData, setFormData] = useState({
     codigoCliente: '',
     nombreObra: '',
@@ -100,7 +99,7 @@ function EditObraContent() {
     setIsSaving(true);
     
     try {
-      const folderName = `${formData.codigoCliente?.trim()}-${formData.numeroOF?.trim()}-${formData.numeroOT?.trim()}`;
+      const folderName = `${formData.codigoCliente?.trim() || 'Obra'}-${formData.numeroOF?.trim() || 'OF'}-${formData.numeroOT?.trim() || 'OT'}`;
       const newUploadedFiles: ObraFile[] = [];
       
       if (newFilesToUpload.length > 0) {
@@ -184,7 +183,7 @@ function EditObraContent() {
                     <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
                       <div className="flex items-center gap-2 overflow-hidden">
                         <FileText className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-xs font-bold truncate">{f.name}</span>
+                        <span className="text-xs font-bold truncate">{f.name || 'Archivo'}</span>
                       </div>
                       <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeExistingFile(i)}>
                         <X className="w-4 h-4" />

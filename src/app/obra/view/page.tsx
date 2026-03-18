@@ -86,7 +86,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Conectando con Tamer Cloud v3.8.2...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Conectando con Tamer Cloud v3.9.0...</p>
       </div>
     );
   }
@@ -160,18 +160,19 @@ function ObraViewContent() {
   const hasFolderUrl = !!obra.driveFolderUrl;
 
   const getDownloadUrl = (id: string) => {
+    if (!id) return '';
     if (id.startsWith('http')) return id;
     return `https://drive.google.com/uc?id=${id}&export=download`;
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Cabecera sin solapamientos - Estructura de flujo natural */}
-      <header className="bg-[#0a3d62] text-white shadow-2xl">
-        <div className="max-w-4xl mx-auto p-6 sm:p-10 space-y-6">
+      {/* Cabecera optimizada: Sin solapamientos, flujo natural */}
+      <header className="bg-[#0a3d62] text-white shadow-2xl p-6 sm:p-10 space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-xl">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-xl shrink-0">
                 {empresa?.logoUrl ? (
                   <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
@@ -179,7 +180,7 @@ function ObraViewContent() {
                 )}
               </div>
               <div className="overflow-hidden">
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v3.8.2</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v3.9.0</p>
                 <h2 className="text-xs font-bold text-white/50 uppercase truncate max-w-[150px]">{empresa?.nombre || 'Tamer Industrial'}</h2>
               </div>
             </div>
@@ -188,9 +189,8 @@ function ObraViewContent() {
             </Button>
           </div>
           
-          <div className="space-y-4 pt-4 border-t border-white/10">
-            {/* Nombre completo sin cortes */}
-            <h1 className="text-2xl sm:text-4xl font-black uppercase leading-tight text-white break-words">
+          <div className="pt-4 border-t border-white/10">
+            <h1 className="text-2xl sm:text-4xl font-black uppercase leading-tight text-white break-words mb-4">
               {obra.nombreObra}
             </h1>
             <div className="flex flex-wrap gap-2">
@@ -202,7 +202,6 @@ function ObraViewContent() {
         </div>
       </header>
 
-      {/* Contenido principal - Flujo secuencial */}
       <main className="max-w-4xl mx-auto w-full px-6 py-8 space-y-8 flex-1">
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -226,28 +225,26 @@ function ObraViewContent() {
           </h3>
           
           <div className="grid grid-cols-1 gap-4">
-            {hasFiles ? (
-              files.map((file, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-[2rem] shadow-xl border border-slate-50 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary shrink-0 border">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-black text-[#0a3d62] text-base truncate uppercase leading-tight">{file.name}</p>
-                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1">Sincronizado Cloud</p>
-                    </div>
+            {hasFiles && files.map((file, idx) => (
+              <div key={idx} className="bg-white p-5 rounded-[2rem] shadow-xl border border-slate-50 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary shrink-0 border">
+                    <FileText className="w-6 h-6" />
                   </div>
-                  {file.id && (
-                    <Button asChild className="h-12 w-12 rounded-xl bg-[#0a3d62] hover:bg-primary shadow-xl shrink-0 transition-colors">
-                      <a href={getDownloadUrl(file.id)} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-5 h-5" />
-                      </a>
-                    </Button>
-                  )}
+                  <div className="min-w-0">
+                    <p className="font-black text-[#0a3d62] text-base truncate uppercase leading-tight">{file.name || 'Documento Técnico'}</p>
+                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1">Sincronizado Cloud</p>
+                  </div>
                 </div>
-              ))
-            ) : null}
+                {(file.id || (typeof file === 'string')) && (
+                  <Button asChild className="h-12 w-12 rounded-xl bg-[#0a3d62] hover:bg-primary shadow-xl shrink-0 transition-colors">
+                    <a href={getDownloadUrl(typeof file === 'string' ? file : file.id)} target="_blank" rel="noopener noreferrer">
+                      <Download className="w-5 h-5" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            ))}
 
             {hasFolderUrl && (
               <Button asChild className="w-full h-24 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 font-black text-lg gap-4 shadow-2xl mt-4 border-l-8 border-primary group">
@@ -273,9 +270,9 @@ function ObraViewContent() {
         </div>
       </main>
 
-      <footer className="p-8 text-center bg-white/50 border-t">
+      <footer className="p-8 text-center bg-white/50 border-t mt-auto">
         <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | v3.8.2
+          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | v3.9.0
         </p>
       </footer>
     </div>

@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
-    // Normalizar identificador a minúsculas para que no discrimine mayúsculas
+    // Normalizar identificador a minúsculas y quitar espacios
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
     // Administrador Maestro: Usuario "admin", Clave "14569"
@@ -55,11 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    // Usuario Habilitado (Consulta en Firestore compartida con Android)
+    // Usuario Habilitado (Consulta en Firestore)
     if (!db) return false;
     
     try {
-      // Nota: Asumimos que los emails se guardan en minúsculas en la base de datos para búsqueda exacta
+      // Buscamos el email normalizado (siempre se guardan en minúsculas ahora)
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
@@ -77,6 +77,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/dashboard');
         return true;
       }
+
+      // También intentamos buscar en la colección de obras por si es un acceso técnico de campo
+      const qObra = query(
+        collection(db, 'obras'),
+        where('usuarioAcceso', '==', normalizedIdentifier),
+        where('claveAcceso', '==', password)
+      );
+      const obraSnapshot = await getDocs(qObra);
+      if (!obraSnapshot.empty) {
+        const doc = obraSnapshot.docs[0];
+        const userData = { ...doc.data(), id: doc.id, role: 'field' };
+        setIsAdmin(false);
+        setIsUser(true);
+        setUser(userData);
+        sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+        router.push('/dashboard');
+        return true;
+      }
+
     } catch (error) {
       console.error("Error en login:", error);
     }

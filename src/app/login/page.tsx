@@ -73,7 +73,7 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? "text" : "password"} 
                     placeholder="••••••••" 
-                    className="pl-11 pr-12 h-14 rounded-2xl border-secondary bg-secondary/20 focus:bg-white transition-all font-medium"
+                    className="pl-11 pr-14 h-14 rounded-2xl border-secondary bg-secondary/20 focus:bg-white transition-all font-medium"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -82,10 +82,10 @@ export default function LoginPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-transparent text-muted-foreground"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-transparent text-[#0a3d62] z-10"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
                   </Button>
                 </div>
               </div>

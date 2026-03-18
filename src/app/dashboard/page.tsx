@@ -50,7 +50,7 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-[calc(100vh-100px)] space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
       
-      {/* Cabecera Institucional Dinámica v2.5 */}
+      {/* Cabecera Institucional Dinámica v2.6 */}
       <div className="relative w-full bg-white rounded-[3rem] p-8 sm:p-12 shadow-xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center">
         {/* Logo de Fondo Detrás del Texto */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none z-0">
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         <div className="relative z-10 space-y-4">
           <div className="inline-flex items-center gap-2 bg-[#0a3d62]/5 px-4 py-1.5 rounded-full border border-[#0a3d62]/10 mb-4">
             <Building2 className="w-3 h-3 text-[#0a3d62]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Portal Institucional</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#0a3d62]">Portal Institucional v2.6</span>
           </div>
           <h2 className="text-4xl sm:text-6xl font-black text-[#0a3d62] leading-none tracking-tighter uppercase">
             {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
@@ -85,7 +85,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.5</p>
+          <p className="text-muted-foreground font-medium">Estado del sistema de gestión Tamer Industrial | v2.6</p>
         </div>
         {isAdmin && (
           <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit">
@@ -151,7 +151,7 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-6">
               <p className="text-xs text-white/60 leading-relaxed font-bold uppercase tracking-wider">
-                Los cambios en planos y documentación técnica realizados aquí se reflejan instantáneamente en la App Android de campo.
+                Los cambios en planos y documentación técnica realizados aquí se reflejan instantáneamente en la App Android de campo y se respaldan en Google Drive.
               </p>
               <div className="pt-6 border-t border-white/10">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Identidad Institucional</p>

@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Save, Loader2, Upload, Globe, Phone, Mail, FileCheck } from 'lucide-react';
+import { Building2, Save, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudSync } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,22 +75,22 @@ export default function EmpresaConfigPage() {
 
     setUploadingLogo(true);
     try {
+      // Subir imagen a Drive en carpeta Datos Empresa
       await uploadToDrive(file, "Datos Empresa");
       
       toast({
-        title: "Logo Enviado",
-        description: "La imagen se ha guardado en la carpeta 'Datos Empresa' de Google Drive.",
+        title: "Archivo en Drive",
+        description: "El logo se ha guardado en la carpeta 'Datos Empresa'.",
       });
-      
+
       toast({
-        title: "Paso Final",
-        description: "Si el logo no se actualiza automáticamente, por favor pegue la URL pública del archivo en el campo correspondiente.",
-        variant: "default"
+        title: "Nota de Visualización",
+        description: "Debido a las políticas de Drive, si desea previsualizarlo aquí, asegúrese de que el archivo sea público y pegue su ID en el campo de URL.",
       });
     } catch (error) {
       toast({
         title: "Error de Subida",
-        description: "No se pudo completar la carga del archivo.",
+        description: "No se pudo completar la carga del archivo a Drive.",
         variant: "destructive",
       });
     } finally {
@@ -104,30 +104,37 @@ export default function EmpresaConfigPage() {
     if (!db) return;
     setSaving(true);
 
-    const docRef = doc(db, 'Configuracion', 'Empresa');
-    setDoc(docRef, formData, { merge: true })
-      .then(() => {
-        toast({
-          title: "Configuración Guardada",
-          description: "La información de Tamer Industrial S.A. ha sido actualizada exitosamente.",
-        });
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: formData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => setSaving(false));
+    try {
+      // 1. Guardar en Firestore
+      const docRef = doc(db, 'Configuracion', 'Empresa');
+      await setDoc(docRef, formData, { merge: true });
+
+      // 2. Respaldar datos en Drive como JSON
+      const configBlob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
+      const configFile = new File([configBlob], "config_empresa.json", { type: 'application/json' });
+      await uploadToDrive(configFile, "Datos Empresa");
+
+      toast({
+        title: "Sincronización v2.6 Exitosa",
+        description: "Datos actualizados en Firestore y respaldados en Google Drive (Datos Empresa).",
+      });
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: 'Configuracion/Empresa',
+        operation: 'write',
+        requestResourceData: formData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.4...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.6...</p>
       </div>
     );
   }
@@ -143,7 +150,7 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Gestión Institucional (v2.4)
+            Gestión Institucional Sincronizada (v2.6)
           </p>
         </div>
         <Button 
@@ -151,7 +158,7 @@ export default function EmpresaConfigPage() {
           className="h-14 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-2xl font-black px-8 shadow-xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95"
           disabled={saving}
         >
-          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save className="w-6 h-6" /> GUARDAR CAMBIOS</>}
+          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CloudSync className="w-6 h-6" /> GUARDAR Y RESPALDAR</>}
         </Button>
       </div>
 
@@ -159,7 +166,7 @@ export default function EmpresaConfigPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
-            <CardDescription className="font-bold">Datos para reportes, portal QR y App Android.</CardDescription>
+            <CardDescription className="font-bold">Datos sincronizados con la carpeta "Datos Empresa" de Google Drive.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
             <div className="space-y-4">
@@ -185,7 +192,7 @@ export default function EmpresaConfigPage() {
                         disabled={uploadingLogo}
                       >
                         {uploadingLogo ? <Loader2 className="animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                        SUBIR DESDE DISPOSITIVO
+                        SUBIR A DRIVE (CARPETA DATOS)
                       </Button>
                       <input 
                         type="file" 
@@ -197,7 +204,7 @@ export default function EmpresaConfigPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">URL Directa del Logo</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Enlace del Logo para Web</p>
                     <Input 
                       value={formData.logoUrl}
                       onChange={e => setFormData({...formData, logoUrl: e.target.value})}

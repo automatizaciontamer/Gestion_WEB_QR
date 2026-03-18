@@ -78,7 +78,7 @@ export default function ObrasPage() {
     
     toast({
       title: "Obra eliminada",
-      description: "El registro ha sido removido de la base de datos.",
+      description: "El registro ha sido removido.",
     });
   };
 
@@ -87,7 +87,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada v5.0.0</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.0</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -112,7 +112,7 @@ export default function ObrasPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando proyectos v5.0...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando v5.0...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -197,7 +197,7 @@ export default function ObrasPage() {
               <Construction className="w-10 h-10 text-muted-foreground" />
             </div>
             <h3 className="text-2xl font-black text-[#0a3d62]">Sin obras</h3>
-            <p className="text-muted-foreground font-bold mt-2">No se encontraron proyectos activos v5.0.</p>
+            <p className="text-muted-foreground font-bold mt-2">No se encontraron proyectos activos.</p>
           </div>
         )}
       </div>

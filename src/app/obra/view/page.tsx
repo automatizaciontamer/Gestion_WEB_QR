@@ -34,7 +34,6 @@ function ObraViewContent() {
 
   const { data: obra, loading: docLoading } = useDoc<Obra>(obraDocRef);
 
-  // Lógica de archivos robusta
   const files = useMemo(() => {
     if (!obra) return [];
     const source = obra.files || (obra as any).archivos || [];
@@ -45,9 +44,9 @@ function ObraViewContent() {
   const hasFolderUrl = !!obra?.driveFolderUrl;
 
   const getDownloadUrl = (file: any) => {
-    if (!file) return '#';
+    if (!file) return '';
     const fileId = file.id || (typeof file === 'string' ? file : '');
-    if (!fileId) return '#';
+    if (!fileId) return '';
     if (fileId.startsWith('http')) return fileId;
     return `https://drive.google.com/uc?id=${fileId}&export=download`;
   };
@@ -63,7 +62,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Conectando con Servidor de Ingeniería v5.0...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0...</p>
       </div>
     );
   }
@@ -73,8 +72,8 @@ function ObraViewContent() {
       <div className="min-h-screen items-center justify-center p-6 bg-slate-50 flex">
         <div className="p-10 max-w-sm w-full bg-white shadow-2xl rounded-[3rem] text-center border">
           <AlertCircle className="w-16 h-16 mx-auto mb-6 text-destructive opacity-50" />
-          <h1 className="font-black text-xl text-[#0a3d62] uppercase">Proyecto no encontrado</h1>
-          <p className="text-xs font-bold text-muted-foreground mt-4">El ID no es válido o la obra fue removida del sistema.</p>
+          <h1 className="font-black text-xl text-[#0a3d62] uppercase">No encontrado</h1>
+          <p className="text-xs font-bold text-muted-foreground mt-4">El ID no es válido o fue removido.</p>
           <Button onClick={() => router.push('/login')} className="w-full h-14 bg-[#0a3d62] rounded-2xl font-black mt-8 uppercase tracking-widest">IR AL INICIO</Button>
         </div>
       </div>
@@ -143,35 +142,42 @@ function ObraViewContent() {
                     <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Sincronizado v5.0</p>
                   </div>
                 </div>
-                <Button asChild className="h-14 w-14 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg shrink-0 transition-transform active:scale-90">
-                  <a href={getDownloadUrl(file)} target="_blank" rel="noopener noreferrer">
-                    <Download className="w-6 h-6" />
-                  </a>
-                </Button>
+                <a 
+                  href={getDownloadUrl(file)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  download={getFileName(file, idx)}
+                  className="h-14 w-14 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg flex items-center justify-center text-white transition-transform active:scale-90"
+                >
+                  <Download className="w-6 h-6" />
+                </a>
               </div>
             )) : !hasFolderUrl && (
               <div className="bg-white p-12 rounded-[3rem] text-center border-4 border-dashed border-slate-100">
                 <AlertCircle className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                 <h4 className="font-black text-[#0a3d62] uppercase text-xs tracking-widest">Documentación en Proceso</h4>
                 <p className="text-[10px] text-muted-foreground font-bold mt-2 uppercase">
-                  Contacte con la oficina técnica mencionando la OF: {obra.numeroOF}
+                  OF: {obra.numeroOF}
                 </p>
               </div>
             )}
 
             {hasFolderUrl && (
-              <Button asChild className="w-full h-auto p-8 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 text-white shadow-2xl mt-6 border-l-[12px] border-primary transition-all active:scale-[0.98]">
-                <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
-                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mr-5 shrink-0">
-                    <FolderOpen className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="text-left flex-1 overflow-hidden">
-                    <p className="font-black uppercase text-xl leading-none tracking-tighter">ACCEDER AL REPOSITORIO COMPLETO</p>
-                    <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Abrir carpeta de planos en Google Drive</p>
-                  </div>
-                  <ChevronRight className="w-8 h-8 opacity-20 ml-2 shrink-0" />
-                </a>
-              </Button>
+              <a 
+                href={obra.driveFolderUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-full h-auto p-8 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 text-white shadow-2xl mt-6 border-l-[12px] border-primary transition-all active:scale-[0.98] flex items-center"
+              >
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mr-5 shrink-0">
+                  <FolderOpen className="w-8 h-8 text-primary" />
+                </div>
+                <div className="text-left flex-1 overflow-hidden">
+                  <p className="font-black uppercase text-xl leading-none tracking-tighter">REPOSITORIO COMPLETO</p>
+                  <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Google Drive</p>
+                </div>
+                <ChevronRight className="w-8 h-8 opacity-20 ml-2 shrink-0" />
+              </a>
             )}
           </div>
         </div>
@@ -179,10 +185,9 @@ function ObraViewContent() {
         <div className="bg-blue-50/70 p-8 rounded-[2rem] border border-blue-100 flex items-start gap-5 shadow-sm">
           <Info className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
           <div>
-            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest mb-1">Aviso Técnico de Obra</p>
+            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest mb-1">Aviso Técnico</p>
             <p className="text-[10px] font-bold text-blue-800/80 uppercase leading-relaxed">
-              La documentación visualizada corresponde a la revisión vigente. 
-              Cualquier modificación debe ser solicitada a la oficina técnica central de Tamer Industrial S.A.
+              La documentación corresponde a la revisión vigente de Tamer Industrial S.A.
             </p>
           </div>
         </div>
@@ -190,7 +195,7 @@ function ObraViewContent() {
 
       <footer className="p-10 text-center mt-auto">
         <p className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.0
+          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | v5.0
         </p>
       </footer>
     </div>
@@ -202,7 +207,7 @@ export default function ObraViewPage() {
     <Suspense fallback={
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-        <p className="font-black uppercase text-[10px] tracking-[0.4em] text-muted-foreground">Sincronizando Planos v5.0...</p>
+        <p className="font-black uppercase text-[10px] tracking-[0.4em] text-muted-foreground">Sincronizando v5.0...</p>
       </div>
     }>
       <ObraViewContent />

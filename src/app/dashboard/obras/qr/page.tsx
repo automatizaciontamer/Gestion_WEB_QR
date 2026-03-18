@@ -25,8 +25,8 @@ function QRPosterContent() {
   useEffect(() => {
     if (typeof window !== 'undefined' && id) {
       // URL para el portal de descarga público
-      // Aseguramos que el QR apunte al dominio de producción gestion-web-qr.web.app
-      const baseUrl = window.location.origin;
+      // Aseguramos que el QR apunte al dominio del proyecto activo
+      const baseUrl = "https://gestion-tamer-ind-s-a.web.app";
       setQrUrl(`${baseUrl}/obra/view?id=${id}`);
     }
   }, [id]);

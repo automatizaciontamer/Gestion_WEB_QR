@@ -5,8 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'Gestion-Web-QR - Tamer Industrial S.A.',
-  description: 'Sistema de Gestión de Obras y Archivos Técnicos con Acceso QR',
+  title: 'Tamer Industrial S.A. - Gestión Web QR',
+  description: 'Sistema de Gestión de Obras y Archivos Técnicos con Acceso QR - Tamer Industrial S.A.',
 };
 
 export default function RootLayout({

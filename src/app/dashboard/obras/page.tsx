@@ -147,12 +147,12 @@ export default function ObrasPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/${obra.id}/edit`} className="flex items-center gap-2">
+                            <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-2">
                               <Edit className="w-4 h-4" /> Editar Obra
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/${obra.id}/qr`} className="flex items-center gap-2">
+                            <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-2">
                               <QrCode className="w-4 h-4" /> Generar Ficha QR
                             </Link>
                           </DropdownMenuItem>

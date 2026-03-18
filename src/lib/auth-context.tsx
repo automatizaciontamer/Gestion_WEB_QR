@@ -7,8 +7,6 @@ import { useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 import { Empresa } from './types';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 interface AuthContextType {
   isAdmin: boolean;
@@ -32,21 +30,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const db = useFirestore();
   const auth = useFirebaseAuth();
 
-  // Cargar datos de empresa al inicio de forma silenciosa
+  // Cargar datos de empresa al inicio
   useEffect(() => {
-    if (!db) return;
-    const empresaRef = doc(db, 'config', 'empresa');
-    getDoc(empresaRef)
-      .then((snap) => {
+    if (!db || !auth) return;
+    
+    const loadConfig = async () => {
+      try {
+        // Necesitamos sesión aunque sea anónima para leer de Firestore
+        await signInAnonymously(auth).catch(() => null);
+        
+        const empresaRef = doc(db, 'config', 'CONFIGURACION');
+        const snap = await getDoc(empresaRef);
         if (snap.exists()) {
-          setEmpresa(snap.data() as Empresa);
+          setEmpresa({ ...snap.data(), id: snap.id } as Empresa);
         }
-      })
-      .catch((error) => {
-        // No emitimos error aquí porque es normal que falle antes del login
-        console.warn('Configuración de empresa no accesible aún.');
-      });
-  }, [db]);
+      } catch (error) {
+        console.warn('Configuración de empresa no accesible inicialmente.');
+      }
+    };
+
+    loadConfig();
+  }, [db, auth]);
 
   const logout = useCallback(() => {
     setIsAdmin(false);
@@ -62,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
     try {
-      // Autenticamos anónimamente en Firebase para obtener permisos de Firestore
       await signInAnonymously(auth);
 
       // 1. Administrador Maestro (Local)
@@ -80,21 +83,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // 2. Email de Contacto de Empresa (Acceso Global)
-      // Intentamos obtener el doc de empresa ahora que tenemos sesión anónima
-      const empresaRef = doc(db, 'config', 'empresa');
+      // 2. Credenciales de la Empresa (usuarioAdmin / passwordAdmin del documento CONFIGURACION)
+      const empresaRef = doc(db, 'config', 'CONFIGURACION');
       const empresaSnap = await getDoc(empresaRef).catch(() => null);
       
       if (empresaSnap && empresaSnap.exists()) {
         const empData = empresaSnap.data() as Empresa;
-        if (normalizedIdentifier === empData.emailContacto.toLowerCase() && password === empData.claveContacto) {
+        if (normalizedIdentifier === empData.usuarioAdmin?.toLowerCase().trim() && password === empData.passwordAdmin) {
           const empresaUserData = {
-            email: empData.emailContacto,
-            role: 'empresa',
-            nombre: empData.razonSocial,
+            email: empData.usuarioAdmin,
+            role: 'admin', // Se trata como admin por ser la cuenta institucional
+            nombre: empData.nombre,
             id: 'empresa-global'
           };
-          setIsAdmin(false);
+          setIsAdmin(true);
           setIsUser(true);
           setUser(empresaUserData);
           sessionStorage.setItem('tamer_session', JSON.stringify(empresaUserData));
@@ -155,7 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data);
         setIsUser(true);
         setIsAdmin(data.role === 'admin');
-        // Re-autenticar anónimamente si hay sesión guardada
         if (auth) signInAnonymously(auth).catch(() => null);
       } catch (e) {
         sessionStorage.removeItem('tamer_session');

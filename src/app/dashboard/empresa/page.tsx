@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash, Settings } from 'lucide-react';
+import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash, Settings, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,24 +22,26 @@ export default function EmpresaConfigPage() {
   const [showPassword, setShowPassword] = useState(false);
   
   const [formData, setFormData] = useState<Empresa>({
-    id: 'empresa',
-    razonSocial: '',
+    id: 'CONFIGURACION',
+    nombre: '',
     direccion: '',
-    cuil: '',
+    nit: '',
     telefono: '',
-    emailContacto: '',
-    claveContacto: '',
-    logoUrl: ''
+    email: '',
+    usuarioAdmin: '',
+    passwordAdmin: '',
+    logoUrl: '',
+    web: ''
   });
 
   useEffect(() => {
     if (!db) return;
     const loadEmpresa = async () => {
-      const docRef = doc(db, 'config', 'empresa');
+      const docRef = doc(db, 'config', 'CONFIGURACION');
       try {
         const snap = await getDoc(docRef);
         if (snap.exists()) {
-          setFormData(snap.data() as Empresa);
+          setFormData({ ...snap.data(), id: snap.id } as Empresa);
         }
       } catch (error) {
         const permissionError = new FirestorePermissionError({
@@ -59,8 +61,13 @@ export default function EmpresaConfigPage() {
     if (!db) return;
     setSaving(true);
 
-    const docRef = doc(db, 'config', 'empresa');
-    setDoc(docRef, formData, { merge: true })
+    const dataToSave = {
+      ...formData,
+      usuarioAdmin: formData.usuarioAdmin.toLowerCase().trim()
+    };
+
+    const docRef = doc(db, 'config', 'CONFIGURACION');
+    setDoc(docRef, dataToSave, { merge: true })
       .then(() => {
         toast({
           title: "Datos Actualizados",
@@ -71,7 +78,7 @@ export default function EmpresaConfigPage() {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
-          requestResourceData: formData,
+          requestResourceData: dataToSave,
         });
         errorEmitter.emit('permission-error', permissionError);
       })
@@ -95,7 +102,7 @@ export default function EmpresaConfigPage() {
           Datos de Empresa
         </h1>
         <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-          Identidad Institucional y Acceso Maestro de Contacto
+          Identidad Institucional y Acceso Maestro (Sincronizado con Android)
         </p>
       </div>
 
@@ -103,69 +110,94 @@ export default function EmpresaConfigPage() {
         <Card className="md:col-span-2 border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Información General</CardTitle>
-            <CardDescription className="font-bold">Datos que aparecerán en las fichas técnicas y reportes.</CardDescription>
+            <CardDescription className="font-bold">Datos institucionales para reportes y QR.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Building2 className="w-3 h-3" /> Razón Social
+                    <Building2 className="w-3 h-3" /> Nombre / Razón Social
                   </Label>
                   <Input 
-                    value={formData.razonSocial}
-                    onChange={e => setFormData({...formData, razonSocial: e.target.value})}
+                    value={formData.nombre}
+                    onChange={e => setFormData({...formData, nombre: e.target.value})}
                     className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="Ej. Tamer Industrial S.A."
+                    placeholder="Tamer Industrial S.A."
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> CUIL / CUIT
+                    <Hash className="w-3 h-3" /> NIT / CUIL
                   </Label>
                   <Input 
-                    value={formData.cuil}
-                    onChange={e => setFormData({...formData, cuil: e.target.value})}
+                    value={formData.nit}
+                    onChange={e => setFormData({...formData, nit: e.target.value})}
                     className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="30-XXXXXXXX-X"
+                    placeholder="30707867309"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <MapPin className="w-3 h-3" /> Dirección Fiscal
+                  <MapPin className="w-3 h-3" /> Dirección
                 </Label>
                 <Input 
                   value={formData.direccion}
                   onChange={e => setFormData({...formData, direccion: e.target.value})}
                   className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="Dirección de la planta o sede"
+                  placeholder="Dirección fiscal"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Phone className="w-3 h-3" /> Teléfono de Contacto
-                </Label>
-                <Input 
-                  value={formData.telefono}
-                  onChange={e => setFormData({...formData, telefono: e.target.value})}
-                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="+54 000 0000"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Phone className="w-3 h-3" /> Teléfono
+                  </Label>
+                  <Input 
+                    value={formData.telefono}
+                    onChange={e => setFormData({...formData, telefono: e.target.value})}
+                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
+                    placeholder="2615566911"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Mail className="w-3 h-3" /> Email Público
+                  </Label>
+                  <Input 
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
+                    placeholder="info@tamer.com"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2 pt-4 border-t">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Settings className="w-3 h-3" /> Logo Institucional (URL)
+                  <Globe className="w-3 h-3" /> Sitio Web
+                </Label>
+                <Input 
+                  value={formData.web}
+                  onChange={e => setFormData({...formData, web: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
+                  placeholder="https://tamer.com.ar"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Settings className="w-3 h-3" /> URL Logo
                 </Label>
                 <Input 
                   value={formData.logoUrl}
                   onChange={e => setFormData({...formData, logoUrl: e.target.value})}
                   className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="https://ejemplo.com/logo.png"
+                  placeholder="URL de la imagen del logo"
                 />
               </div>
             </div>
@@ -175,31 +207,31 @@ export default function EmpresaConfigPage() {
         <div className="space-y-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-[#0a3d62] text-white">
             <CardHeader>
-              <CardTitle className="text-lg font-black uppercase tracking-widest">Acceso Global</CardTitle>
-              <CardDescription className="text-white/60 font-medium">Este correo tendrá acceso a todas las obras registradas.</CardDescription>
+              <CardTitle className="text-lg font-black uppercase tracking-widest">Acceso Maestro</CardTitle>
+              <CardDescription className="text-white/60 font-medium">Credenciales para acceso total al sistema.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Email de Contacto</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Usuario Administrador</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
-                    value={formData.emailContacto}
-                    onChange={e => setFormData({...formData, emailContacto: e.target.value})}
+                    value={formData.usuarioAdmin}
+                    onChange={e => setFormData({...formData, usuarioAdmin: e.target.value})}
                     className="pl-12 h-14 rounded-2xl bg-white/10 border-none text-white font-bold" 
-                    placeholder="contacto@tamer.com"
+                    placeholder="admin@tamer.com"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Clave de Maestro</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Clave de Administrador</Label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
                     type={showPassword ? "text" : "password"}
-                    value={formData.claveContacto}
-                    onChange={e => setFormData({...formData, claveContacto: e.target.value})}
+                    value={formData.passwordAdmin}
+                    onChange={e => setFormData({...formData, passwordAdmin: e.target.value})}
                     className="pl-12 pr-12 h-14 rounded-2xl bg-white/10 border-none text-white font-bold" 
                     placeholder="••••••••"
                     required
@@ -211,7 +243,7 @@ export default function EmpresaConfigPage() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
                   </Button>
                 </div>
               </div>

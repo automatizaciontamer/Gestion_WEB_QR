@@ -43,19 +43,21 @@
       },
       "required": ["nombre", "email", "password"]
     },
-    "Empresa": {
+    "EmpresaConfig": {
       "title": "Configuración de Empresa",
-      "description": "Datos institucionales de Tamer Industrial S.A. configurables por el administrador.",
+      "description": "Datos institucionales de Tamer Industrial S.A. sincronizados con la App Android.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "razonSocial": { "type": "string" },
+        "nombre": { "type": "string" },
         "direccion": { "type": "string" },
-        "cuil": { "type": "string" },
+        "nit": { "type": "string" },
         "telefono": { "type": "string" },
-        "emailContacto": { "type": "string" },
-        "claveContacto": { "type": "string" },
-        "logoUrl": { "type": "string" }
+        "email": { "type": "string" },
+        "usuarioAdmin": { "type": "string" },
+        "passwordAdmin": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "web": { "type": "string" }
       }
     }
   },
@@ -65,15 +67,15 @@
   "firestore": {
     "/obras/{obraId}": {
       "schema": "Obra",
-      "description": "Colección de proyectos industriales. Lectura permitida para usuarios autenticados (incluyendo anónimos) para soportar el flujo de campo y web."
+      "description": "Colección de proyectos industriales compartida con Android."
     },
     "/usuarios_clientes/{usuarioId}": {
       "schema": "UsuarioHabilitado",
-      "description": "Usuarios autorizados. Lectura permitida para validación de login anónimo."
+      "description": "Usuarios autorizados para acceso web y app."
     },
-    "/config/empresa": {
-      "schema": "Empresa",
-      "description": "Configuración global de la empresa. Lectura permitida para branding y validación de acceso maestro."
+    "/config/CONFIGURACION": {
+      "schema": "EmpresaConfig",
+      "description": "Documento de configuración global con las credenciales maestras y datos institucionales."
     }
   }
 }

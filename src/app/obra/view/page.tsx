@@ -11,17 +11,16 @@ import {
   Download, 
   Construction, 
   MapPin, 
-  Info,
   Loader2,
   AlertCircle,
   ShieldCheck,
   Eye,
   EyeOff,
   LogOut,
-  FolderOpen
+  FolderOpen,
+  ArrowRight
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,13 +54,10 @@ function ObraViewContent() {
     const normalizedUserEmail = user.email?.toLowerCase().trim();
     const normalizedObraEmail = obra.usuarioAcceso?.toLowerCase().trim();
     
-    if (user.role === 'field') {
-      return user.id === id || normalizedUserEmail === normalizedObraEmail;
-    }
-
+    // Verificación de campo o cliente autorizado
     return normalizedUserEmail === normalizedObraEmail || 
            obra.authorizedEmails?.some(e => e.email?.toLowerCase().trim() === normalizedUserEmail);
-  }, [isUser, user, obra, isAdmin, id]);
+  }, [isUser, user, obra, isAdmin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +70,7 @@ function ObraViewContent() {
       toast({
         variant: "destructive",
         title: "Acceso Denegado",
-        description: "El usuario o clave son incorrectos para esta obra.",
+        description: "Credenciales incorrectas para este proyecto.",
       });
     }
     setIsLoggingIn(false);
@@ -82,10 +78,10 @@ function ObraViewContent() {
 
   if (authLoading || (docLoading && !obra)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0a3d62]">Conectando con Tamer Cloud...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#0a3d62]">Sincronizando con Tamer Cloud...</p>
         </div>
       </div>
     );
@@ -93,10 +89,10 @@ function ObraViewContent() {
 
   if (!id || (!obra && !docLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-[#f8fafc]">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="max-w-md w-full p-10 text-center rounded-[2.5rem] shadow-2xl border-none">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-6" />
-          <h1 className="text-xl font-black text-[#0a3d62] uppercase">Proyecto No Encontrado</h1>
+          <h1 className="text-xl font-black text-[#0a3d62]">PROYECTO NO ENCONTRADO</h1>
           <Button onClick={() => router.push('/login')} className="w-full h-14 rounded-2xl font-black bg-[#0a3d62] mt-8">VOLVER AL INICIO</Button>
         </Card>
       </div>
@@ -105,28 +101,28 @@ function ObraViewContent() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
           <div className="bg-[#0a3d62] p-8 text-center text-white">
             <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
               <ShieldCheck className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight mb-1">Acceso Técnico</h2>
-            <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">Tamer Industrial S.A.</p>
+            <h2 className="text-xl font-black uppercase">Acceso Técnico</h2>
+            <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mt-1">Tamer Industrial S.A.</p>
           </div>
           <CardContent className="p-8">
             <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Proyecto:</span>
-              <h3 className="font-black text-sm text-[#0a3d62] uppercase leading-snug">{obra.nombreObra}</h3>
+              <span className="text-[9px] font-black text-muted-foreground uppercase block mb-1">Proyecto:</span>
+              <h3 className="font-black text-sm text-[#0a3d62] uppercase leading-tight">{obra.nombreObra}</h3>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Email o Usuario</Label>
+                <Label className="text-[10px] font-black uppercase text-muted-foreground ml-2">Email Autorizado</Label>
                 <Input 
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
-                  className="h-14 rounded-xl bg-secondary/30 border-none font-bold text-base px-5"
+                  className="h-14 rounded-xl bg-slate-100 border-none font-bold text-base px-5"
                   placeholder="usuario@tamer.com"
                   required
                 />
@@ -138,11 +134,11 @@ function ObraViewContent() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="h-14 rounded-xl bg-secondary/30 border-none font-bold text-base px-5 pr-12"
+                    className="h-14 rounded-xl bg-slate-100 border-none font-bold text-base px-5 pr-12"
                     placeholder="••••••••"
                     required
                   />
-                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-5 h-5 text-[#0a3d62]" /> : <Eye className="w-5 h-5 text-[#0a3d62]" />}
                   </Button>
                 </div>
@@ -162,114 +158,113 @@ function ObraViewContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20">
-      {/* Encabezado Industrial v3.5.8 */}
-      <div className="bg-[#0a3d62] text-white pt-16 pb-16 px-6">
+    <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+      {/* Encabezado Técnico v3.6.0 */}
+      <header className="bg-[#0a3d62] text-white pt-10 pb-12 px-6 shadow-xl">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-3 shadow-xl">
+            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center p-2">
               {empresa?.logoUrl ? (
                 <img src={empresa.logoUrl} alt="Logo" className="w-full h-full object-contain" />
               ) : (
                 <Construction className="w-8 h-8 text-[#0a3d62]" />
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={logout} className="text-white hover:bg-white/10 rounded-full h-10 px-6 font-black text-[10px] uppercase tracking-widest">
+            <Button variant="ghost" size="sm" onClick={logout} className="text-white hover:bg-white/10 rounded-full font-black text-[10px] tracking-widest h-9 px-5">
               <LogOut className="w-4 h-4 mr-2" /> SALIR
             </Button>
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight uppercase leading-tight break-words">
+            <h1 className="text-2xl sm:text-3xl font-black uppercase leading-tight break-words drop-shadow-lg">
               {obra.nombreObra}
             </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="bg-primary/20 text-white border border-primary/30 font-black text-[10px] px-4 py-1.5 rounded-lg">OF: {obra.numeroOF}</div>
-              <div className="bg-white/10 text-white border border-white/20 font-black text-[10px] px-4 py-1.5 rounded-lg">OT: {obra.numeroOT}</div>
-              <div className="bg-white/10 text-white border border-white/20 font-black text-[10px] px-4 py-1.5 rounded-lg">ID: {obra.codigoCliente}</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="bg-primary/20 text-white border border-primary/40 font-black text-[10px] px-3 py-1.5 rounded-lg">OF: {obra.numeroOF}</div>
+              <div className="bg-white/10 text-white border border-white/20 font-black text-[10px] px-3 py-1.5 rounded-lg">OT: {obra.numeroOT}</div>
+              <div className="bg-white/10 text-white border border-white/20 font-black text-[10px] px-3 py-1.5 rounded-lg">ID: {obra.codigoCliente}</div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-8 space-y-8">
-        {/* Información Técnica */}
-        <Card className="border-none shadow-xl rounded-[2rem] bg-white overflow-hidden">
+      <main className="max-w-4xl mx-auto px-4 -mt-6 space-y-6">
+        {/* Ficha Informativa */}
+        <Card className="border-none shadow-2xl rounded-[2rem] bg-white overflow-hidden">
           <CardContent className="p-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Titular / Cliente</p>
-                <p className="font-black text-[#0a3d62] text-lg uppercase leading-tight">{obra.cliente}</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Titular del Proyecto</p>
+                <p className="font-black text-[#0a3d62] text-lg uppercase">{obra.cliente}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Ubicación</p>
-                <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <p className="font-bold text-gray-700 text-sm leading-snug">{obra.direccion || 'No especificada'}</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Dirección de Obra</p>
+                <div className="flex items-start gap-2 text-[#0a3d62]">
+                  <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="font-bold text-sm leading-snug">{obra.direccion || 'Ubicación no especificada'}</p>
                 </div>
               </div>
             </div>
-            <div className="pt-4 border-t border-slate-100">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">Alcance del Proyecto</p>
-              <p className="text-sm text-gray-600 leading-relaxed font-medium">{obra.descripcion || 'Sin detalles adicionales.'}</p>
-            </div>
+            {obra.descripcion && (
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Alcance Técnico</p>
+                <p className="text-sm text-slate-600 leading-relaxed font-medium">{obra.descripcion}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Listado de Documentación Directa */}
+        {/* Sección de Documentación Directa */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.2em] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" /> Documentos Técnicos Sincronizados
-            </h3>
-            <Badge variant="secondary" className="font-black text-[10px] px-3 py-1 rounded-full uppercase">{obra.files?.length || 0} ARCHIVOS</Badge>
-          </div>
+          <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.2em] flex items-center gap-2 px-2">
+            <FileText className="w-5 h-5 text-primary" /> DOCUMENTACIÓN DISPONIBLE
+          </h3>
           
-          <div className="grid grid-cols-1 gap-3">
-            {obra.files && obra.files.length > 0 ? (
-              obra.files.map((fileName, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-[1.5rem] shadow-lg border border-slate-100 flex items-center justify-between gap-4 group hover:border-primary/30 transition-all">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary shrink-0">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-black text-[#0a3d62] text-sm truncate leading-tight uppercase">{fileName}</p>
-                      <p className="text-[9px] font-bold text-muted-foreground mt-1">FORMATO TÉCNICO VINCULADO</p>
-                    </div>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Lista de Archivos Específicos */}
+            {obra.files && obra.files.length > 0 && obra.files.map((fileName, idx) => (
+              <div key={idx} className="bg-white p-5 rounded-[1.5rem] shadow-xl border border-slate-100 flex items-center justify-between gap-4 group">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                    <FileText className="w-6 h-6" />
                   </div>
-                  <Button asChild className="h-12 w-12 rounded-xl bg-primary hover:bg-primary/90 text-white shrink-0 shadow-lg shadow-primary/20">
-                    <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="w-5 h-5" />
-                    </a>
-                  </Button>
+                  <div className="min-w-0">
+                    <p className="font-black text-[#0a3d62] text-sm truncate uppercase">{fileName}</p>
+                    <p className="text-[9px] font-bold text-muted-foreground mt-0.5">PLANO SINCRONIZADO</p>
+                  </div>
                 </div>
-              ))
-            ) : (
+                <Button asChild className="h-12 w-12 rounded-xl bg-primary hover:bg-primary/90 text-white shrink-0 shadow-lg shadow-primary/20">
+                  <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
+                    <Download className="w-5 h-5" />
+                  </a>
+                </Button>
+              </div>
+            ))}
+
+            {/* Acceso Directo a Repositorio si no hay archivos individuales o como refuerzo */}
+            {obra.driveFolderUrl && (
+              <Button asChild className="w-full h-20 rounded-[2rem] bg-[#0a3d62] hover:bg-[#0a3d62]/90 font-black text-lg gap-4 shadow-2xl shadow-[#0a3d62]/30 group transition-all active:scale-95">
+                <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
+                  <FolderOpen className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
+                  ABRIR CARPETA DE DRIVE
+                  <ArrowRight className="w-6 h-6 ml-auto" />
+                </a>
+              </Button>
+            )}
+
+            {!obra.driveFolderUrl && (!obra.files || obra.files.length === 0) && (
               <div className="p-16 text-center border-2 border-dashed rounded-[2.5rem] border-slate-200 bg-white/50 flex flex-col items-center gap-4">
                 <Construction className="w-12 h-12 text-slate-300" />
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[#0a3d62] font-black uppercase tracking-widest text-[10px] mb-1">Repositorio de Planos Activo</p>
-                    <p className="text-muted-foreground text-[10px] font-bold uppercase max-w-[250px] mx-auto leading-relaxed">Acceda directamente a la carpeta técnica de Tamer Industrial S.A. en Google Drive para ver los planos.</p>
-                  </div>
-                  {obra.driveFolderUrl && (
-                    <Button asChild className="h-16 px-10 rounded-2xl bg-[#0a3d62] hover:bg-[#0a3d62]/90 font-black gap-3 text-base shadow-2xl shadow-[#0a3d62]/30">
-                      <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                        <FolderOpen className="w-6 h-6" /> ABRIR CARPETA DE DRIVE
-                      </a>
-                    </Button>
-                  )}
-                </div>
+                <p className="text-[#0a3d62] font-black uppercase tracking-widest text-xs">SIN DOCUMENTOS CARGADOS</p>
               </div>
             )}
           </div>
         </div>
+      </main>
 
-        <footer className="pt-10 text-center opacity-30">
-          <p className="text-[10px] font-black text-[#0a3d62] uppercase tracking-[0.5em]">TAMER INDUSTRIAL S.A.</p>
-        </footer>
-      </div>
+      <footer className="mt-12 text-center opacity-30">
+        <p className="text-[9px] font-black text-[#0a3d62] uppercase tracking-[0.5em]">TAMER INDUSTRIAL S.A.</p>
+      </footer>
     </div>
   );
 }
@@ -277,7 +272,7 @@ function ObraViewContent() {
 export default function ObraViewPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="animate-spin text-primary w-10 h-10" />
       </div>
     }>

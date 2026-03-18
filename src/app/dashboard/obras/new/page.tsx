@@ -10,7 +10,8 @@ import {
   FileText,
   X,
   Eye,
-  EyeOff
+  EyeOff,
+  FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ export default function NewObraPage() {
     descripcion: '',
     usuarioAcceso: '',
     claveAcceso: '',
+    driveFolderUrl: ''
   });
 
   const [files, setFiles] = useState<File[]>([]);
@@ -68,14 +70,14 @@ export default function NewObraPage() {
       const folderName = `${formData.codigoCliente}-${formData.numeroOF}-${formData.numeroOT}`;
       const fileNames = files.map(f => f.name);
       
-      // Subir archivos a Drive
+      // Subir archivos a Drive si existen
       if (files.length > 0) {
         for (const file of files) {
           await uploadToDrive(file, folderName);
         }
       }
 
-      // Guardar registro en Firestore (email en minúsculas)
+      // Guardar registro en Firestore
       const obrasRef = collection(db, 'obras');
       const obraData = {
         ...formData,
@@ -86,19 +88,11 @@ export default function NewObraPage() {
         authorizedEmails: []
       };
 
-      addDoc(obrasRef, obraData)
-        .catch(async (error) => {
-          const permissionError = new FirestorePermissionError({
-            path: obrasRef.path,
-            operation: 'create',
-            requestResourceData: obraData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+      await addDoc(obrasRef, obraData);
 
       toast({
         title: "Obra creada exitosamente",
-        description: `La obra ${formData.nombreObra} ha sido registrada.`,
+        description: `La obra ${formData.nombreObra} ha sido registrada v3.3.4.`,
       });
       router.push('/dashboard/obras');
     } catch (error) {
@@ -121,7 +115,7 @@ export default function NewObraPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Nueva Obra</h1>
-            <p className="text-sm text-muted-foreground">Tamer Industrial S.A. - Registro Técnico</p>
+            <p className="text-sm text-muted-foreground">Tamer Industrial S.A. - Registro Técnico v3.3.4</p>
           </div>
         </div>
       </div>
@@ -158,6 +152,12 @@ export default function NewObraPage() {
                 <Input id="cliente" placeholder="Empresa contratante" value={formData.cliente} onChange={handleInputChange} required />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="driveFolderUrl" className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-primary" /> Enlace a Carpeta Drive (Planos)
+                </Label>
+                <Input id="driveFolderUrl" placeholder="https://drive.google.com/..." value={formData.driveFolderUrl} onChange={handleInputChange} />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="direccion">Dirección</Label>
                 <Input id="direccion" placeholder="Ubicación física" value={formData.direccion} onChange={handleInputChange} />
               </div>
@@ -171,15 +171,15 @@ export default function NewObraPage() {
           <Card className="border-none shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg text-primary flex items-center gap-2">
-                <FileText className="w-5 h-5" /> Documentos Técnicos
+                <FileText className="w-5 h-5" /> Documentos Técnicos Rápidos
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border-2 border-dashed border-muted rounded-xl p-8 text-center space-y-4 hover:border-primary/50 transition-colors bg-secondary/10">
                 <Upload className="w-10 h-10 text-primary mx-auto opacity-50" />
                 <div>
-                  <p className="font-medium text-sm">Arrastre planos o archivos PDF aquí</p>
-                  <p className="text-xs text-muted-foreground mt-1">Se guardarán en la carpeta de Drive vinculada.</p>
+                  <p className="font-medium text-sm">Arrastre archivos PDF aquí</p>
+                  <p className="text-xs text-muted-foreground mt-1">Estos se cargarán individualmente en el visor técnico.</p>
                 </div>
                 <Button type="button" variant="outline" size="sm" asChild>
                   <label className="cursor-pointer">
@@ -214,7 +214,7 @@ export default function NewObraPage() {
         <div className="space-y-6">
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-primary">Acceso App Android</CardTitle>
+              <CardTitle className="text-lg text-primary">Acceso App Android / QR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">

@@ -13,6 +13,7 @@ export interface Obra {
   claveAcceso: string;
   createdAt: number;
   files?: string[]; // Lista de nombres de archivos subidos
+  driveFolderUrl?: string; // Enlace opcional a carpeta de Drive v3.3.4
   authorizedEmails: Array<{ email: string; password?: string }>;
 }
 

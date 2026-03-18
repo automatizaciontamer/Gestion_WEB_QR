@@ -9,7 +9,8 @@ import {
   Loader2,
   AlertCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +58,6 @@ function EditObraContent() {
     if (!db || !id) return;
     setIsSaving(true);
     
-    // Email en minúsculas
     const dataToUpdate = {
       ...formData,
       usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim()
@@ -68,7 +68,7 @@ function EditObraContent() {
       .then(() => {
         toast({
           title: "Obra actualizada",
-          description: `Los cambios en ${formData.nombreObra} se han guardado.`,
+          description: `Cambios guardados v3.3.4.`,
         });
         router.push('/dashboard/obras');
       })
@@ -89,32 +89,13 @@ function EditObraContent() {
     return (
       <div className="text-center p-12 bg-white rounded-xl border shadow-sm max-w-md mx-auto mt-20">
         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Falta ID de Obra</h2>
-        <p className="text-muted-foreground mb-6">No se ha proporcionado una identificación válida.</p>
-        <Button onClick={() => router.push('/dashboard/obras')} className="w-full">Volver al listado</Button>
+        <h2 className="text-xl font-bold">Falta ID</h2>
+        <Button onClick={() => router.push('/dashboard/obras')} className="w-full">Volver</Button>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground font-medium">Cargando datos de la obra...</p>
-      </div>
-    );
-  }
-
-  if (!obra) {
-    return (
-      <div className="text-center p-12 bg-white rounded-xl border shadow-sm max-w-md mx-auto mt-20">
-        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <h2 className="text-xl font-bold">Obra no encontrada</h2>
-        <p className="text-muted-foreground mb-6">El registro que intenta editar no existe o no tiene permisos.</p>
-        <Button onClick={() => router.push('/dashboard/obras')} className="w-full">Volver al listado</Button>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-20 text-center">Cargando datos...</div>;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -125,7 +106,7 @@ function EditObraContent() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Editar Obra</h1>
-            <p className="text-sm text-muted-foreground">Actualice los detalles técnicos de la obra.</p>
+            <p className="text-sm text-muted-foreground">Tamer Industrial S.A. v3.3.4</p>
           </div>
         </div>
       </div>
@@ -147,6 +128,12 @@ function EditObraContent() {
                   <Input id="nombreObra" value={formData.nombreObra || ''} onChange={handleInputChange} required />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="driveFolderUrl" className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-primary" /> Enlace Carpeta Drive
+                </Label>
+                <Input id="driveFolderUrl" value={formData.driveFolderUrl || ''} onChange={handleInputChange} placeholder="URL de la carpeta de planos" />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="numeroOF">Número OF</Label>
@@ -162,12 +149,12 @@ function EditObraContent() {
                 <Input id="cliente" value={formData.cliente || ''} onChange={handleInputChange} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="direccion">Dirección de Obra</Label>
+                <Label htmlFor="direccion">Dirección</Label>
                 <Input id="direccion" value={formData.direccion || ''} onChange={handleInputChange} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripción Técnica</Label>
-                <Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="min-h-[150px]" />
+                <Label htmlFor="descripcion">Descripción</Label>
+                <Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="min-h-[100px]" />
               </div>
             </CardContent>
           </Card>
@@ -176,7 +163,7 @@ function EditObraContent() {
         <div className="space-y-6">
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg text-primary">Credenciales App Android</CardTitle>
+              <CardTitle className="text-lg text-primary">Credenciales QR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -184,38 +171,19 @@ function EditObraContent() {
                 <Input id="usuarioAcceso" type="email" value={formData.usuarioAcceso || ''} onChange={handleInputChange} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="claveAcceso">Contraseña de Acceso</Label>
+                <Label htmlFor="claveAcceso">Contraseña</Label>
                 <div className="relative">
-                  <Input 
-                    id="claveAcceso" 
-                    type={showPassword ? "text" : "password"} 
-                    value={formData.claveAcceso || ''} 
-                    onChange={handleInputChange} 
-                    className="pr-12"
-                    required 
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-muted-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
+                  <Input id="claveAcceso" type={showPassword ? "text" : "password"} value={formData.claveAcceso || ''} onChange={handleInputChange} required />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <Button 
-            type="submit" 
-            className="w-full h-14 bg-primary hover:bg-primary/90 gap-2 shadow-lg shadow-primary/20 text-lg font-bold" 
-            disabled={isSaving}
-          >
-            {isSaving ? "Guardando..." : <><Save className="w-5 h-5" /> Guardar Cambios</>}
+          <Button type="submit" className="w-full h-14 bg-primary text-lg font-bold" disabled={isSaving}>
+            {isSaving ? "Guardando..." : <><Save className="w-5 h-5 mr-2" /> Guardar Cambios</>}
           </Button>
-          <Button type="button" variant="outline" className="w-full" onClick={() => router.back()}>Cancelar</Button>
         </div>
       </form>
     </div>

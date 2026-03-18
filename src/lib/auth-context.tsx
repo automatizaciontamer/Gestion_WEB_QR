@@ -10,14 +10,14 @@ interface AuthContextType {
   isAdmin: boolean;
   isUser: boolean;
   user: any | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -35,10 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  const login = async (email: string, password: string) => {
-    // Check for hardcoded Admin
-    if (email === 'admin@tamer.com' && password === '14569') {
-      const adminData = { email, role: 'admin', nombre: 'Administrador' };
+  const login = async (identifier: string, password: string) => {
+    // Check for hardcoded Admin (Usuario: admin, Clave: 14569)
+    if (identifier === 'admin' && password === '14569') {
+      const adminData = { email: 'admin@tamer.com', role: 'admin', nombre: 'Administrador del Sistema' };
       setIsAdmin(true);
       setIsUser(true);
       setUser(adminData);
@@ -47,17 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    // Check in Firestore for Habilitados
+    // Check in Firestore for Usuarios Habilitados (using email)
+    if (!db) return false;
+    
     try {
       const q = query(
         collection(db, 'usuarios_clientes'),
-        where('email', '==', email),
+        where('email', '==', identifier),
         where('password', '==', password)
       );
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
-        const userData = { ...querySnapshot.docs[0].data(), id: querySnapshot.docs[0].id, role: 'user' };
+        const doc = querySnapshot.docs[0];
+        const userData = { ...doc.data(), id: doc.id, role: 'user' };
         setIsAdmin(false);
         setIsUser(true);
         setUser(userData);

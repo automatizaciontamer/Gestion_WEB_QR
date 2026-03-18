@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   MoreVertical, 
@@ -11,7 +11,8 @@ import {
   Mail,
   Key,
   Loader2,
-  UserCheck
+  UserCheck,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +40,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,7 +92,7 @@ export default function ClientesPage() {
       });
 
     toast({
-      title: "Usuario habilitado",
+      title: "Usuario Habilitado",
       description: `El usuario ${formData.nombre} ha sido creado correctamente.`,
     });
     setFormData({ nombre: '', email: '', password: '' });
@@ -115,47 +115,47 @@ export default function ClientesPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="space-y-6 pt-10 lg:pt-0">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 pt-16 lg:pt-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
-            <UserCheck className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
+            <ShieldCheck className="w-8 h-8 text-primary" />
             Usuarios Habilitados
           </h1>
-          <p className="text-sm text-muted-foreground font-medium">Gestionar accesos web para visualización de documentos técnicos.</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Gestión de Accesos Web y Documentación Técnica</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
-              <UserPlus className="w-4 h-4" /> Nuevo Usuario
+            <Button className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
+              <UserPlus className="w-5 h-5" /> NUEVO USUARIO
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-2xl">
+          <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-none shadow-2xl p-8">
             <DialogHeader>
-              <DialogTitle className="text-xl font-black">Habilitar Nuevo Usuario</DialogTitle>
+              <DialogTitle className="text-2xl font-black text-[#0a3d62]">Habilitar Usuario</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSaveClient} className="space-y-4 pt-4">
+            <form onSubmit={handleSaveClient} className="space-y-5 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre Completo</Label>
+                <Label htmlFor="nombre" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre Completo</Label>
                 <Input 
                   id="nombre" 
                   placeholder="Ej. Roberto Sánchez" 
-                  className="rounded-xl"
+                  className="rounded-xl h-12 bg-secondary/30"
                   value={formData.nombre}
                   onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
                   required 
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
+                <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Correo Electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="cliente@empresa.com" 
-                    className="pl-10 rounded-xl" 
+                    className="pl-12 rounded-xl h-12 bg-secondary/30" 
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     required 
@@ -163,78 +163,78 @@ export default function ClientesPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña de Acceso</Label>
+                <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Contraseña</Label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
                     id="password" 
                     type="password" 
                     placeholder="••••••••" 
-                    className="pl-10 rounded-xl"
+                    className="pl-12 rounded-xl h-12 bg-secondary/30"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     required 
                   />
                 </div>
               </div>
-              <DialogFooter className="pt-4 gap-2">
-                <Button type="button" variant="outline" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" className="rounded-xl font-bold">Guardar Usuario</Button>
+              <DialogFooter className="pt-6 gap-3">
+                <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
+                <Button type="submit" className="rounded-xl font-black bg-primary px-8">GUARDAR USUARIO</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-secondary">
+      <div className="bg-white p-4 rounded-3xl shadow-sm border border-secondary flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por nombre o email..." 
-            className="pl-10 h-11 bg-secondary/30 border-none rounded-xl"
+            className="pl-12 h-12 bg-secondary/20 border-none rounded-2xl font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-secondary overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-[#0a3d62]/5 border border-secondary overflow-hidden">
         {loading ? (
-          <div className="p-12 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground font-bold">Cargando usuarios...</p>
+          <div className="p-20 flex flex-col items-center justify-center gap-6">
+            <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Sincronizando Base de Datos...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-secondary/20">
-                <TableRow>
-                  <TableHead className="font-black uppercase text-[10px] tracking-widest">Nombre</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-widest">Email</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] tracking-widest">Acciones</TableHead>
+              <TableHeader className="bg-secondary/20 border-none">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Nombre Completo</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Email / Usuario</TableHead>
+                  <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClients.map((client) => (
-                  <TableRow key={client.id} className="hover:bg-secondary/10 transition-colors">
-                    <TableCell className="font-bold text-gray-800">{client.nombre}</TableCell>
-                    <TableCell className="text-muted-foreground font-medium">{client.email}</TableCell>
-                    <TableCell className="text-right">
+                  <TableRow key={client.id} className="hover:bg-secondary/10 transition-colors border-secondary">
+                    <TableCell className="font-black text-gray-800 px-8 py-5">{client.nombre}</TableCell>
+                    <TableCell className="text-primary font-bold">{client.email}</TableCell>
+                    <TableCell className="text-right px-8">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full">
-                            <MoreVertical className="w-4 h-4" />
+                          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
+                            <MoreVertical className="w-5 h-5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem className="flex items-center gap-2 font-medium">
-                            <Edit className="w-4 h-4" /> Editar
+                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
+                          <DropdownMenuItem className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl">
+                            <Edit className="w-4 h-4 text-primary" /> Editar Perfil
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="text-destructive flex items-center gap-2 font-bold"
+                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl"
                             onClick={() => handleDelete(client.id, client.nombre)}
                           >
-                            <Trash2 className="w-4 h-4" /> Eliminar
+                            <Trash2 className="w-4 h-4" /> ELIMINAR ACCESO
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -246,12 +246,12 @@ export default function ClientesPage() {
           </div>
         )}
         {!loading && filteredClients.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="mx-auto w-16 h-16 bg-secondary/30 rounded-2xl flex items-center justify-center mb-4">
-              <Search className="w-8 h-8 text-muted-foreground" />
+          <div className="p-20 text-center">
+            <div className="mx-auto w-24 h-24 bg-secondary/30 rounded-[2rem] flex items-center justify-center mb-6">
+              <UserCheck className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-black">No hay usuarios</h3>
-            <p className="text-muted-foreground font-medium">Registre su primer usuario habilitado para empezar.</p>
+            <h3 className="text-2xl font-black text-[#0a3d62]">Sin resultados</h3>
+            <p className="text-muted-foreground font-bold mt-2">No se encontraron usuarios habilitados.</p>
           </div>
         )}
       </div>

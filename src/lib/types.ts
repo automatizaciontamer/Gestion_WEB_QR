@@ -25,11 +25,11 @@ export interface UsuarioHabilitado {
 
 export interface Empresa {
   id: string;
-  nombre: string;
+  nombre: string; // Razon Social
   direccion: string;
-  nit: string;
+  nit: string; // CUIL
   telefono: string;
-  email: string;
+  email: string; // Email Contacto
   usuarioAdmin: string;
   passwordAdmin: string;
   logoUrl?: string;

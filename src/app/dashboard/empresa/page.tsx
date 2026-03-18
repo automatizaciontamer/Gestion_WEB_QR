@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash, Settings, Globe } from 'lucide-react';
+import { Building2, Save, Loader2, Key, Eye, EyeOff, Mail, Phone, MapPin, Hash, Settings, Globe, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,10 +13,14 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Empresa } from '@/lib/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
 
 export default function EmpresaConfigPage() {
   const db = useFirestore();
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +37,12 @@ export default function EmpresaConfigPage() {
     logoUrl: '',
     web: ''
   });
+
+  useEffect(() => {
+    if (!isAdmin && !loading) {
+      router.push('/dashboard');
+    }
+  }, [isAdmin, loading, router]);
 
   useEffect(() => {
     if (!db) return;
@@ -71,7 +81,7 @@ export default function EmpresaConfigPage() {
       .then(() => {
         toast({
           title: "Datos Actualizados",
-          description: "La información institucional ha sido guardada con éxito.",
+          description: "La información institucional de Tamer Industrial S.A. ha sido guardada.",
         });
       })
       .catch(async (error) => {
@@ -94,31 +104,31 @@ export default function EmpresaConfigPage() {
     );
   }
 
+  if (!isAdmin) return null;
+
   return (
     <div className="space-y-8 pt-16 lg:pt-0 max-w-4xl mx-auto">
       <div>
         <h1 className="text-3xl font-black tracking-tight text-[#0a3d62] flex items-center gap-3">
           <Building2 className="w-8 h-8 text-primary" />
-          Datos de Empresa
+          Configuración de Empresa
         </h1>
         <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-          Identidad Institucional y Acceso Maestro (Sincronizado con Android)
+          Identidad Institucional (Solo Acceso Administrador)
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
         <Card className="md:col-span-2 border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
-            <CardTitle className="text-xl font-black text-[#0a3d62]">Información General</CardTitle>
-            <CardDescription className="font-bold">Datos institucionales para reportes y QR.</CardDescription>
+            <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
+            <CardDescription className="font-bold">Datos para reportes, portal web y QRs.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Building2 className="w-3 h-3" /> Nombre / Razón Social
-                  </Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Razón Social</Label>
                   <Input 
                     value={formData.nombre}
                     onChange={e => setFormData({...formData, nombre: e.target.value})}
@@ -128,35 +138,30 @@ export default function EmpresaConfigPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> NIT / CUIL
-                  </Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">NIT / CUIL</Label>
                   <Input 
                     value={formData.nit}
                     onChange={e => setFormData({...formData, nit: e.target.value})}
                     className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
                     placeholder="30707867309"
+                    required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <MapPin className="w-3 h-3" /> Dirección
-                </Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección Fiscal</Label>
                 <Input 
                   value={formData.direccion}
                   onChange={e => setFormData({...formData, direccion: e.target.value})}
                   className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="Dirección fiscal"
+                  placeholder="Dirección completa"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Phone className="w-3 h-3" /> Teléfono
-                  </Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Teléfono</Label>
                   <Input 
                     value={formData.telefono}
                     onChange={e => setFormData({...formData, telefono: e.target.value})}
@@ -165,9 +170,7 @@ export default function EmpresaConfigPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Mail className="w-3 h-3" /> Email Público
-                  </Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email de Contacto Global</Label>
                   <Input 
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
@@ -178,9 +181,7 @@ export default function EmpresaConfigPage() {
               </div>
 
               <div className="space-y-2 pt-4 border-t">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Globe className="w-3 h-3" /> Sitio Web
-                </Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Sitio Web Oficial</Label>
                 <Input 
                   value={formData.web}
                   onChange={e => setFormData({...formData, web: e.target.value})}
@@ -189,16 +190,25 @@ export default function EmpresaConfigPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Settings className="w-3 h-3" /> URL Logo
+                  <Upload className="w-3 h-3" /> Logo de Empresa (URL)
                 </Label>
-                <Input 
-                  value={formData.logoUrl}
-                  onChange={e => setFormData({...formData, logoUrl: e.target.value})}
-                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="URL de la imagen del logo"
-                />
+                <div className="flex gap-4 items-center">
+                  <div className="w-16 h-16 bg-secondary/30 rounded-xl flex items-center justify-center overflow-hidden border">
+                    {formData.logoUrl ? (
+                      <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
+                    ) : (
+                      <Building2 className="text-muted-foreground w-8 h-8" />
+                    )}
+                  </div>
+                  <Input 
+                    value={formData.logoUrl}
+                    onChange={e => setFormData({...formData, logoUrl: e.target.value})}
+                    className="flex-1 h-12 rounded-xl bg-secondary/20 border-none font-bold" 
+                    placeholder="Pegue la URL directa del logo"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -207,12 +217,12 @@ export default function EmpresaConfigPage() {
         <div className="space-y-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-[#0a3d62] text-white">
             <CardHeader>
-              <CardTitle className="text-lg font-black uppercase tracking-widest">Acceso Maestro</CardTitle>
-              <CardDescription className="text-white/60 font-medium">Credenciales para acceso total al sistema.</CardDescription>
+              <CardTitle className="text-lg font-black uppercase tracking-widest">Credenciales Maestras</CardTitle>
+              <CardDescription className="text-white/60 font-medium">Email y clave para acceso institucional global.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Usuario Administrador</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Email Administrador</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
@@ -225,7 +235,7 @@ export default function EmpresaConfigPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Clave de Administrador</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-white/50">Clave Maestra</Label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                   <Input 
@@ -243,7 +253,7 @@ export default function EmpresaConfigPage() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </Button>
                 </div>
               </div>

@@ -182,7 +182,8 @@ function ObraViewContent() {
                   {downloadUrl ? (
                     <a 
                       href={downloadUrl} 
-                      download={fileName}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="h-16 px-8 rounded-[1.5rem] bg-[#0a3d62] hover:bg-primary shadow-xl flex items-center justify-center text-white transition-all active:scale-90 shrink-0 gap-3"
                     >
                       <Download className="w-6 h-6" />

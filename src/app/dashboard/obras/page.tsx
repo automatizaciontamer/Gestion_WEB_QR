@@ -11,7 +11,8 @@ import {
   Edit, 
   Trash2, 
   QrCode,
-  Loader2
+  Loader2,
+  Construction
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,10 +46,10 @@ export default function ObrasPage() {
   const filteredObras = useMemo(() => {
     if (!obras) return [];
     return obras.filter(obra => 
-      obra.numeroOF.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.numeroOT.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.nombreObra.toLowerCase().includes(searchTerm.toLowerCase())
+      obra.numeroOF?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.numeroOT?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.nombreObra?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [obras, searchTerm]);
 
@@ -71,96 +72,94 @@ export default function ObrasPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pt-16 lg:pt-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground">Listado de proyectos activos y finalizados.</p>
+          <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">Administración Técnica Sincronizada</p>
         </div>
         <Link href="/dashboard/obras/new">
-          <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nueva Obra
+          <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
+            <Plus className="w-5 h-5" /> NUEVA OBRA
           </Button>
         </Link>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
+      <div className="bg-white p-4 rounded-3xl shadow-sm border border-secondary flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             placeholder="Buscar por OF, OT o Cliente..." 
-            className="pl-10 h-10 bg-secondary/50 border-none"
+            className="pl-12 h-12 bg-secondary/20 border-none rounded-2xl font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="flex items-center gap-2 h-10">
-          <Filter className="w-4 h-4" /> Filtros
-        </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-[#0a3d62]/5 border border-secondary overflow-hidden">
         {loading ? (
-          <div className="p-12 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Cargando obras...</p>
+          <div className="p-20 flex flex-col items-center justify-center gap-6">
+            <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando proyectos...</p>
           </div>
         ) : (
-          <>
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-secondary/50">
-                <TableRow>
-                  <TableHead className="font-semibold">N° OF / OT</TableHead>
-                  <TableHead className="font-semibold">Nombre de Obra</TableHead>
-                  <TableHead className="font-semibold">Cliente</TableHead>
-                  <TableHead className="font-semibold">Cod. Cliente</TableHead>
-                  <TableHead className="font-semibold">Acceso App</TableHead>
-                  <TableHead className="text-right font-semibold">Acciones</TableHead>
+              <TableHeader className="bg-secondary/20 border-none">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">N° OF / OT</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Obra / Proyecto</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Cliente</TableHead>
+                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Acceso App</TableHead>
+                  <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredObras.map((obra) => (
-                  <TableRow key={obra.id} className="hover:bg-secondary/20 transition-colors">
-                    <TableCell>
+                  <TableRow key={obra.id} className="hover:bg-secondary/10 transition-colors border-secondary">
+                    <TableCell className="px-8">
                       <div className="flex flex-col">
-                        <span className="font-bold text-primary">{obra.numeroOF}</span>
-                        <span className="text-xs text-muted-foreground">{obra.numeroOT}</span>
+                        <span className="font-black text-primary text-base">{obra.numeroOF}</span>
+                        <span className="text-[10px] font-black text-muted-foreground uppercase">{obra.numeroOT}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{obra.nombreObra}</TableCell>
-                    <TableCell>{obra.cliente}</TableCell>
+                    <TableCell className="font-bold text-gray-800">{obra.nombreObra}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-mono">{obra.codigoCliente}</Badge>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm">{obra.cliente}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground">{obra.codigoCliente}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col text-xs">
-                        <span className="font-medium">{obra.usuarioAcceso}</span>
-                        <span className="text-muted-foreground">Clave: {obra.claveAcceso}</span>
+                        <span className="font-bold text-primary">{obra.usuarioAcceso}</span>
+                        <span className="text-muted-foreground font-mono">Clave: {obra.claveAcceso}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right px-8">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
+                          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
+                            <MoreVertical className="w-5 h-5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-2">
-                              <Edit className="w-4 h-4" /> Editar Obra
+                            <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
+                              <Edit className="w-4 h-4 text-primary" /> EDITAR OBRA
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-2">
-                              <QrCode className="w-4 h-4" /> Generar Ficha QR
+                            <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
+                              <QrCode className="w-4 h-4 text-primary" /> GENERAR QR
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="text-destructive flex items-center gap-2"
+                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
                             onClick={() => handleDelete(obra.id, obra.nombreObra)}
                           >
-                            <Trash2 className="w-4 h-4" /> Eliminar
+                            <Trash2 className="w-4 h-4" /> ELIMINAR
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -169,16 +168,16 @@ export default function ObrasPage() {
                 ))}
               </TableBody>
             </Table>
-            {filteredObras.length === 0 && (
-              <div className="p-12 text-center">
-                <div className="mx-auto w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-4">
-                  <Search className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold">No se encontraron obras</h3>
-                <p className="text-muted-foreground">Registre su primera obra para empezar.</p>
-              </div>
-            )}
-          </>
+          </div>
+        )}
+        {!loading && filteredObras.length === 0 && (
+          <div className="p-20 text-center">
+            <div className="mx-auto w-24 h-24 bg-secondary/30 rounded-[2rem] flex items-center justify-center mb-6">
+              <Construction className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-2xl font-black text-[#0a3d62]">Sin obras</h3>
+            <p className="text-muted-foreground font-bold mt-2">No se encontraron proyectos activos.</p>
+          </div>
         )}
       </div>
     </div>

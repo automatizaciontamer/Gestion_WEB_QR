@@ -1,10 +1,10 @@
+
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   MoreVertical, 
-  Edit, 
   Trash2, 
   UserPlus,
   Mail,
@@ -40,7 +40,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 
-export default function ClientesPage() {
+export default function UsuariosHabilitadosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const db = useFirestore();
@@ -60,30 +60,30 @@ export default function ClientesPage() {
     password: ''
   });
 
-  const clientsQuery = useMemo(() => {
+  const usersQuery = useMemo(() => {
     if (!db) return null;
     return collection(db, 'usuarios_clientes');
   }, [db]);
 
-  const { data: clients, loading } = useCollection<UsuarioHabilitado>(clientsQuery);
+  const { data: users, loading } = useCollection<UsuarioHabilitado>(usersQuery);
 
-  const filteredClients = useMemo(() => {
-    if (!clients) return [];
-    return clients.filter(client => 
-      client.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter(user => 
+      user.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [clients, searchTerm]);
+  }, [users, searchTerm]);
 
-  const handleSaveClient = (e: React.FormEvent) => {
+  const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!db) return;
 
-    const clientsRef = collection(db, 'usuarios_clientes');
-    addDoc(clientsRef, formData)
+    const usersRef = collection(db, 'usuarios_clientes');
+    addDoc(usersRef, formData)
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
-          path: clientsRef.path,
+          path: usersRef.path,
           operation: 'create',
           requestResourceData: formData,
         });
@@ -91,8 +91,8 @@ export default function ClientesPage() {
       });
 
     toast({
-      title: "Usuario Habilitado",
-      description: `El usuario ${formData.nombre} ha sido creado correctamente.`,
+      title: "Usuario Creado",
+      description: `El acceso para ${formData.nombre} ha sido habilitado.`,
     });
     setFormData({ nombre: '', email: '', password: '' });
     setIsDialogOpen(false);
@@ -121,7 +121,7 @@ export default function ClientesPage() {
             <ShieldCheck className="w-8 h-8 text-primary" />
             Usuarios Habilitados
           </h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Gestión de Accesos Web Compartida con Android</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Sincronización de Accesos con App Android</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -134,7 +134,7 @@ export default function ClientesPage() {
             <DialogHeader>
               <DialogTitle className="text-2xl font-black text-[#0a3d62]">Habilitar Usuario</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSaveClient} className="space-y-5 pt-4">
+            <form onSubmit={handleSaveUser} className="space-y-5 pt-4">
               <div className="space-y-2">
                 <Label htmlFor="nombre" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre Completo</Label>
                 <Input 
@@ -153,7 +153,7 @@ export default function ClientesPage() {
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="cliente@empresa.com" 
+                    placeholder="usuario@tamer.com" 
                     className="pl-12 rounded-xl h-12 bg-secondary/30" 
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
@@ -178,7 +178,7 @@ export default function ClientesPage() {
               </div>
               <DialogFooter className="pt-6 gap-3">
                 <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
-                <Button type="submit" className="rounded-xl font-black bg-primary px-8">GUARDAR USUARIO</Button>
+                <Button type="submit" className="rounded-xl font-black bg-primary px-8">HABILITAR ACCESO</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -201,7 +201,7 @@ export default function ClientesPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Sincronizando Usuarios...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Conectando con Firestore...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -214,10 +214,10 @@ export default function ClientesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClients.map((client) => (
-                  <TableRow key={client.id} className="hover:bg-secondary/10 transition-colors border-secondary">
-                    <TableCell className="font-black text-gray-800 px-8 py-5">{client.nombre}</TableCell>
-                    <TableCell className="text-primary font-bold">{client.email}</TableCell>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-secondary/10 transition-colors border-secondary">
+                    <TableCell className="font-black text-gray-800 px-8 py-5">{user.nombre}</TableCell>
+                    <TableCell className="text-primary font-bold">{user.email}</TableCell>
                     <TableCell className="text-right px-8">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -227,8 +227,8 @@ export default function ClientesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
                           <DropdownMenuItem 
-                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl"
-                            onClick={() => handleDelete(client.id, client.nombre)}
+                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
+                            onClick={() => handleDelete(user.id, user.nombre)}
                           >
                             <Trash2 className="w-4 h-4" /> ELIMINAR ACCESO
                           </DropdownMenuItem>
@@ -241,13 +241,13 @@ export default function ClientesPage() {
             </Table>
           </div>
         )}
-        {!loading && filteredClients.length === 0 && (
+        {!loading && filteredUsers.length === 0 && (
           <div className="p-20 text-center">
             <div className="mx-auto w-24 h-24 bg-secondary/30 rounded-[2rem] flex items-center justify-center mb-6">
               <UserCheck className="w-10 h-10 text-muted-foreground" />
             </div>
             <h3 className="text-2xl font-black text-[#0a3d62]">Sin registros</h3>
-            <p className="text-muted-foreground font-bold mt-2">No se encontraron usuarios habilitados.</p>
+            <p className="text-muted-foreground font-bold mt-2">No hay usuarios habilitados en el sistema.</p>
           </div>
         )}
       </div>

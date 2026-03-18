@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -40,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const adminData = { 
         email: 'admin@tamer.com', 
         role: 'admin', 
-        nombre: 'Administrador del Sistema',
+        nombre: 'Administrador Maestro',
         id: 'admin-master'
       };
       setIsAdmin(true);

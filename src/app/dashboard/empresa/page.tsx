@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Upload } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Building2, Save, Loader2, Upload, Globe, Phone, Mail, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,14 +15,18 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { uploadToDrive } from '@/lib/drive-api';
 
 export default function EmpresaConfigPage() {
   const db = useFirestore();
   const { toast } = useToast();
   const { isAdmin } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   
   const [formData, setFormData] = useState<Empresa>({
     id: 'Empresa',
@@ -65,6 +69,39 @@ export default function EmpresaConfigPage() {
     loadEmpresa();
   }, [db]);
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      // Subir a la carpeta específica "Datos Empresa"
+      await uploadToDrive(file, "Datos Empresa");
+      
+      toast({
+        title: "Logo Enviado",
+        description: "La imagen se ha guardado en la carpeta 'Datos Empresa' de Google Drive.",
+      });
+      
+      // Nota: Debido a CORS en Apps Script no podemos obtener la URL directa automáticamente.
+      // Instruimos al usuario sobre cómo proceder si el script no actualiza Firestore.
+      toast({
+        title: "Paso Final",
+        description: "Si el logo no se actualiza automáticamente, por favor pegue la URL pública del archivo en el campo correspondiente.",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error de Subida",
+        description: "No se pudo completar la carga del archivo.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!db) return;
@@ -74,8 +111,8 @@ export default function EmpresaConfigPage() {
     setDoc(docRef, formData, { merge: true })
       .then(() => {
         toast({
-          title: "Datos Actualizados",
-          description: "La información institucional de Tamer Industrial S.A. ha sido guardada.",
+          title: "Configuración Guardada",
+          description: "La información de Tamer Industrial S.A. ha sido actualizada exitosamente.",
         });
       })
       .catch(async (error) => {
@@ -93,7 +130,7 @@ export default function EmpresaConfigPage() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Cargando Configuración...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Sincronizando v2.3...</p>
       </div>
     );
   }
@@ -109,15 +146,15 @@ export default function EmpresaConfigPage() {
             Configuración de Empresa
           </h1>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">
-            Identidad Institucional (v2.2)
+            Gestión Institucional (v2.3)
           </p>
         </div>
         <Button 
           onClick={handleSubmit}
-          className="h-14 bg-primary hover:bg-primary/90 rounded-2xl font-black px-8 shadow-xl shadow-primary/20 gap-3 transition-all active:scale-95"
+          className="h-14 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-2xl font-black px-8 shadow-xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95"
           disabled={saving}
         >
-          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save className="w-6 h-6" /> GUARDAR DATOS</>}
+          {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save className="w-6 h-6" /> GUARDAR CAMBIOS</>}
         </Button>
       </div>
 
@@ -125,96 +162,128 @@ export default function EmpresaConfigPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="bg-[#0a3d62]/5 border-b py-8">
             <CardTitle className="text-xl font-black text-[#0a3d62]">Ficha Institucional</CardTitle>
-            <CardDescription className="font-bold">Datos para reportes y portal web.</CardDescription>
+            <CardDescription className="font-bold">Datos para reportes, portal QR y App Android.</CardDescription>
           </CardHeader>
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-8 space-y-8">
+            
+            {/* Sección de Logo */}
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Razón Social</Label>
-                  <Input 
-                    value={formData.nombre}
-                    onChange={e => setFormData({...formData, nombre: e.target.value})}
-                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="Tamer Industrial S.A."
-                    required
-                  />
+              <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <Upload className="w-3 h-3" /> Identidad Visual (Logo)
+              </Label>
+              <div className="flex flex-col sm:flex-row gap-8 items-center bg-secondary/10 p-8 rounded-[2rem] border border-dashed border-primary/20">
+                <div className="w-40 h-40 bg-white rounded-3xl flex items-center justify-center overflow-hidden border-4 border-white shadow-xl p-3 shrink-0">
+                  {formData.logoUrl ? (
+                    <img src={formData.logoUrl} alt="Logo Actual" className="w-full h-full object-contain" />
+                  ) : (
+                    <Building2 className="text-muted-foreground/30 w-16 h-16" />
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">NIT / CUIL</Label>
-                  <Input 
-                    value={formData.nit}
-                    onChange={e => setFormData({...formData, nit: e.target.value})}
-                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="30707867309"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección Fiscal</Label>
-                <Input 
-                  value={formData.direccion}
-                  onChange={e => setFormData({...formData, direccion: e.target.value})}
-                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="Julio A. Roca 1899 Benegas Godoy Cruz"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Teléfono</Label>
-                  <Input 
-                    value={formData.telefono}
-                    onChange={e => setFormData({...formData, telefono: e.target.value})}
-                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="2615566911"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email de Contacto</Label>
-                  <Input 
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                    placeholder="automatizacion.tamer@gmail.com"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-4 border-t">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Sitio Web Oficial</Label>
-                <Input 
-                  value={formData.web}
-                  onChange={e => setFormData({...formData, web: e.target.value})}
-                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold" 
-                  placeholder="https://tamer.com.ar"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Upload className="w-3 h-3" /> Logo Institucional (URL)
-                </Label>
-                <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center bg-secondary/10 p-6 rounded-3xl">
-                  <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow-inner p-2">
-                    {formData.logoUrl ? (
-                      <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
-                    ) : (
-                      <Building2 className="text-muted-foreground w-12 h-12" />
-                    )}
+                <div className="flex-1 w-full space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Acciones de Imagen</p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="rounded-xl font-black border-2 border-primary text-primary hover:bg-primary hover:text-white h-12 px-6"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                      >
+                        {uploadingLogo ? <Loader2 className="animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                        SUBIR DESDE DISPOSITIVO
+                      </Button>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleLogoUpload} 
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1 w-full space-y-2">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase">URL Directa del Logo</p>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">URL Directa del Logo</p>
                     <Input 
                       value={formData.logoUrl}
                       onChange={e => setFormData({...formData, logoUrl: e.target.value})}
                       className="h-12 rounded-xl bg-white border-none font-bold shadow-sm" 
-                      placeholder="Pegue la URL del logo de Drive o Web"
+                      placeholder="https://drive.google.com/uc?id=..."
                     />
+                    <p className="text-[9px] text-muted-foreground font-medium italic">
+                      * El archivo se guardará en la carpeta "Datos Empresa" de Drive.
+                    </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Datos Generales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Building2 className="w-3 h-3" /> Razón Social
+                </Label>
+                <Input 
+                  value={formData.nombre}
+                  onChange={e => setFormData({...formData, nombre: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="Tamer Industrial S.A."
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <FileCheck className="w-3 h-3" /> CUIL / NIT
+                </Label>
+                <Input 
+                  value={formData.nit}
+                  onChange={e => setFormData({...formData, nit: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="30707867309"
+                  required
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dirección Fiscal</Label>
+                <Input 
+                  value={formData.direccion}
+                  onChange={e => setFormData({...formData, direccion: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="Julio A. Roca 1899 Benegas Godoy Cruz"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Phone className="w-3 h-3" /> Teléfono
+                </Label>
+                <Input 
+                  value={formData.telefono}
+                  onChange={e => setFormData({...formData, telefono: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="2615566911"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Mail className="w-3 h-3" /> Email de Contacto
+                </Label>
+                <Input 
+                  value={formData.email}
+                  onChange={e => setFormData({...formData, email: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="automatizacion.tamer@gmail.com"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2 pt-4 border-t">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Globe className="w-3 h-3" /> Sitio Web Oficial
+                </Label>
+                <Input 
+                  value={formData.web}
+                  onChange={e => setFormData({...formData, web: e.target.value})}
+                  className="h-12 rounded-xl bg-secondary/20 border-none font-bold text-[#0a3d62]" 
+                  placeholder="https://tamer.com.ar"
+                />
               </div>
             </div>
           </CardContent>

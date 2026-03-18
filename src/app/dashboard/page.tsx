@@ -64,7 +64,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3 text-[#0a3d62]">
             ¡Hola, {user?.nombre || 'Bienvenido'}!
           </h1>
-          <p className="text-muted-foreground font-medium">Estado actual del sistema de gestión Tamer Industrial S.A. | v2.2</p>
+          <p className="text-muted-foreground font-medium">Estado actual del sistema de gestión Tamer Industrial S.A. | v2.3</p>
         </div>
         {isAdmin && (
           <div className="bg-[#0a3d62]/10 text-[#0a3d62] px-4 py-2 rounded-xl border border-[#0a3d62]/20 flex items-center gap-2 text-sm font-bold w-fit">

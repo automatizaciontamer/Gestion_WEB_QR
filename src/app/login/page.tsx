@@ -33,7 +33,6 @@ export default function LoginPage() {
         });
         setIsLoading(false);
       }
-      // Si tiene éxito, el AuthProvider redirigirá automáticamente
     } catch (error) {
       console.error("Login Error:", error);
       toast({
@@ -125,7 +124,7 @@ export default function LoginPage() {
         </Card>
         
         <p className="text-center text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black opacity-50">
-          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.2
+          © {new Date().getFullYear()} Tamer Industrial S.A. | v2.3
         </p>
       </div>
     </div>

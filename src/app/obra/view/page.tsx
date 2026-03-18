@@ -8,7 +8,7 @@ import { useMemo, Suspense } from 'react';
 import { Obra } from '@/lib/types';
 import { 
   FileText, 
-  Download, 
+  Eye, 
   Construction, 
   Loader2,
   AlertCircle,
@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Info,
   ArrowLeft,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
@@ -44,9 +45,8 @@ function ObraViewContent() {
   const hasFiles = files.length > 0;
   const hasFolderUrl = !!obra?.driveFolderUrl;
 
-  const getDownloadUrl = (file: any) => {
+  const getDriveViewUrl = (file: any) => {
     if (!file) return '';
-    // Detección profunda de ID (v5.0.4)
     let fileId = '';
     if (typeof file === 'string') {
       fileId = file;
@@ -57,8 +57,8 @@ function ObraViewContent() {
     if (!fileId) return '';
     if (fileId.startsWith('http')) return fileId;
     
-    // URL de descarga directa forzada
-    return `https://drive.google.com/uc?id=${fileId}&export=download`;
+    // Usamos el visor nativo de Google Drive para máxima compatibilidad (v5.0.5)
+    return `https://drive.google.com/file/d/${fileId}/view`;
   };
 
   const getFileName = (file: any, index: number) => {
@@ -72,7 +72,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando Planos v5.0.4...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando Planos v5.0.5...</p>
       </div>
     );
   }
@@ -105,7 +105,7 @@ function ObraViewContent() {
                </div>
                <div className="overflow-hidden">
                  <p className="text-[8px] font-black uppercase tracking-[0.4em] text-primary">TAMER INDUSTRIAL S.A.</p>
-                 <h2 className="text-xs font-black truncate max-w-[150px] uppercase opacity-80">v5.0.4 - Planos en Obra</h2>
+                 <h2 className="text-xs font-black truncate max-w-[150px] uppercase opacity-80">v5.0.5 - Planos en Obra</h2>
                </div>
              </div>
              <Button variant="ghost" onClick={() => router.push('/login')} className="text-white/50 hover:bg-white/10 rounded-xl h-10 px-4 font-black text-[9px] uppercase tracking-widest">
@@ -140,12 +140,12 @@ function ObraViewContent() {
 
         <div className="space-y-6">
           <h3 className="text-[11px] font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
-            <FileText className="w-5 h-5 text-primary" /> Planos Técnicos Sincronizados
+            <FileText className="w-5 h-5 text-primary" /> Documentación Técnica
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
             {hasFiles ? files.map((file, idx) => {
-              const downloadUrl = getDownloadUrl(file);
+              const driveUrl = getDriveViewUrl(file);
               const fileName = getFileName(file, idx);
               return (
                 <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border hover:border-primary/50 transition-all flex items-center justify-between group">
@@ -155,17 +155,18 @@ function ObraViewContent() {
                     </div>
                     <div className="overflow-hidden">
                       <p className="font-black text-[#0a3d62] text-sm uppercase truncate max-w-[200px] sm:max-w-[400px]">{fileName}</p>
-                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Listo para descargar</p>
+                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Archivo de Ingeniería</p>
                     </div>
                   </div>
-                  {downloadUrl ? (
+                  {driveUrl ? (
                     <a 
-                      href={downloadUrl} 
+                      href={driveUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="h-14 w-14 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg flex items-center justify-center text-white transition-transform active:scale-90 shrink-0"
+                      className="h-14 px-6 rounded-2xl bg-[#0a3d62] hover:bg-primary shadow-lg flex items-center justify-center text-white transition-transform active:scale-95 shrink-0 gap-3"
                     >
-                      <Download className="w-6 h-6" />
+                      <Eye className="w-5 h-5" />
+                      <span className="font-black text-xs uppercase hidden sm:inline">VER / BAJAR</span>
                     </a>
                   ) : (
                     <div className="h-14 w-14 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">
@@ -195,8 +196,8 @@ function ObraViewContent() {
                   <FolderOpen className="w-8 h-8 text-primary" />
                 </div>
                 <div className="text-left flex-1 overflow-hidden">
-                  <p className="font-black uppercase text-xl leading-none tracking-tighter">ACCEDER A CARPETA COMPLETA</p>
-                  <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Repositorio Google Drive v5.0.4</p>
+                  <p className="font-black uppercase text-xl leading-none tracking-tighter">REPOSITORIO DE PLANOS COMPLETO</p>
+                  <p className="text-[10px] opacity-60 uppercase font-black mt-2 tracking-widest">Acceso Directo Google Drive v5.0.5</p>
                 </div>
                 <ChevronRight className="w-8 h-8 opacity-20 ml-2 shrink-0" />
               </a>
@@ -207,9 +208,9 @@ function ObraViewContent() {
         <div className="bg-blue-50/70 p-8 rounded-[2rem] border border-blue-100 flex items-start gap-5 shadow-sm">
           <Info className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
           <div className="space-y-2">
-            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest">Aviso de Sincronización</p>
+            <p className="text-[11px] font-black text-blue-900 uppercase tracking-widest">Aviso de Documentación</p>
             <p className="text-[10px] font-bold text-blue-800/80 uppercase leading-relaxed">
-              Si la descarga directa falla, utilice el botón "ACCEDER A CARPETA COMPLETA" para visualizar los planos directamente desde el servidor de Google. OF: {obra.numeroOF}
+              El botón "VER / BAJAR" abrirá el visor oficial de Google Drive para garantizar que los planos se descarguen en el formato original (PNG/JPG) sin errores de sincronización. OF: {obra.numeroOF}
             </p>
           </div>
         </div>
@@ -218,7 +219,7 @@ function ObraViewContent() {
       <footer className="p-10 text-center mt-auto">
         <div className="inline-block px-6 py-2 bg-secondary/50 rounded-full border">
           <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">
-            TAMER INDUSTRIAL S.A. | GESTIÓN DE PLANOS v5.0.4
+            TAMER INDUSTRIAL S.A. | GESTIÓN DE PLANOS v5.0.5
           </p>
         </div>
       </footer>
@@ -234,7 +235,9 @@ export default function ObraViewPage() {
         <p className="font-black uppercase text-[10px] tracking-[0.4em] text-muted-foreground">Cargando Documentación...</p>
       </div>
     }>
-      <ObraViewContent />
+      <Suspense fallback={null}>
+        <ObraViewContent />
+      </Suspense>
     </Suspense>
   );
 }

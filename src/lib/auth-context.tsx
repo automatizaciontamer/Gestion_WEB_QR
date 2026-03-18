@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setEmpresa({ ...data, id: snap.id } as Empresa);
       }
     }, (error) => {
-      console.warn('Conectando con Identidad Institucional...');
+      console.warn('Sincronizando Identidad...');
     });
 
     return () => unsubscribe();
@@ -65,17 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
 
-      // CASO ESPECIAL: Login desde un QR de Obra específico (Aislamiento Estricto v3.3.7)
+      // CASO ESPECIAL: Login desde un QR de Obra específico (Aislamiento Estricto v3.6.8)
       if (restrictedToObraId) {
         const obraRef = doc(db, 'obras', restrictedToObraId);
         const obraSnap = await getDoc(obraRef);
         
         if (obraSnap.exists()) {
           const d = obraSnap.data();
-          // 1. Validar contra credenciales PRINCIPALES de la obra
           const isMainMatch = d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password;
-          
-          // 2. Validar contra lista de AUTORIZADOS secundarios
           const isAuthorizedMatch = d.authorizedEmails?.some((e: any) => 
             e.email?.toLowerCase().trim() === normalizedIdentifier && e.password === password
           );
@@ -85,7 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ...d, 
               id: obraSnap.id, 
               role: 'field',
-              email: normalizedIdentifier // CRÍTICO: Aseguramos que el email esté en la sesión para validación
+              email: normalizedIdentifier,
+              nombre: d.nombreObra || 'Personal de Obra'
             };
             setIsAdmin(false);
             setIsUser(true);
@@ -94,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return true;
           }
         }
-        return false; // Credenciales inválidas para ESTA obra
+        return false;
       }
 
       // 1. Acceso Maestro Admin
@@ -166,7 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...docSnap.data(), 
           id: docSnap.id, 
           role: 'field',
-          email: normalizedIdentifier 
+          email: normalizedIdentifier,
+          nombre: docSnap.data().nombreObra
         };
         setIsAdmin(false);
         setIsUser(true);

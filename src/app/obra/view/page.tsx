@@ -51,10 +51,10 @@ function ObraViewContent() {
     if (isAdmin) return true;
     
     const normalizedUserEmail = user.email?.toLowerCase().trim();
-    const normalizedObraEmail = obra.usuarioAcceso?.toLowerCase().trim();
+    const normalizedObraEmail = (obra.usuarioAcceso || '').toLowerCase().trim();
     
     return normalizedUserEmail === normalizedObraEmail || 
-           obra.authorizedEmails?.some(e => e.email?.toLowerCase().trim() === normalizedUserEmail);
+           (obra.authorizedEmails || []).some(e => (e.email || '').toLowerCase().trim() === normalizedUserEmail);
   }, [isUser, user, obra, isAdmin]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -86,7 +86,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-8">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Conectando con Tamer Cloud v3.8...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground text-center">Conectando con Tamer Cloud v3.8.2...</p>
       </div>
     );
   }
@@ -159,7 +159,6 @@ function ObraViewContent() {
   const hasFiles = files.length > 0;
   const hasFolderUrl = !!obra.driveFolderUrl;
 
-  // Función para obtener URL de descarga limpia
   const getDownloadUrl = (id: string) => {
     if (id.startsWith('http')) return id;
     return `https://drive.google.com/uc?id=${id}&export=download`;
@@ -167,7 +166,8 @@ function ObraViewContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <header className="bg-[#0a3d62] text-white shadow-2xl relative">
+      {/* Cabecera sin solapamientos - Estructura de flujo natural */}
+      <header className="bg-[#0a3d62] text-white shadow-2xl">
         <div className="max-w-4xl mx-auto p-6 sm:p-10 space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -178,18 +178,19 @@ function ObraViewContent() {
                   <Construction className="text-[#0a3d62] w-6 h-6" />
                 )}
               </div>
-              <div>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v3.8.0</p>
-                <h2 className="text-xs font-bold text-white/50 uppercase truncate max-w-[120px]">{empresa?.nombre || 'Tamer Industrial'}</h2>
+              <div className="overflow-hidden">
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Tamer Cloud v3.8.2</p>
+                <h2 className="text-xs font-bold text-white/50 uppercase truncate max-w-[150px]">{empresa?.nombre || 'Tamer Industrial'}</h2>
               </div>
             </div>
-            <Button variant="ghost" onClick={logout} className="text-white border border-white/20 rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest hover:bg-white/10">
+            <Button variant="ghost" onClick={logout} className="text-white border border-white/20 rounded-xl h-10 px-4 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 shrink-0">
               <LogOut className="w-4 h-4 mr-2" /> SALIR
             </Button>
           </div>
           
           <div className="space-y-4 pt-4 border-t border-white/10">
-            <h1 className="text-2xl sm:text-4xl font-black uppercase leading-tight text-white">
+            {/* Nombre completo sin cortes */}
+            <h1 className="text-2xl sm:text-4xl font-black uppercase leading-tight text-white break-words">
               {obra.nombreObra}
             </h1>
             <div className="flex flex-wrap gap-2">
@@ -201,7 +202,8 @@ function ObraViewContent() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto w-full px-6 py-10 space-y-8 flex-1">
+      {/* Contenido principal - Flujo secuencial */}
+      <main className="max-w-4xl mx-auto w-full px-6 py-8 space-y-8 flex-1">
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <div className="grid grid-cols-1 sm:grid-cols-2">
             <div className="p-8 border-b sm:border-b-0 sm:border-r border-slate-100">
@@ -248,14 +250,14 @@ function ObraViewContent() {
             ) : null}
 
             {hasFolderUrl && (
-              <Button asChild className="w-full h-20 rounded-[2rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 font-black text-base gap-4 shadow-2xl mt-2 border-l-8 border-primary group">
+              <Button asChild className="w-full h-24 rounded-[2.5rem] bg-[#0a3d62] hover:bg-[#0a3d62]/95 font-black text-lg gap-4 shadow-2xl mt-4 border-l-8 border-primary group">
                 <a href={obra.driveFolderUrl} target="_blank" rel="noopener noreferrer">
-                  <FolderOpen className="w-6 h-6 text-primary" />
+                  <FolderOpen className="w-8 h-8 text-primary" />
                   <div className="text-left flex-1">
-                    <p className="uppercase tracking-tight leading-none text-white">REPOSITORIO DE PLANOS</p>
-                    <p className="text-[8px] opacity-60 font-black tracking-widest uppercase mt-1">Google Drive Oficial</p>
+                    <p className="uppercase tracking-tight leading-none text-white text-xl">ACCEDER A REPOSITORIO DE PLANOS</p>
+                    <p className="text-[10px] opacity-60 font-black tracking-widest uppercase mt-2">Acceso directo Google Drive Oficial</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 opacity-40" />
+                  <ChevronRight className="w-6 h-6 opacity-40 group-hover:translate-x-2 transition-transform" />
                 </a>
               </Button>
             )}
@@ -273,7 +275,7 @@ function ObraViewContent() {
 
       <footer className="p-8 text-center bg-white/50 border-t">
         <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.5em]">
-          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | v3.8.0
+          © {new Date().getFullYear()} TAMER INDUSTRIAL S.A. | v3.8.2
         </p>
       </footer>
     </div>

@@ -32,7 +32,9 @@ function EditObraContent() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [formData, setFormData] = useState<Partial<Obra>>({
+  
+  // Inicialización completa para evitar error de uncontrolled inputs
+  const [formData, setFormData] = useState({
     codigoCliente: '',
     nombreObra: '',
     numeroOF: '',
@@ -41,8 +43,11 @@ function EditObraContent() {
     descripcion: '',
     usuarioAcceso: '',
     claveAcceso: '',
-    driveFolderUrl: ''
+    driveFolderUrl: '',
+    direccion: ''
   });
+  
+  const [existingFiles, setExistingFiles] = useState<ObraFile[]>([]);
   const [newFilesToUpload, setNewFilesToUpload] = useState<File[]>([]);
 
   const obraDocRef = useMemo(() => {
@@ -64,8 +69,9 @@ function EditObraContent() {
         usuarioAcceso: obra.usuarioAcceso || '',
         claveAcceso: obra.claveAcceso || '',
         driveFolderUrl: obra.driveFolderUrl || '',
-        files: obra.files || []
+        direccion: obra.direccion || ''
       });
+      setExistingFiles(obra.files || []);
     }
   }, [obra]);
 
@@ -80,8 +86,12 @@ function EditObraContent() {
     }
   };
 
-  const removeFile = (index: number) => {
+  const removeNewFile = (index: number) => {
     setNewFilesToUpload(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingFile = (index: number) => {
+    setExistingFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,19 +108,16 @@ function EditObraContent() {
           const result = await uploadToDrive(newFilesToUpload[i], folderName);
           newUploadedFiles.push({
             name: newFilesToUpload[i].name,
-            id: result?.fileId || result?.url || ''
+            id: result?.fileId || ''
           });
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
       }
 
-      const existingFiles = obra.files || [];
-      const updatedFiles = [...existingFiles, ...newUploadedFiles];
-
       const dataToUpdate = {
         ...formData,
         usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim() || '',
-        files: updatedFiles,
+        files: [...existingFiles, ...newUploadedFiles],
         updatedAt: Date.now()
       };
 
@@ -118,7 +125,7 @@ function EditObraContent() {
 
       toast({
         title: "Obra Actualizada",
-        description: `Se han guardado los cambios y sincronizado los archivos.`,
+        description: "Cambios sincronizados correctamente.",
       });
       
       router.push('/dashboard/obras');
@@ -148,16 +155,17 @@ function EditObraContent() {
             <CardHeader className="bg-secondary/20 p-8 border-b"><CardTitle className="text-xl font-black">Información de Obra</CardTitle></CardHeader>
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Código Cliente</Label><Input id="codigoCliente" value={formData.codigoCliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-                <div className="space-y-2"><Label>Obra</Label><Input id="nombreObra" value={formData.nombreObra || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+                <div className="space-y-2"><Label>Código Cliente</Label><Input id="codigoCliente" value={formData.codigoCliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+                <div className="space-y-2"><Label>Obra</Label><Input id="nombreObra" value={formData.nombreObra} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2"><Label>Número OF</Label><Input id="numeroOF" value={formData.numeroOF || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-                <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
+                <div className="space-y-2"><Label>Número OF</Label><Input id="numeroOF" value={formData.numeroOF} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+                <div className="space-y-2"><Label>Número OT</Label><Input id="numeroOT" value={formData.numeroOT} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
               </div>
-              <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" /></div>
-              <div className="space-y-2"><Label>URL Carpeta Drive</Label><Input id="driveFolderUrl" value={formData.driveFolderUrl || ''} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold" placeholder="https://drive.google.com/..." /></div>
-              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion || ''} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[100px]" /></div>
+              <div className="space-y-2"><Label>Cliente</Label><Input id="cliente" value={formData.cliente} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+              <div className="space-y-2"><Label>Dirección</Label><Input id="direccion" value={formData.direccion} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" /></div>
+              <div className="space-y-2"><Label>URL Carpeta Drive</Label><Input id="driveFolderUrl" value={formData.driveFolderUrl} onChange={handleInputChange} className="h-14 bg-secondary/30 border-none font-bold rounded-xl" placeholder="https://drive.google.com/..." /></div>
+              <div className="space-y-2"><Label>Descripción</Label><Textarea id="descripcion" value={formData.descripcion} onChange={handleInputChange} className="bg-secondary/30 border-none min-h-[100px] rounded-xl" /></div>
             </CardContent>
           </Card>
 
@@ -169,12 +177,27 @@ function EditObraContent() {
                 <p className="font-black">Subir archivos adicionales</p>
                 <input id="edit-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
-              {newFilesToUpload.length > 0 && (
+              
+              {(existingFiles.length > 0 || newFilesToUpload.length > 0) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {existingFiles.map((f, i) => (
+                    <div key={`exist-${i}`} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileText className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-xs font-bold truncate">{f.name}</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeExistingFile(i)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
                   {newFilesToUpload.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border">
-                      <span className="text-xs font-black truncate">{f.name}</span>
-                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeFile(i)}>
+                    <div key={`new-${i}`} className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <Upload className="w-4 h-4 text-blue-500 shrink-0" />
+                        <span className="text-xs font-black truncate">{f.name}</span>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeNewFile(i)}>
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -187,8 +210,8 @@ function EditObraContent() {
 
         <div className="lg:col-span-4 space-y-8">
           <Card className="rounded-[3rem] bg-[#0a3d62] text-white p-8 space-y-6 shadow-2xl">
-            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
-            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso || ''} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
+            <div className="space-y-2"><Label>Usuario Acceso</Label><Input id="usuarioAcceso" value={formData.usuarioAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
+            <div className="space-y-2"><Label>Clave</Label><Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-12 rounded-xl font-bold" /></div>
           </Card>
           <div className="space-y-4">
             {isSaving && <Progress value={uploadProgress} className="h-2" />}

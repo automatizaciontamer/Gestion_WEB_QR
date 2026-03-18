@@ -142,7 +142,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.1...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Cargando Ficha v4.5...</p>
     </div>
   );
 
@@ -154,7 +154,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto Técnico</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.1</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización Cloud v4.5</p>
         </div>
       </div>
 
@@ -264,16 +264,13 @@ function EditObraContent() {
                 <Input id="claveAcceso" value={formData.claveAcceso} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
               </div>
             </div>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-relaxed">
-              Estas credenciales permiten al personal de campo acceder al visor técnico a través del código QR.
-            </p>
           </Card>
           
           <div className="space-y-4">
             {isSaving && <Progress value={uploadProgress} className="h-2 rounded-full" />}
             <Button type="submit" className="w-full h-24 rounded-[2.5rem] font-black text-2xl bg-primary shadow-2xl shadow-primary/30 transition-all active:scale-95" disabled={isSaving}>
               {isSaving ? <Loader2 className="animate-spin w-8 h-8" /> : <Save className="w-8 h-8 mr-3" />}
-              {isSaving ? 'SINCRONIZANDO...' : 'GUARDAR CAMBIOS'}
+              {isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
             </Button>
           </div>
         </div>

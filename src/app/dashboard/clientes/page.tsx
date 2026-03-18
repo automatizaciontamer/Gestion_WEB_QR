@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
@@ -32,7 +31,7 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UsuarioCliente } from '@/lib/types';
+import { UsuarioHabilitado } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, deleteDoc } from 'firebase/firestore';
@@ -66,7 +65,7 @@ export default function ClientesPage() {
     return collection(db, 'usuarios_clientes');
   }, [db]);
 
-  const { data: clients, loading } = useCollection<UsuarioCliente>(clientsQuery);
+  const { data: clients, loading } = useCollection<UsuarioHabilitado>(clientsQuery);
 
   const filteredClients = useMemo(() => {
     if (!clients) return [];

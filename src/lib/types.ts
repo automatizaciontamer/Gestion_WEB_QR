@@ -25,7 +25,7 @@ export interface Archivo {
   usuario: string; // admin email
 }
 
-export interface UsuarioCliente {
+export interface UsuarioHabilitado {
   id: string;
   nombre: string;
   email: string;

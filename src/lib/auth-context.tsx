@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -36,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const login = async (identifier: string, password: string) => {
-    // Check for hardcoded Admin (Usuario: admin, Clave: 14569)
+    // Admin Hardcoded Login
     if (identifier === 'admin' && password === '14569') {
       const adminData = { email: 'admin@tamer.com', role: 'admin', nombre: 'Administrador del Sistema' };
       setIsAdmin(true);
@@ -47,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    // Check in Firestore for Usuarios Habilitados (using email)
+    // Cliente/Usuario Habilitado Login
     if (!db) return false;
     
     try {
@@ -78,10 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const session = sessionStorage.getItem('tamer_session');
     if (session) {
-      const data = JSON.parse(session);
-      setUser(data);
-      setIsUser(true);
-      setIsAdmin(data.role === 'admin');
+      try {
+        const data = JSON.parse(session);
+        setUser(data);
+        setIsUser(true);
+        setIsAdmin(data.role === 'admin');
+      } catch (e) {
+        sessionStorage.removeItem('tamer_session');
+      }
     }
     setLoading(false);
   }, []);

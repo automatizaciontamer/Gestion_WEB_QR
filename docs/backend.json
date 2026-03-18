@@ -16,6 +16,7 @@
         "descripcion": { "type": "string" },
         "usuarioAcceso": { "type": "string", "description": "Email para login en Android" },
         "claveAcceso": { "type": "string" },
+        "driveFolderUrl": { "type": "string", "description": "Enlace a carpeta de planos en Google Drive" },
         "createdAt": { "type": "number" },
         "serverTimestamp": { "type": "object", "description": "Firebase server timestamp" },
         "authorizedEmails": {

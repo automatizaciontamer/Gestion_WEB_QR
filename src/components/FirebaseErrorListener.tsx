@@ -10,11 +10,20 @@ export const FirebaseErrorListener = () => {
 
   useEffect(() => {
     const handlePermissionError = (error: FirestorePermissionError) => {
-      console.error('Firestore Permission Error:', error.context);
+      // Log detallado para el desarrollador/agente
+      console.error('--- FIRESTORE PERMISSION DENIED ---');
+      console.error('Operación:', error.context.operation);
+      console.error('Ruta:', error.context.path);
+      if (error.context.requestResourceData) {
+        console.error('Datos enviados:', error.context.requestResourceData);
+      }
+      console.error('Contexto Completo:', JSON.stringify(error.context, null, 2));
+      console.error('-----------------------------------');
+
       toast({
         variant: "destructive",
-        title: "Error de Permisos",
-        description: `No tienes permisos para ${error.context.operation} en ${error.context.path}.`,
+        title: "Error de Seguridad",
+        description: `Acceso denegado a ${error.context.path}. Verifica las reglas de Firestore.`,
       });
     };
 

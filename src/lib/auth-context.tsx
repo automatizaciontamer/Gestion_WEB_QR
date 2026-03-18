@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -30,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const db = useFirestore();
 
-  // Cargar datos de empresa al inicio con captura de errores
+  // Cargar datos de empresa al inicio con captura de errores silenciosa para no bloquear el login
   useEffect(() => {
     if (!db) return;
     const empresaRef = doc(db, 'config', 'empresa');
@@ -40,7 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setEmpresa(snap.data() as Empresa);
         }
       })
-      .catch(async (error) => {
+      .catch((error) => {
+        // Emitimos el error para depuración pero no bloqueamos la app
         const permissionError = new FirestorePermissionError({
           path: empresaRef.path,
           operation: 'get',
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     const normalizedIdentifier = identifier.toLowerCase().trim();
 
-    // 1. Administrador Maestro (Hardcoded para emergencia/setup inicial)
+    // 1. Administrador Maestro (Login local, no requiere Firestore)
     if (normalizedIdentifier === 'admin' && password === '14569') {
       const adminData = { 
         email: 'admin@tamer.com', 
@@ -94,13 +94,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!db) return false;
     
     try {
+      // Intento en usuarios_clientes
       const q = query(
         collection(db, 'usuarios_clientes'),
         where('email', '==', normalizedIdentifier),
         where('password', '==', password)
       );
       
-      const querySnapshot = await getDocs(q).catch(async (err) => {
+      const querySnapshot = await getDocs(q).catch((err) => {
         const permissionError = new FirestorePermissionError({
           path: 'usuarios_clientes',
           operation: 'list',
@@ -110,8 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        const userData = { ...doc.data(), id: doc.id, role: 'user' };
+        const docSnap = querySnapshot.docs[0];
+        const userData = { ...docSnap.data(), id: docSnap.id, role: 'user' };
         setIsAdmin(false);
         setIsUser(true);
         setUser(userData);
@@ -119,13 +120,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
+      // Intento en accesos de obra
       const qObra = query(
         collection(db, 'obras'),
         where('usuarioAcceso', '==', normalizedIdentifier),
         where('claveAcceso', '==', password)
       );
       
-      const obraSnapshot = await getDocs(qObra).catch(async (err) => {
+      const obraSnapshot = await getDocs(qObra).catch((err) => {
         const permissionError = new FirestorePermissionError({
           path: 'obras',
           operation: 'list',
@@ -135,8 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!obraSnapshot.empty) {
-        const doc = obraSnapshot.docs[0];
-        const userData = { ...doc.data(), id: doc.id, role: 'field' };
+        const docSnap = obraSnapshot.docs[0];
+        const userData = { ...docSnap.data(), id: docSnap.id, role: 'field' };
         setIsAdmin(false);
         setIsUser(true);
         setUser(userData);
@@ -145,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
     } catch (error) {
-      // Los errores de permiso ya se emiten arriba
+      // Los errores ya se emiten arriba
     }
 
     return false;

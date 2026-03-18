@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Obra": {
@@ -45,7 +44,7 @@
     },
     "Empresa": {
       "title": "Configuración de Empresa",
-      "description": "Datos institucionales de Tamer Industrial S.A.",
+      "description": "Datos institucionales de Tamer Industrial S.A. configurables por el administrador.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -65,15 +64,15 @@
   "firestore": {
     "/obras/{obraId}": {
       "schema": "Obra",
-      "description": "Proyectos industriales accesibles desde la App Android."
+      "description": "Colección principal de proyectos industriales accesibles desde la App Android y Web."
     },
     "/usuarios_clientes/{usuarioId}": {
       "schema": "UsuarioHabilitado",
-      "description": "Gestión de usuarios con acceso web."
+      "description": "Usuarios autorizados para acceder a la plataforma web de clientes."
     },
     "/config/empresa": {
       "schema": "Empresa",
-      "description": "Datos maestros de la empresa."
+      "description": "Configuración global de la empresa accesible para lectura pública y escritura administrativa."
     }
   }
 }

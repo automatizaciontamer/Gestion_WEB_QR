@@ -1,4 +1,9 @@
 
+export interface ObraFile {
+  name: string;
+  id: string;
+}
+
 export interface Obra {
   id: string;
   numeroOF: string;
@@ -9,11 +14,11 @@ export interface Obra {
   direccion: string;
   descripcion: string;
   imageUrl?: string;
-  usuarioAcceso: string; // email principal
+  usuarioAcceso: string;
   claveAcceso: string;
   createdAt: number;
-  files?: string[]; // Lista de nombres de archivos subidos
-  driveFolderUrl?: string; // Enlace opcional a carpeta de Drive v3.3.4
+  files?: ObraFile[]; // Lista de objetos con nombre e ID de Drive
+  driveFolderUrl?: string;
   authorizedEmails: Array<{ email: string; password?: string }>;
 }
 
@@ -26,11 +31,11 @@ export interface UsuarioHabilitado {
 
 export interface Empresa {
   id: string;
-  nombre: string; // Razon Social
+  nombre: string;
   direccion: string;
-  nit: string; // CUIL
+  nit: string;
   telefono: string;
-  email: string; // Email Contacto
+  email: string;
   usuarioAdmin: string;
   passwordAdmin: string;
   logoUrl?: string;

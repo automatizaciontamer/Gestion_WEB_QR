@@ -32,7 +32,17 @@ function EditObraContent() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [formData, setFormData] = useState<Partial<Obra>>({});
+  const [formData, setFormData] = useState<Partial<Obra>>({
+    codigoCliente: '',
+    nombreObra: '',
+    numeroOF: '',
+    numeroOT: '',
+    cliente: '',
+    descripcion: '',
+    usuarioAcceso: '',
+    claveAcceso: '',
+    driveFolderUrl: ''
+  });
   const [newFilesToUpload, setNewFilesToUpload] = useState<File[]>([]);
 
   const obraDocRef = useMemo(() => {
@@ -45,7 +55,6 @@ function EditObraContent() {
   useEffect(() => {
     if (obra) {
       setFormData({
-        ...obra,
         codigoCliente: obra.codigoCliente || '',
         nombreObra: obra.nombreObra || '',
         numeroOF: obra.numeroOF || '',
@@ -54,7 +63,8 @@ function EditObraContent() {
         descripcion: obra.descripcion || '',
         usuarioAcceso: obra.usuarioAcceso || '',
         claveAcceso: obra.claveAcceso || '',
-        driveFolderUrl: obra.driveFolderUrl || ''
+        driveFolderUrl: obra.driveFolderUrl || '',
+        files: obra.files || []
       });
     }
   }, [obra]);
@@ -88,7 +98,7 @@ function EditObraContent() {
           const result = await uploadToDrive(newFilesToUpload[i], folderName);
           newUploadedFiles.push({
             name: newFilesToUpload[i].name,
-            id: result?.fileId || ''
+            id: result?.fileId || result?.url || ''
           });
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
@@ -108,7 +118,7 @@ function EditObraContent() {
 
       toast({
         title: "Obra Actualizada",
-        description: `Se han guardado los cambios y sincronizado los nuevos archivos.`,
+        description: `Se han guardado los cambios y sincronizado los archivos.`,
       });
       
       router.push('/dashboard/obras');

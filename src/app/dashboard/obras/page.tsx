@@ -74,29 +74,31 @@ export default function ObrasPage() {
 
     toast({
       title: "Eliminando obra...",
-      description: "Sincronizando limpieza en Google Drive y Firebase.",
+      description: "Iniciando limpieza total en Google Drive y Firebase.",
     });
 
     try {
-      // 1. Eliminar CARPETA en Google Drive usando el nombre único del proyecto
-      const folderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
-      console.log(`Intentando eliminar carpeta en Drive: ${folderName}`);
+      // 1. ELIMINACIÓN EN DRIVE: Construir nombre de carpeta exacto
+      const folderName = `${(obra.codigoCliente || '').trim()}-${(obra.numeroOF || '').trim()}-${(obra.numeroOT || '').trim()}`;
       
       const driveResult = await deleteFolderFromDrive(folderName);
       
       if (driveResult && driveResult.status === 'success') {
-        console.log("Carpeta eliminada de Drive con éxito");
+        toast({
+          title: "Carpeta de Drive Eliminada",
+          description: "La documentación técnica fue borrada de la nube.",
+        });
       } else {
-        console.warn("No se pudo confirmar la eliminación en Drive, pero procederemos con Firebase:", driveResult?.message);
+        console.warn("Drive no confirmó borrado, borrando en Firebase:", driveResult?.message);
       }
 
-      // 2. Eliminar registro de Firestore
+      // 2. ELIMINACIÓN EN FIREBASE
       const docRef = doc(db, 'obras', obra.id);
       await deleteDoc(docRef);
       
       toast({
         title: "Obra eliminada",
-        description: "El registro y sus archivos en Drive han sido borrados con éxito.",
+        description: "El registro ha sido borrado con éxito del sistema.",
       });
     } catch (error) {
       console.error("Error en eliminación:", error);
@@ -109,7 +111,7 @@ export default function ObrasPage() {
       
       toast({
         title: "Error en eliminación",
-        description: "No se pudo completar la limpieza total. Verifique consola.",
+        description: "No se pudo completar la limpieza total. Revise la conexión.",
         variant: "destructive",
       });
     }
@@ -120,7 +122,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.1.3 - Sincronización Drive Activa</p>
+          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.1.4 - Sincronización Total Drive Activa</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">

@@ -1,6 +1,6 @@
 /**
  * Servicio para interactuar con Google Drive a través de un Google Apps Script.
- * v5.1.3 - Soporte para eliminación total de carpetas y archivos.
+ * v5.1.4 - Soporte optimizado para eliminación total de carpetas.
  */
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';
@@ -20,9 +20,9 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
           folderName: folderName,
         };
 
+        // No enviamos Content-Type para evitar preflight OPTIONS que GAS no maneja
         const response = await fetch(DRIVE_SCRIPT_URL, {
           method: 'POST',
-          mode: 'cors',
           body: JSON.stringify(payload),
         });
         
@@ -44,7 +44,7 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
 
 /**
  * Elimina una CARPETA completa de Google Drive buscando por su nombre único.
- * Esta función es la que se vincula al botón de ELIMINAR OBRA.
+ * El nombre de la carpeta se construye como: codigoCliente-numeroOF-numeroOT
  */
 export async function deleteFolderFromDrive(folderName: string): Promise<any> {
   if (!folderName) return { status: 'ignored' };
@@ -55,11 +55,14 @@ export async function deleteFolderFromDrive(folderName: string): Promise<any> {
       folderName: folderName,
     };
 
-    // Usamos POST sin cabeceras especiales para evitar problemas de CORS con Apps Script
+    console.log(`Solicitando eliminación de carpeta en Drive: ${folderName}`);
+
     const response = await fetch(DRIVE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    
+    if (!response.ok) throw new Error("Fallo en comunicación con Google Drive");
     
     const data = await response.json();
     return data;

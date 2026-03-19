@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useSearchParams } from 'next/navigation';
@@ -35,7 +34,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0.9...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.1.0...</p>
       </div>
     );
   }
@@ -61,7 +60,7 @@ function ObraViewContent() {
             </div>
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">TAMER INDUSTRIAL S.A.</p>
-              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico v5.0.9</h2>
+              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico v5.1.0</h2>
             </div>
           </div>
           
@@ -124,7 +123,7 @@ function ObraViewContent() {
 
       <footer className="p-12 text-center mt-auto">
         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.5em]">
-          TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.0.9
+          TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.1.0
         </p>
       </footer>
     </div>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -110,18 +109,14 @@ function EditObraContent() {
       if (newFilesToUpload.length > 0) {
         for (let i = 0; i < newFilesToUpload.length; i++) {
           const result = await uploadToDrive(newFilesToUpload[i], folderName);
-          const fileId = result?.fileId || result?.id || '';
           
-          // GENERACIÓN Y ALMACENAMIENTO DE URL DE DESCARGA
-          const downloadUrl = fileId 
-            ? `https://drive.google.com/uc?export=download&id=${fileId}` 
-            : (result?.url || '');
-
-          newUploadedFiles.push({
-            name: newFilesToUpload[i].name,
-            id: fileId,
-            url: downloadUrl
-          });
+          if (result && result.status === 'success') {
+            newUploadedFiles.push({
+              name: newFilesToUpload[i].name,
+              id: result.fileId,
+              url: result.url // Capturamos la URL de descarga directa real
+            });
+          }
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
       }
@@ -137,7 +132,7 @@ function EditObraContent() {
 
       toast({
         title: "Cambios Guardados",
-        description: "Sincronización v5.0.8 completada correctamente.",
+        description: "Sincronización v5.1.0 completada correctamente.",
       });
       
       router.push('/dashboard/obras');
@@ -155,7 +150,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Conectando con Servidor v5.0.8...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Conectando con Servidor v5.1.0...</p>
     </div>
   );
 
@@ -167,7 +162,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.0.8</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.1.0</p>
         </div>
       </div>
 

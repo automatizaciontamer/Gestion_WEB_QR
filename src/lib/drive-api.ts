@@ -1,6 +1,6 @@
 /**
  * Servicio para interactuar con Google Drive a través de un Google Apps Script.
- * v3.0 - Soporte para eliminación sincronizada de CARPETAS y archivos.
+ * v3.1 - Nueva URL de Script y soporte para descarga directa universal.
  */
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';
@@ -25,15 +25,16 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
           body: JSON.stringify(payload),
         });
         
-        if (response.ok) {
-          const data = await response.json();
+        const data = await response.json();
+        if (data.status === 'success') {
           resolve(data);
         } else {
-          resolve({ status: 'success' });
+          console.error('Error de script:', data.message);
+          resolve(null);
         }
       } catch (error) {
-        console.warn('Error en la comunicación con Drive API:', error);
-        resolve({ status: 'sent' });
+        console.error('Error en la comunicación con Drive API:', error);
+        resolve(null);
       }
     };
     reader.onerror = (error) => reject(error);
@@ -43,7 +44,6 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
 
 /**
  * Elimina una CARPETA completa de Google Drive buscando por su nombre único.
- * El nombre único se construye como: codigoCliente-numeroOF-numeroOT
  */
 export async function deleteFolderFromDrive(folderName: string): Promise<any> {
   if (!folderName) return { status: 'ignored' };
@@ -59,10 +59,7 @@ export async function deleteFolderFromDrive(folderName: string): Promise<any> {
       body: JSON.stringify(payload),
     });
     
-    if (response.ok) {
-      return await response.json();
-    }
-    return { status: 'sent' };
+    return await response.json();
   } catch (error) {
     console.warn('Error eliminando carpeta de Drive:', error);
     return { status: 'failed' };
@@ -86,10 +83,7 @@ export async function deleteFromDrive(fileId: string): Promise<any> {
       body: JSON.stringify(payload),
     });
     
-    if (response.ok) {
-      return await response.json();
-    }
-    return { status: 'sent' };
+    return await response.json();
   } catch (error) {
     console.warn('Error eliminando archivo de Drive:', error);
     return { status: 'failed' };

@@ -80,12 +80,16 @@ export default function NewObraPage() {
         for (let i = 0; i < filesToUpload.length; i++) {
           const result = await uploadToDrive(filesToUpload[i], folderName);
           
-          if (result && result.status === 'success') {
+          if (result && result.status === 'success' && result.url) {
             uploadedFiles.push({
               name: filesToUpload[i].name,
               id: result.fileId,
-              url: result.url // URL de descarga directa devuelta por el nuevo script
+              url: result.url 
             });
+          } else {
+            console.error('Fallo en la subida del archivo:', filesToUpload[i].name, result?.message);
+            // Si un archivo falla, lanzamos error para informar al usuario
+            throw new Error(`Fallo al subir ${filesToUpload[i].name}: ${result?.message || 'Error desconocido'}`);
           }
           setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         }
@@ -105,14 +109,15 @@ export default function NewObraPage() {
 
       toast({
         title: "Obra Registrada",
-        description: `Proyecto "${formData.nombreObra}" sincronizado con éxito v5.1.0.`,
+        description: `Proyecto "${formData.nombreObra}" sincronizado con éxito v5.1.1.`,
       });
       
       router.push('/dashboard/obras');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error en submit:", error);
       toast({
         title: "Error en Sincronización",
-        description: "No se pudo completar la operación en Drive/Firestore.",
+        description: error.message || "No se pudo completar la operación en Drive/Firestore.",
         variant: "destructive",
       });
     } finally {
@@ -128,7 +133,7 @@ export default function NewObraPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Nuevo Proyecto</h1>
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.1.0</p>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.1.1</p>
         </div>
       </div>
 
@@ -189,7 +194,7 @@ export default function NewObraPage() {
               >
                 <Upload className="w-16 h-16 text-primary mx-auto opacity-40" />
                 <p className="font-black text-lg text-[#0a3d62] uppercase tracking-tight">Seleccionar Documentación</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.1.0</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.1.1</p>
                 <input id="new-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               {filesToUpload.length > 0 && (

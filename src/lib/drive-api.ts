@@ -1,6 +1,6 @@
 /**
  * Servicio para interactuar con Google Drive a través de un Google Apps Script.
- * v3.1 - Nueva URL de Script y soporte para descarga directa universal.
+ * v3.5 - Nueva URL de Script, soporte para descarga directa y manejo de errores robusto.
  */
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';
@@ -20,21 +20,27 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
           folderName: folderName,
         };
 
+        // Enviamos como texto plano para evitar problemas de preflight CORS con Apps Script
         const response = await fetch(DRIVE_SCRIPT_URL, {
           method: 'POST',
+          mode: 'cors',
           body: JSON.stringify(payload),
         });
         
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
+
         const data = await response.json();
         if (data.status === 'success') {
           resolve(data);
         } else {
-          console.error('Error de script:', data.message);
-          resolve(null);
+          console.error('Error reportado por el script:', data.message);
+          resolve({ status: 'error', message: data.message });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error en la comunicación con Drive API:', error);
-        resolve(null);
+        resolve({ status: 'error', message: error.message });
       }
     };
     reader.onerror = (error) => reject(error);

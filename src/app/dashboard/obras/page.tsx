@@ -113,7 +113,7 @@ export default function ObrasPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando v5.0.6...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

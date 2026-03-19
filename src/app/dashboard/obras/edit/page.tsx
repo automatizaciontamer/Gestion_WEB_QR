@@ -112,18 +112,27 @@ function EditObraContent() {
           
           if (result && result.status === 'success') {
             newUploadedFiles.push({
-              name: newFilesToUpload[i].name,
-              id: result.fileId,
-              url: result.url // Capturamos la URL de descarga directa real
+              name: newFilesToUpload[i].name || 'Archivo sin nombre',
+              id: result.fileId || '',
+              url: result.url || '' 
             });
           }
           setUploadProgress(Math.round(((i + 1) / newFilesToUpload.length) * 100));
         }
       }
 
+      // LIMPIEZA DE DATOS: Asegurar que NADA sea undefined antes de Firestore
       const dataToUpdate = {
-        ...formData,
-        usuarioAcceso: formData.usuarioAcceso?.toLowerCase().trim() || '',
+        codigoCliente: formData.codigoCliente || '',
+        nombreObra: formData.nombreObra || '',
+        numeroOF: formData.numeroOF || '',
+        numeroOT: formData.numeroOT || '',
+        cliente: formData.cliente || '',
+        direccion: formData.direccion || '',
+        descripcion: formData.descripcion || '',
+        usuarioAcceso: (formData.usuarioAcceso || '').toLowerCase().trim(),
+        claveAcceso: formData.claveAcceso || '',
+        driveFolderUrl: formData.driveFolderUrl || '',
         files: [...existingFiles, ...newUploadedFiles],
         updatedAt: Date.now()
       };
@@ -132,14 +141,15 @@ function EditObraContent() {
 
       toast({
         title: "Cambios Guardados",
-        description: "Sincronización v5.1.0 completada correctamente.",
+        description: "Actualización completada correctamente.",
       });
       
       router.push('/dashboard/obras');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error en update:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la obra.",
+        description: error.message || "No se pudo actualizar la obra.",
         variant: "destructive",
       });
     } finally {
@@ -150,7 +160,7 @@ function EditObraContent() {
   if (loading) return (
     <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
       <Loader2 className="animate-spin w-12 h-12 text-primary" />
-      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Conectando con Servidor v5.1.0...</p>
+      <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">Conectando con Servidor...</p>
     </div>
   );
 
@@ -162,7 +172,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.1.0</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.1.2</p>
         </div>
       </div>
 

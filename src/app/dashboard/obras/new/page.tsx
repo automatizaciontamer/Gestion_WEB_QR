@@ -80,15 +80,13 @@ export default function NewObraPage() {
         for (let i = 0; i < filesToUpload.length; i++) {
           const result = await uploadToDrive(filesToUpload[i], folderName);
           
-          if (result && result.status === 'success' && result.url) {
+          if (result && result.status === 'success') {
             uploadedFiles.push({
-              name: filesToUpload[i].name,
-              id: result.fileId,
-              url: result.url 
+              name: filesToUpload[i].name || 'Archivo sin nombre',
+              id: result.fileId || '',
+              url: result.url || '' 
             });
           } else {
-            console.error('Fallo en la subida del archivo:', filesToUpload[i].name, result?.message);
-            // Si un archivo falla, lanzamos error para informar al usuario
             throw new Error(`Fallo al subir ${filesToUpload[i].name}: ${result?.message || 'Error desconocido'}`);
           }
           setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
@@ -96,9 +94,19 @@ export default function NewObraPage() {
       }
 
       const obrasRef = collection(db, 'obras');
+      
+      // LIMPIEZA DE DATOS: Asegurar que NADA sea undefined para evitar error de Firestore
       const obraData = {
-        ...formData,
-        usuarioAcceso: formData.usuarioAcceso.toLowerCase().trim(),
+        numeroOF: formData.numeroOF || '',
+        numeroOT: formData.numeroOT || '',
+        codigoCliente: formData.codigoCliente || '',
+        nombreObra: formData.nombreObra || '',
+        cliente: formData.cliente || '',
+        direccion: formData.direccion || '',
+        descripcion: formData.descripcion || '',
+        usuarioAcceso: (formData.usuarioAcceso || '').toLowerCase().trim(),
+        claveAcceso: formData.claveAcceso || '',
+        driveFolderUrl: formData.driveFolderUrl || '',
         files: uploadedFiles,
         createdAt: Date.now(),
         serverTimestamp: serverTimestamp(),
@@ -109,7 +117,7 @@ export default function NewObraPage() {
 
       toast({
         title: "Obra Registrada",
-        description: `Proyecto "${formData.nombreObra}" sincronizado con éxito v5.1.1.`,
+        description: `Proyecto "${formData.nombreObra}" sincronizado con éxito.`,
       });
       
       router.push('/dashboard/obras');
@@ -117,7 +125,7 @@ export default function NewObraPage() {
       console.error("Error en submit:", error);
       toast({
         title: "Error en Sincronización",
-        description: error.message || "No se pudo completar la operación en Drive/Firestore.",
+        description: error.message || "No se pudo completar la operación.",
         variant: "destructive",
       });
     } finally {
@@ -133,7 +141,7 @@ export default function NewObraPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Nuevo Proyecto</h1>
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.1.1</p>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.1.2</p>
         </div>
       </div>
 
@@ -194,7 +202,7 @@ export default function NewObraPage() {
               >
                 <Upload className="w-16 h-16 text-primary mx-auto opacity-40" />
                 <p className="font-black text-lg text-[#0a3d62] uppercase tracking-tight">Seleccionar Documentación</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.1.1</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive</p>
                 <input id="new-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               {filesToUpload.length > 0 && (

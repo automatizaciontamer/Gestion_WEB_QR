@@ -28,30 +28,14 @@ function ObraViewContent() {
 
   const files = useMemo(() => {
     if (!obra) return [];
-    return obra.files || (obra as any).archivos || [];
+    return obra.files || [];
   }, [obra]);
-
-  // FUNCIÓN DE DESCARGA SIMPLIFICADA QUE USA LA URL GUARDADA EN FIREBASE
-  const getDownloadUrl = (file: any) => {
-    if (!file) return null;
-    
-    // 1. Usar URL directa si existe (guardada en Firebase)
-    if (file.url) return file.url;
-    
-    // 2. Fallback: construir URL desde el ID si no hay URL almacenada (registros viejos)
-    const driveId = file.id || file.fileId || '';
-    if (driveId && driveId.length > 5) {
-      return `https://drive.google.com/uc?export=download&id=${driveId}`;
-    }
-
-    return null;
-  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0.8...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0.9...</p>
       </div>
     );
   }
@@ -77,7 +61,7 @@ function ObraViewContent() {
             </div>
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">TAMER INDUSTRIAL S.A.</p>
-              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico v5.0.8</h2>
+              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico v5.0.9</h2>
             </div>
           </div>
           
@@ -103,37 +87,33 @@ function ObraViewContent() {
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
-            {files.length > 0 ? files.map((file, idx) => {
-              const downloadUrl = getDownloadUrl(file);
-              
-              return (
-                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border flex items-center justify-between group transition-all hover:border-primary/50">
-                  <div className="flex items-center gap-6 overflow-hidden">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 shadow-inner">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <div className="overflow-hidden pr-4">
-                      <p className="font-black text-[#0a3d62] text-sm uppercase truncate">{file.name || `Archivo Técnico ${idx + 1}`}</p>
-                    </div>
+            {files.length > 0 ? files.map((file, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border flex items-center justify-between group transition-all hover:border-primary/50">
+                <div className="flex items-center gap-6 overflow-hidden">
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 shadow-inner">
+                    <FileText className="w-6 h-6" />
                   </div>
-                  
-                  {downloadUrl ? (
-                    <a 
-                      href={downloadUrl} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-12 px-6 rounded-xl bg-primary hover:bg-[#0a3d62] flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase shadow-lg shadow-primary/20"
-                    >
-                      <Download className="w-4 h-4" /> DESCARGAR
-                    </a>
-                  ) : (
-                    <div className="bg-red-50 px-4 py-2 rounded-xl border border-red-100">
-                       <p className="text-[8px] font-black text-red-500 uppercase tracking-tighter">SIN LINK VÁLIDO</p>
-                    </div>
-                  )}
+                  <div className="overflow-hidden pr-4">
+                    <p className="font-black text-[#0a3d62] text-sm uppercase truncate">{file.name || `Archivo Técnico ${idx + 1}`}</p>
+                  </div>
                 </div>
-              );
-            }) : (
+                
+                {file.url ? (
+                  <a 
+                    href={file.url} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-12 px-6 rounded-xl bg-primary hover:bg-[#0a3d62] flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase shadow-lg shadow-primary/20"
+                  >
+                    <Download className="w-4 h-4" /> DESCARGAR
+                  </a>
+                ) : (
+                  <div className="bg-red-50 px-4 py-2 rounded-xl border border-red-100">
+                     <p className="text-[8px] font-black text-red-500 uppercase tracking-tighter">SIN LINK VÁLIDO</p>
+                  </div>
+                )}
+              </div>
+            )) : (
               <div className="bg-white p-12 rounded-[2rem] text-center border-4 border-dashed border-slate-100">
                 <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">No hay planos registrados en esta obra.</p>
               </div>
@@ -144,7 +124,7 @@ function ObraViewContent() {
 
       <footer className="p-12 text-center mt-auto">
         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.5em]">
-          TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.0.8
+          TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.0.9
         </p>
       </footer>
     </div>

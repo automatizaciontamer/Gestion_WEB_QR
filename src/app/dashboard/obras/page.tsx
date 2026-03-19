@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from 'react';
@@ -68,18 +69,17 @@ export default function ObrasPage() {
   const handleDelete = async (obra: Obra) => {
     if (!db) return;
     
-    const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción es irreversible y eliminará TODOS los archivos y la CARPETA en Google Drive.`;
+    const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción es irreversible y eliminará la CARPETA completa en Google Drive y el registro en el sistema.`;
     
     if (!confirm(confirmMessage)) return;
 
     toast({
-      title: "Iniciando eliminación",
-      description: "Limpiando archivos en la nube y base de datos...",
+      title: "Eliminando obra...",
+      description: "Sincronizando limpieza en Google Drive y base de datos.",
     });
 
     try {
-      // 1. Sincronización Drive: Eliminar la CARPETA completa por nombre único
-      // El nombre único se generó al crear la obra: codigoCliente-numeroOF-numeroOT
+      // 1. Eliminar CARPETA en Google Drive por nombre único
       const folderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
       await deleteFolderFromDrive(folderName);
 
@@ -88,8 +88,8 @@ export default function ObrasPage() {
       await deleteDoc(docRef);
       
       toast({
-        title: "Obra eliminada con éxito",
-        description: "El registro y su carpeta en la nube han sido removidos.",
+        title: "Obra eliminada",
+        description: "El registro y sus archivos en Drive han sido borrados con éxito.",
       });
     } catch (error) {
       console.error("Error en eliminación:", error);
@@ -101,8 +101,8 @@ export default function ObrasPage() {
       errorEmitter.emit('permission-error', permissionError);
       
       toast({
-        title: "Error parcial",
-        description: "Se eliminó el registro pero puede que queden archivos en Drive.",
+        title: "Error en eliminación",
+        description: "No se pudo completar la limpieza total. Verifique permisos.",
         variant: "destructive",
       });
     }
@@ -113,7 +113,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.8 - Sincronizado Cloud</p>
+          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.0.9 - Sincronización Drive Activa</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -138,7 +138,7 @@ export default function ObrasPage() {
         {loading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-6">
             <Loader2 className="w-12 h-12 animate-spin text-[#0a3d62]" />
-            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Cargando...</p>
+            <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Conectando...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -170,7 +170,7 @@ export default function ObrasPage() {
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-[#0a3d62] text-white rounded-lg text-[9px] font-black uppercase tracking-wider">
-                        ACTIVO QR
+                        SINCRONIZADO
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right px-8">

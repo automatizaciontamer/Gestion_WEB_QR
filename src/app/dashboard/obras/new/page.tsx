@@ -74,16 +74,23 @@ export default function NewObraPage() {
     setUploadProgress(0);
     
     try {
-      // Requerimiento: Carpeta = (codigo cliente + of + ot)
       const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
       const uploadedFiles: ObraFile[] = [];
       
       if (filesToUpload.length > 0) {
         for (let i = 0; i < filesToUpload.length; i++) {
           const result = await uploadToDrive(filesToUpload[i], folderName);
+          const fileId = result?.fileId || result?.id || '';
+          
+          // GENERACIÓN Y ALMACENAMIENTO DE URL DE DESCARGA
+          const downloadUrl = fileId 
+            ? `https://drive.google.com/uc?export=download&id=${fileId}` 
+            : (result?.url || '');
+
           uploadedFiles.push({
             name: filesToUpload[i].name,
-            id: result?.fileId || result?.id || ''
+            id: fileId,
+            url: downloadUrl
           });
           setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         }
@@ -126,7 +133,7 @@ export default function NewObraPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Nuevo Proyecto</h1>
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer v5.0</p>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer v5.0.8</p>
         </div>
       </div>
 
@@ -187,7 +194,7 @@ export default function NewObraPage() {
               >
                 <Upload className="w-16 h-16 text-primary mx-auto opacity-40" />
                 <p className="font-black text-lg text-[#0a3d62] uppercase tracking-tight">Seleccionar Documentación</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.0</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">Se guardará en Drive v5.0.8</p>
                 <input id="new-file-input" type="file" className="hidden" multiple onChange={handleFileChange} />
               </div>
               {filesToUpload.length > 0 && (

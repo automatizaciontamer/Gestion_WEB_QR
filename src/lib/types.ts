@@ -2,6 +2,7 @@
 export interface ObraFile {
   name: string;
   id: string;
+  url?: string; // URL de descarga directa almacenada en Firebase
 }
 
 export interface Obra {
@@ -17,7 +18,7 @@ export interface Obra {
   usuarioAcceso: string;
   claveAcceso: string;
   createdAt: number;
-  files?: ObraFile[]; // Lista de objetos con nombre e ID de Drive
+  files?: ObraFile[]; // Lista de objetos con nombre, ID y URL
   driveFolderUrl?: string;
   authorizedEmails: Array<{ email: string; password?: string }>;
 }

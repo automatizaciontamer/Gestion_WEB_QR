@@ -33,8 +33,9 @@ function ObraViewContent() {
 
   const getDownloadUrl = (file: any) => {
     if (!file) return '';
+    // Extraer el ID de Google Drive de cualquier propiedad posible
     const driveId = file.id || file.fileId || (typeof file === 'string' ? file : '');
-    if (!driveId || driveId.length < 10) return '';
+    if (!driveId || driveId.length < 5) return '';
     return `https://drive.google.com/uc?export=download&id=${driveId}`;
   };
 
@@ -120,23 +121,8 @@ function ObraViewContent() {
               );
             }) : (
               <div className="bg-white p-12 rounded-[2rem] text-center border-4 border-dashed border-slate-100">
-                <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">No hay planos individuales registrados</p>
+                <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">No hay planos registrados</p>
               </div>
-            )}
-
-            {obra.driveFolderUrl && (
-              <a 
-                href={obra.driveFolderUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-full p-8 rounded-[2rem] bg-[#0a3d62] text-white shadow-2xl mt-6 border-l-[10px] border-primary transition-all active:scale-95 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-black uppercase text-xl leading-none">REPOSITORIO COMPLETO</p>
-                  <p className="text-[10px] opacity-60 uppercase font-black mt-1">Sincronizado con Google Drive</p>
-                </div>
-                <Download className="w-8 h-8 opacity-20" />
-              </a>
             )}
           </div>
         </div>

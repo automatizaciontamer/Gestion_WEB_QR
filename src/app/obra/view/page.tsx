@@ -28,14 +28,31 @@ function ObraViewContent() {
 
   const files = useMemo(() => {
     if (!obra) return [];
-    return obra.files || [];
+    // Soporte para múltiples variantes de nombres de campo
+    return obra.files || (obra as any).archivos || [];
   }, [obra]);
 
   const getDownloadUrl = (file: any) => {
-    if (!file) return '';
-    // Extraer el ID de Google Drive de cualquier propiedad posible
-    const driveId = file.id || file.fileId || (typeof file === 'string' ? file : '');
-    if (!driveId || driveId.length < 5) return '';
+    if (!file) return '#';
+    
+    // Extracción ultra-robusta del ID de Google Drive
+    let driveId = '';
+    if (typeof file === 'string') {
+      driveId = file;
+    } else {
+      driveId = file.id || file.fileId || '';
+    }
+
+    // Limpieza si es una URL completa
+    if (driveId.includes('id=')) {
+      driveId = driveId.split('id=')[1].split('&')[0];
+    } else if (driveId.includes('/d/')) {
+      driveId = driveId.split('/d/')[1].split('/')[0];
+    }
+
+    if (!driveId) return '#';
+    
+    // Retornamos el enlace de descarga directa universal
     return `https://drive.google.com/uc?export=download&id=${driveId}`;
   };
 
@@ -107,16 +124,14 @@ function ObraViewContent() {
                       <p className="font-black text-[#0a3d62] text-base uppercase truncate pr-4">{file.name || `Plano Técnico ${idx + 1}`}</p>
                     </div>
                   </div>
-                  {downloadUrl && (
-                    <a 
-                      href={downloadUrl} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-12 px-6 rounded-xl bg-[#0a3d62] hover:bg-primary flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase"
-                    >
-                      <Download className="w-4 h-4" /> DESCARGAR
-                    </a>
-                  )}
+                  <a 
+                    href={downloadUrl} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-12 px-6 rounded-xl bg-[#0a3d62] hover:bg-primary flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase"
+                  >
+                    <Download className="w-4 h-4" /> DESCARGAR
+                  </a>
                 </div>
               );
             }) : (

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from 'react';
@@ -31,6 +30,7 @@ import { Obra } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { deleteFromDrive } from '@/lib/drive-api';
 
 export default function ObrasPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,10 +65,20 @@ export default function ObrasPage() {
     });
   };
 
-  const handleDelete = (id: string, nombre: string) => {
-    if (!db || !confirm(`¿Estás seguro de eliminar la obra "${nombre}"?`)) return;
+  const handleDelete = (obra: Obra) => {
+    if (!db || !confirm(`¿Estás seguro de eliminar la obra "${obra.nombreObra}"? Esta acción borrará también los archivos en Google Drive.`)) return;
 
-    const docRef = doc(db, 'obras', id);
+    // 1. Sincronización Drive: Eliminar archivos vinculados
+    if (obra.files && obra.files.length > 0) {
+      obra.files.forEach(file => {
+        if (file.id) {
+          deleteFromDrive(file.id).catch(() => null);
+        }
+      });
+    }
+
+    // 2. Eliminar registro de Firestore
+    const docRef = doc(db, 'obras', obra.id);
     deleteDoc(docRef).catch(async (error) => {
       const permissionError = new FirestorePermissionError({
         path: docRef.path,
@@ -79,7 +89,7 @@ export default function ObrasPage() {
     
     toast({
       title: "Obra eliminada",
-      description: "El registro ha sido removido.",
+      description: "El registro y sus archivos en la nube han sido removidos.",
     });
   };
 
@@ -179,7 +189,7 @@ export default function ObrasPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
-                            onClick={() => handleDelete(obra.id, obra.nombreObra)}
+                            onClick={() => handleDelete(obra)}
                           >
                             <Trash2 className="w-4 h-4" /> ELIMINAR
                           </DropdownMenuItem>

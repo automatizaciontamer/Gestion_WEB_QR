@@ -28,6 +28,7 @@ function ObraViewContent() {
 
   const files = useMemo(() => {
     if (!obra) return [];
+    // Soporte para múltiples nombres de campo de archivos
     return obra.files || (obra as any).archivos || [];
   }, [obra]);
 
@@ -36,27 +37,31 @@ function ObraViewContent() {
     
     let driveId = '';
     
+    // Extracción ultra-permisiva del ID de Google Drive
     if (typeof file === 'object') {
-      driveId = file.id || file.fileId || file.driveId || '';
+      driveId = file.id || file.fileId || file.driveId || file.url || '';
     } else if (typeof file === 'string') {
       driveId = file;
     }
 
-    // Extracción robusta de ID desde URLs o strings sucios
+    // Si es una URL completa, extraemos el ID mediante regex
     if (driveId.includes('id=')) {
       const match = driveId.match(/id=([^&]+)/);
       if (match) driveId = match[1];
     } else if (driveId.includes('/d/')) {
       const match = driveId.match(/\/d\/([^/]+)/);
       if (match) driveId = match[1];
+    } else if (driveId.includes('drive.google.com/open?id=')) {
+      const match = driveId.match(/id=([^&]+)/);
+      if (match) driveId = match[1];
     }
 
-    // Limpieza de espacios o carácteres extraños
     driveId = driveId.trim();
 
+    // Si después de todo no tenemos un ID válido, no generamos link
     if (!driveId || driveId.length < 5) return null;
     
-    // URL de descarga directa universal de Google Drive
+    // Generación de enlace de descarga directa universal
     return `https://drive.google.com/uc?export=download&id=${driveId}`;
   };
 
@@ -120,9 +125,9 @@ function ObraViewContent() {
               const downloadUrl = getDownloadUrl(file);
               
               return (
-                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border flex items-center justify-between group">
+                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border flex items-center justify-between group transition-all hover:border-primary/50">
                   <div className="flex items-center gap-6 overflow-hidden">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 shadow-inner">
                       <FileText className="w-6 h-6" />
                     </div>
                     <div className="overflow-hidden pr-4">
@@ -140,7 +145,9 @@ function ObraViewContent() {
                       <Download className="w-4 h-4" /> DESCARGAR
                     </a>
                   ) : (
-                    <span className="text-[9px] font-black text-destructive uppercase px-4">Error ID</span>
+                    <div className="bg-red-50 px-4 py-2 rounded-xl border border-red-100">
+                       <p className="text-[8px] font-black text-red-500 uppercase tracking-tighter">SIN ID VÁLIDO</p>
+                    </div>
                   )}
                 </div>
               );

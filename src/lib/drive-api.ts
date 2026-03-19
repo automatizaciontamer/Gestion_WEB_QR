@@ -1,6 +1,6 @@
 /**
  * Servicio para interactuar con Google Drive a través de un Google Apps Script.
- * v3.5 - Nueva URL de Script, soporte para descarga directa y manejo de errores robusto.
+ * v5.1.3 - Soporte para eliminación total de carpetas y archivos.
  */
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';
@@ -20,7 +20,6 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
           folderName: folderName,
         };
 
-        // Enviamos como texto plano para evitar problemas de preflight CORS con Apps Script
         const response = await fetch(DRIVE_SCRIPT_URL, {
           method: 'POST',
           mode: 'cors',
@@ -32,14 +31,9 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
         }
 
         const data = await response.json();
-        if (data.status === 'success') {
-          resolve(data);
-        } else {
-          console.error('Error reportado por el script:', data.message);
-          resolve({ status: 'error', message: data.message });
-        }
+        resolve(data);
       } catch (error: any) {
-        console.error('Error en la comunicación con Drive API:', error);
+        console.error('Error en uploadToDrive:', error);
         resolve({ status: 'error', message: error.message });
       }
     };
@@ -50,6 +44,7 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
 
 /**
  * Elimina una CARPETA completa de Google Drive buscando por su nombre único.
+ * Esta función es la que se vincula al botón de ELIMINAR OBRA.
  */
 export async function deleteFolderFromDrive(folderName: string): Promise<any> {
   if (!folderName) return { status: 'ignored' };
@@ -60,15 +55,17 @@ export async function deleteFolderFromDrive(folderName: string): Promise<any> {
       folderName: folderName,
     };
 
+    // Usamos POST sin cabeceras especiales para evitar problemas de CORS con Apps Script
     const response = await fetch(DRIVE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
     
-    return await response.json();
-  } catch (error) {
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
     console.warn('Error eliminando carpeta de Drive:', error);
-    return { status: 'failed' };
+    return { status: 'error', message: error.message };
   }
 }
 

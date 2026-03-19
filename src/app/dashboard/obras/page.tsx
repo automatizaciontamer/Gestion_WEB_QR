@@ -68,19 +68,27 @@ export default function ObrasPage() {
   const handleDelete = async (obra: Obra) => {
     if (!db) return;
     
-    const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción es irreversible y eliminará la CARPETA completa en Google Drive y el registro en el sistema.`;
+    const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción eliminará permanentemente la CARPETA en Google Drive y el registro en el sistema.`;
     
     if (!confirm(confirmMessage)) return;
 
     toast({
       title: "Eliminando obra...",
-      description: "Sincronizando limpieza en Google Drive y base de datos.",
+      description: "Sincronizando limpieza en Google Drive y Firebase.",
     });
 
     try {
-      // 1. Eliminar CARPETA en Google Drive por nombre único
+      // 1. Eliminar CARPETA en Google Drive usando el nombre único del proyecto
       const folderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
-      await deleteFolderFromDrive(folderName);
+      console.log(`Intentando eliminar carpeta en Drive: ${folderName}`);
+      
+      const driveResult = await deleteFolderFromDrive(folderName);
+      
+      if (driveResult && driveResult.status === 'success') {
+        console.log("Carpeta eliminada de Drive con éxito");
+      } else {
+        console.warn("No se pudo confirmar la eliminación en Drive, pero procederemos con Firebase:", driveResult?.message);
+      }
 
       // 2. Eliminar registro de Firestore
       const docRef = doc(db, 'obras', obra.id);
@@ -101,7 +109,7 @@ export default function ObrasPage() {
       
       toast({
         title: "Error en eliminación",
-        description: "No se pudo completar la limpieza total. Verifique permisos.",
+        description: "No se pudo completar la limpieza total. Verifique consola.",
         variant: "destructive",
       });
     }
@@ -112,7 +120,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.1.1 - Sincronización Drive Activa</p>
+          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.1.3 - Sincronización Drive Activa</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">

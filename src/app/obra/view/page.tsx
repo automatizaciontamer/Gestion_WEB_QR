@@ -28,31 +28,32 @@ function ObraViewContent() {
 
   const files = useMemo(() => {
     if (!obra) return [];
-    // Soporte para múltiples variantes de nombres de campo
     return obra.files || (obra as any).archivos || [];
   }, [obra]);
 
   const getDownloadUrl = (file: any) => {
     if (!file) return '#';
     
-    // Extracción ultra-robusta del ID de Google Drive
+    // Extracción ultra-robusta del ID de Google Drive de cualquier formato
     let driveId = '';
-    if (typeof file === 'string') {
+    
+    if (typeof file === 'object') {
+      driveId = file.id || file.fileId || file.driveId || '';
+    } else if (typeof file === 'string') {
       driveId = file;
-    } else {
-      driveId = file.id || file.fileId || '';
     }
 
-    // Limpieza si es una URL completa
+    // Limpieza de URLs si el ID contiene basura
     if (driveId.includes('id=')) {
       driveId = driveId.split('id=')[1].split('&')[0];
     } else if (driveId.includes('/d/')) {
       driveId = driveId.split('/d/')[1].split('/')[0];
     }
 
-    if (!driveId) return '#';
+    // Si no hay ID válido, retornamos un enlace vacío controlado
+    if (!driveId || driveId.length < 5) return '#';
     
-    // Retornamos el enlace de descarga directa universal
+    // Retornamos el enlace de descarga directa universal de Google Drive
     return `https://drive.google.com/uc?export=download&id=${driveId}`;
   };
 

@@ -88,7 +88,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.6 - Sincronizado Cloud</p>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px]">v5.0.7 - Sincronizado Cloud</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">

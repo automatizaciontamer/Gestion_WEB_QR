@@ -32,9 +32,8 @@ function ObraViewContent() {
   }, [obra]);
 
   const getDownloadUrl = (file: any) => {
-    if (!file) return '#';
+    if (!file) return null;
     
-    // Extracción ultra-robusta del ID de Google Drive de cualquier formato
     let driveId = '';
     
     if (typeof file === 'object') {
@@ -43,17 +42,21 @@ function ObraViewContent() {
       driveId = file;
     }
 
-    // Limpieza de URLs si el ID contiene basura
+    // Extracción robusta de ID desde URLs o strings sucios
     if (driveId.includes('id=')) {
-      driveId = driveId.split('id=')[1].split('&')[0];
+      const match = driveId.match(/id=([^&]+)/);
+      if (match) driveId = match[1];
     } else if (driveId.includes('/d/')) {
-      driveId = driveId.split('/d/')[1].split('/')[0];
+      const match = driveId.match(/\/d\/([^/]+)/);
+      if (match) driveId = match[1];
     }
 
-    // Si no hay ID válido, retornamos un enlace vacío controlado
-    if (!driveId || driveId.length < 5) return '#';
+    // Limpieza de espacios o carácteres extraños
+    driveId = driveId.trim();
+
+    if (!driveId || driveId.length < 5) return null;
     
-    // Retornamos el enlace de descarga directa universal de Google Drive
+    // URL de descarga directa universal de Google Drive
     return `https://drive.google.com/uc?export=download&id=${driveId}`;
   };
 
@@ -61,7 +64,7 @@ function ObraViewContent() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sincronizando v5.0.7...</p>
       </div>
     );
   }
@@ -87,7 +90,7 @@ function ObraViewContent() {
             </div>
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">TAMER INDUSTRIAL S.A.</p>
-              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico de Obra</h2>
+              <h2 className="text-xs font-black uppercase opacity-60">Visor Técnico v5.0.7</h2>
             </div>
           </div>
           
@@ -109,35 +112,41 @@ function ObraViewContent() {
 
         <div className="space-y-6">
           <h3 className="text-[12px] font-black text-[#0a3d62] uppercase tracking-[0.4em] flex items-center gap-3">
-            <FileText className="w-6 h-6 text-primary" /> DOCUMENTACIÓN TÉCNICA
+            <FileText className="w-6 h-6 text-primary" /> PLANOS Y DOCUMENTACIÓN
           </h3>
 
           <div className="grid grid-cols-1 gap-4">
             {files.length > 0 ? files.map((file, idx) => {
               const downloadUrl = getDownloadUrl(file);
+              
               return (
-                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border hover:border-primary transition-all flex items-center justify-between group">
+                <div key={idx} className="bg-white p-6 rounded-[2rem] shadow-md border flex items-center justify-between group">
                   <div className="flex items-center gap-6 overflow-hidden">
                     <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
                       <FileText className="w-6 h-6" />
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="font-black text-[#0a3d62] text-base uppercase truncate pr-4">{file.name || `Plano Técnico ${idx + 1}`}</p>
+                    <div className="overflow-hidden pr-4">
+                      <p className="font-black text-[#0a3d62] text-sm uppercase truncate">{file.name || `Archivo Técnico ${idx + 1}`}</p>
                     </div>
                   </div>
-                  <a 
-                    href={downloadUrl} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-12 px-6 rounded-xl bg-[#0a3d62] hover:bg-primary flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase"
-                  >
-                    <Download className="w-4 h-4" /> DESCARGAR
-                  </a>
+                  
+                  {downloadUrl ? (
+                    <a 
+                      href={downloadUrl} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-12 px-6 rounded-xl bg-primary hover:bg-[#0a3d62] flex items-center justify-center text-white transition-all active:scale-95 shrink-0 gap-3 font-black text-xs uppercase shadow-lg shadow-primary/20"
+                    >
+                      <Download className="w-4 h-4" /> DESCARGAR
+                    </a>
+                  ) : (
+                    <span className="text-[9px] font-black text-destructive uppercase px-4">Error ID</span>
+                  )}
                 </div>
               );
             }) : (
               <div className="bg-white p-12 rounded-[2rem] text-center border-4 border-dashed border-slate-100">
-                <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">No hay planos registrados</p>
+                <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">No hay planos registrados en esta obra.</p>
               </div>
             )}
           </div>
@@ -146,7 +155,7 @@ function ObraViewContent() {
 
       <footer className="p-12 text-center mt-auto">
         <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.5em]">
-          TAMER INDUSTRIAL S.A. | v5.0.6
+          TAMER INDUSTRIAL S.A. | GESTIÓN CLOUD v5.0.7
         </p>
       </footer>
     </div>
@@ -155,7 +164,7 @@ function ObraViewContent() {
 
 export default function ObraViewPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black text-xs uppercase tracking-widest">Cargando...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black text-xs uppercase tracking-widest">Iniciando Visor...</div>}>
       <ObraViewContent />
     </Suspense>
   );

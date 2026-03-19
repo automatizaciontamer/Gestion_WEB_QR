@@ -30,7 +30,7 @@ import { Obra } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { deleteFromDrive } from '@/lib/drive-api';
+import { deleteFolderFromDrive } from '@/lib/drive-api';
 
 export default function ObrasPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,32 +65,47 @@ export default function ObrasPage() {
     });
   };
 
-  const handleDelete = (obra: Obra) => {
-    if (!db || !confirm(`¿Estás seguro de eliminar la obra "${obra.nombreObra}"? Esta acción borrará también los archivos en Google Drive.`)) return;
+  const handleDelete = async (obra: Obra) => {
+    if (!db) return;
+    
+    const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción es irreversible y eliminará TODOS los archivos y la CARPETA en Google Drive.`;
+    
+    if (!confirm(confirmMessage)) return;
 
-    // 1. Sincronización Drive: Eliminar archivos vinculados
-    if (obra.files && obra.files.length > 0) {
-      obra.files.forEach(file => {
-        if (file.id) {
-          deleteFromDrive(file.id).catch(() => null);
-        }
+    toast({
+      title: "Iniciando eliminación",
+      description: "Limpiando archivos en la nube y base de datos...",
+    });
+
+    try {
+      // 1. Sincronización Drive: Eliminar la CARPETA completa por nombre único
+      // El nombre único se generó al crear la obra: codigoCliente-numeroOF-numeroOT
+      const folderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
+      await deleteFolderFromDrive(folderName);
+
+      // 2. Eliminar registro de Firestore
+      const docRef = doc(db, 'obras', obra.id);
+      await deleteDoc(docRef);
+      
+      toast({
+        title: "Obra eliminada con éxito",
+        description: "El registro y su carpeta en la nube han sido removidos.",
       });
-    }
-
-    // 2. Eliminar registro de Firestore
-    const docRef = doc(db, 'obras', obra.id);
-    deleteDoc(docRef).catch(async (error) => {
+    } catch (error) {
+      console.error("Error en eliminación:", error);
+      const docRef = doc(db, 'obras', obra.id);
       const permissionError = new FirestorePermissionError({
         path: docRef.path,
         operation: 'delete',
       });
       errorEmitter.emit('permission-error', permissionError);
-    });
-    
-    toast({
-      title: "Obra eliminada",
-      description: "El registro y sus archivos en la nube han sido removidos.",
-    });
+      
+      toast({
+        title: "Error parcial",
+        description: "Se eliminó el registro pero puede que queden archivos en Drive.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -191,7 +206,7 @@ export default function ObrasPage() {
                             className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
                             onClick={() => handleDelete(obra)}
                           >
-                            <Trash2 className="w-4 h-4" /> ELIMINAR
+                            <Trash2 className="w-4 h-4" /> ELIMINAR OBRA
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

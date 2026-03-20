@@ -72,24 +72,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const d = obraSnap.data();
           
           // Acceso Maestro Global (Empresa)
-          const isEmpresaMatch = empresa && 
-                                 empresa.email?.toLowerCase().trim() === normalizedIdentifier && 
-                                 empresa.claveAccesoInfo === password &&
+          let currentEmpresa: any = empresa;
+          if (!currentEmpresa) {
+            try {
+              const eqRef = doc(db, 'Configuracion', 'Empresa');
+              const eqSnap = await getDoc(eqRef);
+              if (eqSnap.exists()) {
+                currentEmpresa = eqSnap.data();
+              }
+            } catch(e) { console.warn("Fallo lectura Empresa master", e); }
+          }
+          
+          const isEmpresaMatch = currentEmpresa && 
+                                 currentEmpresa.email?.toLowerCase().trim() === normalizedIdentifier && 
+                                 currentEmpresa.claveAccesoInfo === password &&
                                  password !== undefined && password.trim() !== '';
+
+          // Soporte secundario administrativo (Fallback por si probaron la de panel)
+          const isAdminMatch = currentEmpresa &&
+                               currentEmpresa.usuarioAdmin?.toLowerCase().trim() === normalizedIdentifier &&
+                               currentEmpresa.passwordAdmin === password &&
+                               password !== undefined && password.trim() !== '';
 
           const isMainMatch = d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password;
           const isAuthorizedMatch = (d.authorizedEmails || []).some((e: any) => 
             e.email?.toLowerCase().trim() === normalizedIdentifier && e.password === password
           );
 
-          if (isMainMatch || isAuthorizedMatch || isEmpresaMatch) {
+          if (isMainMatch || isAuthorizedMatch || isEmpresaMatch || isAdminMatch) {
             // CRÍTICO: Asegurar que el objeto de sesión tenga el campo 'email' para validación en visor
             const userData = { 
               ...d, 
               id: obraSnap.id, 
               role: 'field',
               email: normalizedIdentifier, // Importante para useMemo isAuthorized
-              nombre: isEmpresaMatch ? (empresa?.nombre || 'Inspector General') : (d.nombreObra || 'Personal de Obra')
+              nombre: (isEmpresaMatch || isAdminMatch) ? (currentEmpresa?.nombre || 'Inspector General') : (d.nombreObra || 'Personal de Obra')
             };
             setIsAdmin(false);
             setIsUser(true);

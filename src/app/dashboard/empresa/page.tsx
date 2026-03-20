@@ -160,7 +160,8 @@ export default function EmpresaConfigPage() {
           </p>
         </div>
         <Button 
-          onClick={handleSubmit}
+          type="submit"
+          form="empresa-form"
           className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95"
           disabled={saving}
         >
@@ -181,7 +182,7 @@ export default function EmpresaConfigPage() {
           </CardHeader>
           <CardContent className="p-10 space-y-12">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
+            <form id="empresa-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
               <div className="space-y-3">
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                   <Building2 className="w-3.5 h-3.5" /> Razón Social
@@ -237,15 +238,40 @@ export default function EmpresaConfigPage() {
                   placeholder="automatizacion.tamer@gmail.com"
                 />
               </div>
+              <div className="space-y-3 pt-6 border-t">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Usuario Administrador (Dashboard)
+                </Label>
+                <Input 
+                  value={formData.usuarioAdmin}
+                  onChange={e => setFormData({...formData, usuarioAdmin: e.target.value})}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  placeholder="Ej: admin"
+                  required
+                />
+              </div>
+              <div className="space-y-3 pt-6 border-t">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Clave Administrador
+                </Label>
+                <Input 
+                  value={formData.passwordAdmin}
+                  onChange={e => setFormData({...formData, passwordAdmin: e.target.value})}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  placeholder="Ej: 14569"
+                  required
+                />
+              </div>
               <div className="space-y-3 md:col-span-2 pt-6 border-t">
                 <Label className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5" /> CLAVE Acceso Informacion (Maestra Obras):
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" /> CLAVE Acceso Informacion (Maestra Visor QR):
                 </Label>
                 <Input 
                   value={formData.claveAccesoInfo || ''}
                   onChange={e => setFormData({...formData, claveAccesoInfo: e.target.value})}
                   className="h-14 rounded-2xl bg-blue-50 border-none font-black text-lg text-primary" 
-                  placeholder="Contraseña Maestra para visor de Obras"
+                  placeholder="Contraseña Maestra para descargar en Visor de Obras"
+                  required
                 />
               </div>
               <div className="space-y-3 md:col-span-2 pt-6 border-t">
@@ -259,7 +285,7 @@ export default function EmpresaConfigPage() {
                   placeholder="https://tamer.com.ar"
                 />
               </div>
-            </div>
+            </form>
           </CardContent>
         </Card>
       </div>

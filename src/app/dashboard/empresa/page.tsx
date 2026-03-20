@@ -23,11 +23,11 @@ export default function EmpresaConfigPage() {
   const { isAdmin } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  
+
   const [formData, setFormData] = useState<Empresa>({
     id: 'Empresa',
     nombre: '',
@@ -50,9 +50,9 @@ export default function EmpresaConfigPage() {
 
   useEffect(() => {
     if (!db) return;
-    
+
     const docRef = doc(db, 'Configuracion', 'Empresa');
-    
+
     // Escucha en tiempo real para la configuración de empresa v2.9
     const unsubscribe = onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
@@ -73,12 +73,12 @@ export default function EmpresaConfigPage() {
     setUploadingLogo(true);
     try {
       const result = await uploadToDrive(file, "Datos Empresa");
-      
+
       // Automatización de URL directa v2.9
       if (result && result.fileId) {
         const driveUrl = `https://drive.google.com/uc?id=${result.fileId}&export=download`;
         setFormData(prev => ({ ...prev, logoUrl: driveUrl }));
-        
+
         toast({
           title: "Logo Cargado en Drive",
           description: "La imagen se ha vinculado correctamente. Guarde los cambios para aplicar.",
@@ -108,7 +108,7 @@ export default function EmpresaConfigPage() {
 
     try {
       const docRef = doc(db, 'Configuracion', 'Empresa');
-      
+
       // Guardar en Firestore con merge para no sobreescribir otros campos si existen
       await setDoc(docRef, {
         ...formData,
@@ -122,7 +122,7 @@ export default function EmpresaConfigPage() {
 
       toast({
         title: "Sincronización v2.9 Exitosa",
-        description: "Los datos institucionales y el logo se han actualizado en todo el sistema.",
+        description: "Los datos institucionales se han actualizado en todo el sistema.",
       });
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -159,7 +159,7 @@ export default function EmpresaConfigPage() {
             Gestión Institucional Tamer Industrial v2.9
           </p>
         </div>
-        <Button 
+        <Button
           type="submit"
           form="empresa-form"
           className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95"
@@ -187,32 +187,32 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                   <Building2 className="w-3.5 h-3.5" /> Razón Social
                 </Label>
-                <Input 
+                <Input
                   value={formData.nombre}
-                  onChange={e => setFormData({...formData, nombre: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-xl text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-xl text-[#0a3d62]"
                   placeholder="TAMER INDUSTRIAL S.A."
                   required
                 />
               </div>
               <div className="space-y-3">
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <FileCheck className="w-3.5 h-3.5" /> CUIL / NIT
+                  <FileCheck className="w-3.5 h-3.5" /> CUIT
                 </Label>
-                <Input 
+                <Input
                   value={formData.nit}
-                  onChange={e => setFormData({...formData, nit: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-xl text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, nit: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-black text-xl text-[#0a3d62]"
                   placeholder="30707867309"
                   required
                 />
               </div>
               <div className="space-y-3 md:col-span-2">
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Dirección Fiscal / Operativa</Label>
-                <Input 
+                <Input
                   value={formData.direccion}
-                  onChange={e => setFormData({...formData, direccion: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, direccion: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]"
                   placeholder="Julio A. Roca 1899 Benegas Godoy Cruz"
                 />
               </div>
@@ -220,10 +220,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                   <Phone className="w-3.5 h-3.5" /> Teléfono de Contacto
                 </Label>
-                <Input 
+                <Input
                   value={formData.telefono}
-                  onChange={e => setFormData({...formData, telefono: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, telefono: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]"
                   placeholder="2615566911"
                 />
               </div>
@@ -231,10 +231,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5" /> Email Corporativo
                 </Label>
-                <Input 
+                <Input
                   value={formData.email}
-                  onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]"
                   placeholder="automatizacion.tamer@gmail.com"
                 />
               </div>
@@ -242,10 +242,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5" /> Usuario Administrador (Dashboard)
                 </Label>
-                <Input 
+                <Input
                   value={formData.usuarioAdmin}
-                  onChange={e => setFormData({...formData, usuarioAdmin: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, usuarioAdmin: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]"
                   placeholder="Ej: admin"
                   required
                 />
@@ -254,10 +254,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5" /> Clave Administrador
                 </Label>
-                <Input 
+                <Input
                   value={formData.passwordAdmin}
-                  onChange={e => setFormData({...formData, passwordAdmin: e.target.value})}
-                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, passwordAdmin: e.target.value })}
+                  className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]"
                   placeholder="Ej: 14569"
                   required
                 />
@@ -266,10 +266,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-primary" /> CLAVE Acceso Informacion (Maestra Visor QR):
                 </Label>
-                <Input 
+                <Input
                   value={formData.claveAccesoInfo || ''}
-                  onChange={e => setFormData({...formData, claveAccesoInfo: e.target.value})}
-                  className="h-14 rounded-2xl bg-blue-50 border-none font-black text-lg text-primary" 
+                  onChange={e => setFormData({ ...formData, claveAccesoInfo: e.target.value })}
+                  className="h-14 rounded-2xl bg-blue-50 border-none font-black text-lg text-primary"
                   placeholder="Contraseña Maestra para descargar en Visor de Obras"
                   required
                 />
@@ -278,10 +278,10 @@ export default function EmpresaConfigPage() {
                 <Label className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                   <Globe className="w-3.5 h-3.5" /> Portal Web Oficial
                 </Label>
-                <Input 
+                <Input
                   value={formData.web}
-                  onChange={e => setFormData({...formData, web: e.target.value})}
-                  className="h-14 rounded-2xl bg-primary/10 border-none font-black text-lg text-[#0a3d62]" 
+                  onChange={e => setFormData({ ...formData, web: e.target.value })}
+                  className="h-14 rounded-2xl bg-primary/10 border-none font-black text-lg text-[#0a3d62]"
                   placeholder="https://tamer.com.ar"
                 />
               </div>

@@ -33,10 +33,12 @@ export default function DashboardLayout({
   if (!isUser) return null;
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden font-body">
-      <NavSidebar />
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 no-scrollbar bg-[#f8fafc]">
-        <div className="max-w-7xl mx-auto h-full">
+    <div className="flex flex-col lg:flex-row h-screen print:h-auto bg-background print:bg-white overflow-hidden print:overflow-visible font-body">
+      <div className="print:hidden">
+        <NavSidebar />
+      </div>
+      <main className="flex-1 overflow-y-auto print:overflow-visible p-4 sm:p-6 lg:p-8 print:p-0 no-scrollbar bg-[#f8fafc] print:bg-white">
+        <div className="max-w-7xl mx-auto h-full print:h-auto print:max-w-none print:w-full">
           {children}
         </div>
       </main>

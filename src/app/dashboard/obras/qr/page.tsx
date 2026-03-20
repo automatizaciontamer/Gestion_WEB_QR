@@ -57,7 +57,7 @@ function QRPosterContent() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Generando Ficha Técnica v3.5.2...</p>
+        <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">Generando Ficha Técnica v5.2.0...</p>
       </div>
     );
   }
@@ -97,26 +97,13 @@ function QRPosterContent() {
           </div>
         </div>
 
-        <Alert className="bg-blue-50 border-blue-200">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800 font-black text-xs uppercase tracking-wider">Modo de Pruebas v3.5.2</AlertTitle>
-          <AlertDescription className="text-blue-700 text-[10px] font-bold">
-            Si el QR da error 401 en tu celular, es debido a la privacidad de este entorno.
-            Usa el botón <strong>"ABRIR VISOR EN NUEVA PESTAÑA"</strong> para probar el acceso técnico ahora mismo.
-          </AlertDescription>
-        </Alert>
 
-        <Button asChild className="w-full h-16 rounded-[1.5rem] font-black text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 gap-3">
-          <a href={qrUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-6 h-6" /> ABRIR VISOR EN NUEVA PESTAÑA
-          </a>
-        </Button>
       </div>
 
       <div className="bg-white shadow-2xl mx-auto border overflow-hidden w-full max-w-[210mm] min-h-[297mm] p-0 flex flex-col font-sans">
         <div className="bg-[#0a3d62] text-white py-12 px-8 text-center">
           <h1 className="text-4xl font-black tracking-widest uppercase mb-2">TAMER INDUSTRIAL S.A.</h1>
-          <p className="text-sm font-bold opacity-80 tracking-[0.2em]">DOCUMENTACIÓN TÉCNICA Y PLANOS v3.5.2</p>
+          <p className="text-sm font-bold opacity-80 tracking-[0.2em]">DOCUMENTACIÓN TÉCNICA Y PLANOS v5.2.0</p>
         </div>
 
         <div className="flex-1 px-8 sm:px-16 py-12 flex flex-col items-center">
@@ -174,7 +161,7 @@ function QRPosterContent() {
           <p className="text-lg sm:text-xl font-bold leading-tight uppercase tracking-tighter">
             ACCESO EXCLUSIVO PARA PERSONAL DE OBRA Y CLIENTES
           </p>
-          <p className="text-[10px] mt-2 opacity-60 font-black uppercase tracking-widest">Sincronización Cloud Tamer | v3.5.2</p>
+          <p className="text-[10px] mt-2 opacity-60 font-black uppercase tracking-widest">Sincronización Cloud Tamer | v5.2.0</p>
         </div>
       </div>
     </div>

@@ -1,0 +1,8 @@
+Intalar dependencias
+npm install
+compilar
+npm run build
+
+
+Desplegar
+firebase deploy --only hosting --project gestion-tamer-ind-s-a

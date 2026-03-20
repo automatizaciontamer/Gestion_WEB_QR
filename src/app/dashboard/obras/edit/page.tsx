@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Obra, ObraFile } from '@/lib/types';
-import { uploadToDrive } from '@/lib/drive-api';
+import { uploadToDrive, deleteFromDrive } from '@/lib/drive-api';
 import { Progress } from '@/components/ui/progress';
 
 function EditObraContent() {
@@ -52,6 +52,7 @@ function EditObraContent() {
   
   const [existingFiles, setExistingFiles] = useState<ObraFile[]>([]);
   const [newFilesToUpload, setNewFilesToUpload] = useState<File[]>([]);
+  const [filesToDeleteFromDrive, setFilesToDeleteFromDrive] = useState<string[]>([]);
 
   const obraDocRef = useMemo(() => {
     if (!db || !id) return null;
@@ -94,6 +95,10 @@ function EditObraContent() {
   };
 
   const removeExistingFile = (index: number) => {
+    const fileToRemove = existingFiles[index];
+    if (fileToRemove.id) {
+      setFilesToDeleteFromDrive(prev => [...prev, fileToRemove.id]);
+    }
     setExistingFiles(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -103,6 +108,16 @@ function EditObraContent() {
     setIsSaving(true);
     
     try {
+      // 1. ELIMINACIÓN DE ARCHIVOS INDIVIDUALES EN DRIVE
+      if (filesToDeleteFromDrive.length > 0) {
+        for (const fileId of filesToDeleteFromDrive) {
+          const deleteResult = await deleteFromDrive(fileId);
+          if (deleteResult && deleteResult.status !== 'success') {
+            console.warn(`Drive no confirmó borrado para el archivo ${fileId}:`, deleteResult?.message);
+          }
+        }
+      }
+
       const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
       const newUploadedFiles: ObraFile[] = [];
       
@@ -172,7 +187,7 @@ function EditObraContent() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Editar Proyecto</h1>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.1.2</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Sincronización v5.2.0</p>
         </div>
       </div>
 

@@ -16,8 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -54,16 +53,7 @@ export default function ObrasPage() {
     );
   }, [obras, searchTerm]);
 
-  const handleCopyLink = (id: string) => {
-    if (typeof window === 'undefined') return;
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/obra/view?id=${id}`;
-    navigator.clipboard.writeText(link);
-    toast({
-      title: "Enlace Copiado",
-      description: "El link directo para el visor ha sido copiado al portapapeles.",
-    });
-  };
+
 
   const handleDelete = async (obra: Obra) => {
     if (!db) return;
@@ -122,7 +112,7 @@ export default function ObrasPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0a3d62]">Gestión de Obras</h1>
-          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.1.4 - Sincronización Total Drive Activa</p>
+          <p className="text-sm text-muted-foreground font-black uppercase tracking-widest text-[10px]">v5.2.0 - Sincronización Total Drive Activa</p>
         </div>
         <Link href="/dashboard/obras/new">
           <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2 h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -150,80 +140,48 @@ export default function ObrasPage() {
             <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Conectando...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-secondary/20 border-none">
-                <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">N° OF / OT</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Obra / Proyecto</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Cliente</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Estado</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredObras.map((obra) => (
-                  <TableRow key={obra.id} className="hover:bg-secondary/10 transition-colors border-secondary">
-                    <TableCell className="px-8">
-                      <div className="flex flex-col">
-                        <span className="font-black text-primary text-base">{obra.numeroOF}</span>
-                        <span className="text-[10px] font-black text-muted-foreground uppercase">{obra.numeroOT}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-bold text-gray-800">{obra.nombreObra}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm">{obra.cliente}</span>
-                        <span className="text-[10px] font-mono text-muted-foreground">{obra.codigoCliente}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-[#0a3d62] text-white rounded-lg text-[9px] font-black uppercase tracking-wider">
-                        SINCRONIZADO
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right px-8">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
-                            <MoreVertical className="w-5 h-5 text-muted-foreground" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl min-w-[200px]">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
-                              <Edit className="w-4 h-4 text-primary" /> EDITAR OBRA
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
-                              <QrCode className="w-4 h-4 text-primary" /> GENERAR QR / FICHA
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleCopyLink(obra.id)}
-                            className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
-                          >
-                            <Copy className="w-4 h-4 text-primary" /> COPIAR LINK VISOR
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a href={`/obra/view?id=${obra.id}`} target="_blank" className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
-                              <ExternalLink className="w-4 h-4 text-primary" /> ABRIR VISOR PÚBLICO
-                            </a>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
-                            onClick={() => handleDelete(obra)}
-                          >
-                            <Trash2 className="w-4 h-4" /> ELIMINAR OBRA
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-secondary/10">
+            {filteredObras.map((obra) => (
+              <div key={obra.id} className="bg-white rounded-2xl border border-secondary shadow-sm p-5 flex justify-between items-start hover:shadow-md transition-all relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#0a3d62] opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="flex flex-col gap-2 flex-1 pr-4">
+                  <h3 className="font-black text-xl text-[#0a3d62] leading-tight break-words">{obra.nombreObra}</h3>
+                  <div className="space-y-1 mt-1">
+                    <p className="text-sm font-bold text-gray-700">Cliente: <span className="font-normal text-muted-foreground">{obra.cliente}</span></p>
+                    <p className="text-xs font-bold text-gray-700">OF: <strong className="font-black font-mono text-primary">{obra.numeroOF}</strong></p>
+                    <p className="text-xs font-bold text-gray-700">OT: <strong className="font-black font-mono text-primary">{obra.numeroOT}</strong></p>
+                  </div>
+                </div>
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
+                        <MoreVertical className="w-5 h-5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl min-w-[200px]">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/obras/edit?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
+                          <Edit className="w-4 h-4 text-primary" /> EDITAR OBRA
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
+                          <QrCode className="w-4 h-4 text-primary" /> GENERAR QR / FICHA
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
+                        onClick={() => handleDelete(obra)}
+                      >
+                        <Trash2 className="w-4 h-4" /> ELIMINAR OBRA
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {!loading && filteredObras.length === 0 && (

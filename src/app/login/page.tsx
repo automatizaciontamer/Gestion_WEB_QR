@@ -52,7 +52,7 @@ export default function LoginPage() {
             <ShieldCheck className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-[#0a3d62] tracking-tight">Tamer Industrial S.A.</h1>
-          <p className="text-muted-foreground mt-2 font-bold uppercase tracking-widest text-[10px]">Gestión Técnica de Obras | v5.0.0</p>
+          <p className="text-muted-foreground mt-2 font-bold uppercase tracking-widest text-[10px]">Gestión Técnica de Obras | v5.2.0</p>
         </div>
 
         <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem] bg-white">
@@ -124,7 +124,7 @@ export default function LoginPage() {
         </Card>
         
         <p className="text-center text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black opacity-50">
-          © {new Date().getFullYear()} Tamer Industrial S.A. | v5.0.0
+          © {new Date().getFullYear()} Tamer Industrial S.A. | v5.2.0
         </p>
       </div>
     </div>

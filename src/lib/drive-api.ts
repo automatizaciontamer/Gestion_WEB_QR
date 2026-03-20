@@ -1,6 +1,6 @@
 /**
  * Servicio para interactuar con Google Drive a través de un Google Apps Script.
- * v5.1.4 - Soporte optimizado para eliminación total de carpetas.
+ * v5.2.0 - Soporte optimizado para eliminación total e individual de carpetas y archivos.
  */
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';

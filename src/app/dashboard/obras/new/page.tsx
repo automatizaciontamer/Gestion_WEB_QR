@@ -141,7 +141,7 @@ export default function NewObraPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-black text-[#0a3d62]">Nuevo Proyecto</h1>
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.1.2</p>
+          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Sincronización Cloud Tamer | v5.2.0</p>
         </div>
       </div>
 

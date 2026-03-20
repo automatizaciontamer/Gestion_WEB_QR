@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -261,47 +261,41 @@ export default function UsuariosHabilitadosPage() {
             <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Conectando con Firestore...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-secondary/20 border-none">
-                <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Nombre Completo</TableHead>
-                  <TableHead className="font-black uppercase text-[10px] tracking-[0.2em] py-6 text-[#0a3d62]">Email / Usuario</TableHead>
-                  <TableHead className="text-right font-black uppercase text-[10px] tracking-[0.2em] py-6 px-8 text-[#0a3d62]">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-secondary/10 transition-colors border-secondary">
-                    <TableCell className="font-black text-gray-800 px-8 py-5">{user.nombre}</TableCell>
-                    <TableCell className="text-primary font-bold">{user.email}</TableCell>
-                    <TableCell className="text-right px-8">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
-                            <MoreVertical className="w-5 h-5 text-muted-foreground" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
-                          <DropdownMenuItem 
-                            className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
-                            onClick={() => handleOpenEdit(user)}
-                          >
-                            <Edit className="w-4 h-4 text-primary" /> EDITAR USUARIO
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
-                            onClick={() => handleDelete(user.id, user.nombre)}
-                          >
-                            <Trash2 className="w-4 h-4" /> ELIMINAR ACCESO
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-secondary/10">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="bg-white rounded-2xl border border-secondary shadow-sm p-5 flex justify-between items-start hover:shadow-md transition-all relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="flex flex-col gap-1 flex-1 pr-4">
+                  <h3 className="font-black text-xl text-gray-800 leading-tight">{user.nombre}</h3>
+                  <div className="mt-2">
+                    <p className="text-sm font-bold text-gray-700">Email: <span className="font-normal break-all text-primary">{user.email}</span></p>
+                  </div>
+                </div>
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-xl hover:bg-secondary">
+                        <MoreVertical className="w-5 h-5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-2xl p-2 border-none shadow-2xl">
+                      <DropdownMenuItem 
+                        className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
+                        onClick={() => handleOpenEdit(user)}
+                      >
+                        <Edit className="w-4 h-4 text-primary" /> EDITAR USUARIO
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
+                        onClick={() => handleDelete(user.id, user.nombre)}
+                      >
+                        <Trash2 className="w-4 h-4" /> ELIMINAR ACCESO
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {!loading && filteredUsers.length === 0 && (

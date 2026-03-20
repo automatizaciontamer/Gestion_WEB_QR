@@ -33,8 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!db || !auth) return;
     
-    signInAnonymously(auth).catch(() => null);
-
     const empresaRef = doc(db, 'Configuracion', 'Empresa');
     
     const unsubscribe = onSnapshot(empresaRef, (snap) => {

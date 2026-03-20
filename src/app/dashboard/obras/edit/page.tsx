@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useDoc } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { Obra, ObraFile } from '@/lib/types';
 import { uploadToDrive, deleteFromDrive } from '@/lib/drive-api';
 import { Progress } from '@/components/ui/progress';
@@ -137,7 +137,7 @@ function EditObraContent() {
       }
 
       // LIMPIEZA DE DATOS: Asegurar que NADA sea undefined antes de Firestore
-      const dataToUpdate = {
+      let dataToUpdate: any = {
         codigoCliente: formData.codigoCliente || '',
         nombreObra: formData.nombreObra || '',
         numeroOF: formData.numeroOF || '',
@@ -151,6 +151,34 @@ function EditObraContent() {
         files: [...existingFiles, ...newUploadedFiles],
         updatedAt: Date.now()
       };
+
+      // Inyección o preservación de Credenciales Maestras de la Empresa
+      try {
+        const eqRef = doc(db, 'Configuracion', 'Empresa');
+        const eqSnap = await getDoc(eqRef);
+        if (eqSnap.exists()) {
+          const eqData = eqSnap.data();
+          const currentAuthorized = obra!.authorizedEmails || [];
+          
+          let updatedAuthorized = [...currentAuthorized];
+          
+          // Helper para agregar si no existe
+          const addIfNotExists = (email: string, pass: string) => {
+            if (email && pass && !updatedAuthorized.some(e => e.email === email && e.password === pass)) {
+              updatedAuthorized.push({ email, password: pass });
+            }
+          };
+
+          if (eqData.email && eqData.claveAccesoInfo) {
+             addIfNotExists(eqData.email.toLowerCase().trim(), eqData.claveAccesoInfo);
+          }
+          if (eqData.usuarioAdmin && eqData.passwordAdmin) {
+             addIfNotExists(eqData.usuarioAdmin.toLowerCase().trim(), eqData.passwordAdmin);
+          }
+          
+          dataToUpdate.authorizedEmails = updatedAuthorized;
+        }
+      } catch (e) { console.warn("No se pudo inyectar empresa en edición", e) }
 
       await updateDoc(doc(db, 'obras', id), dataToUpdate);
 

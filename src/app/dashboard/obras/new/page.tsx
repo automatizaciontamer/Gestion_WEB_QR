@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { uploadToDrive } from '@/lib/drive-api';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { Progress } from '@/components/ui/progress';
 import { ObraFile } from '@/lib/types';
 
@@ -93,6 +93,22 @@ export default function NewObraPage() {
         }
       }
 
+      // Obtener credenciales maestras de la Empresa
+      let defaultAdminCreds = [];
+      try {
+        const eqRef = doc(db, 'Configuracion', 'Empresa');
+        const eqSnap = await getDoc(eqRef);
+        if (eqSnap.exists()) {
+          const eqData = eqSnap.data();
+          if (eqData.email && eqData.claveAccesoInfo) {
+             defaultAdminCreds.push({ email: eqData.email.toLowerCase().trim(), password: eqData.claveAccesoInfo });
+          }
+          if (eqData.usuarioAdmin && eqData.passwordAdmin) {
+             defaultAdminCreds.push({ email: eqData.usuarioAdmin.toLowerCase().trim(), password: eqData.passwordAdmin });
+          }
+        }
+      } catch (e) { console.warn("No se pudo obtener empresa", e) }
+
       const obrasRef = collection(db, 'obras');
       
       // LIMPIEZA DE DATOS: Asegurar que NADA sea undefined para evitar error de Firestore
@@ -110,7 +126,7 @@ export default function NewObraPage() {
         files: uploadedFiles,
         createdAt: Date.now(),
         serverTimestamp: serverTimestamp(),
-        authorizedEmails: []
+        authorizedEmails: defaultAdminCreds
       };
 
       await addDoc(obrasRef, obraData);

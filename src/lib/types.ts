@@ -41,4 +41,5 @@ export interface Empresa {
   passwordAdmin: string;
   logoUrl?: string;
   web?: string;
+  claveAccesoInfo?: string;
 }

@@ -72,19 +72,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (obraSnap.exists()) {
           const d = obraSnap.data();
+          
+          // Acceso Maestro Global (Empresa)
+          const isEmpresaMatch = empresa && 
+                                 empresa.email?.toLowerCase().trim() === normalizedIdentifier && 
+                                 empresa.claveAccesoInfo === password &&
+                                 password !== undefined && password.trim() !== '';
+
           const isMainMatch = d.usuarioAcceso?.toLowerCase().trim() === normalizedIdentifier && d.claveAcceso === password;
           const isAuthorizedMatch = (d.authorizedEmails || []).some((e: any) => 
             e.email?.toLowerCase().trim() === normalizedIdentifier && e.password === password
           );
 
-          if (isMainMatch || isAuthorizedMatch) {
+          if (isMainMatch || isAuthorizedMatch || isEmpresaMatch) {
             // CRÍTICO: Asegurar que el objeto de sesión tenga el campo 'email' para validación en visor
             const userData = { 
               ...d, 
               id: obraSnap.id, 
               role: 'field',
               email: normalizedIdentifier, // Importante para useMemo isAuthorized
-              nombre: d.nombreObra || 'Personal de Obra'
+              nombre: isEmpresaMatch ? (empresa?.nombre || 'Inspector General') : (d.nombreObra || 'Personal de Obra')
             };
             setIsAdmin(false);
             setIsUser(true);

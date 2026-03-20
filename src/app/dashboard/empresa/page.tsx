@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudUpload, Info } from 'lucide-react';
+import { Building2, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudUpload, Info, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,7 +38,8 @@ export default function EmpresaConfigPage() {
     usuarioAdmin: '',
     passwordAdmin: '',
     logoUrl: '',
-    web: ''
+    web: '',
+    claveAccesoInfo: ''
   });
 
   useEffect(() => {
@@ -179,61 +180,7 @@ export default function EmpresaConfigPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-10 space-y-12">
-            
-            {/* Sección de Logo */}
-            <div className="space-y-6">
-              <Label className="text-[12px] font-black uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-                <Upload className="w-4 h-4" /> Logotipo Institucional (Sincronizado Drive)
-              </Label>
-              <div className="flex flex-col lg:flex-row gap-10 items-center bg-gray-50 p-10 rounded-[3rem] border-2 border-dashed border-[#0a3d62]/10 transition-all hover:bg-gray-100">
-                <div className="w-56 h-56 bg-white rounded-[2.5rem] flex items-center justify-center overflow-hidden border-8 border-white shadow-2xl p-4 shrink-0 relative group">
-                  {formData.logoUrl ? (
-                    <img src={formData.logoUrl} alt="Logo Empresa" className="w-full h-full object-contain" />
-                  ) : (
-                    <Building2 className="text-muted-foreground/20 w-20 h-20" />
-                  )}
-                  <div className="absolute inset-0 bg-[#0a3d62]/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" className="text-white font-black text-xs" onClick={() => fileInputRef.current?.click()}>CAMBIAR</Button>
-                  </div>
-                </div>
-                
-                <div className="flex-1 w-full space-y-6">
-                  <div className="space-y-4">
-                    <p className="text-xs font-black text-[#0a3d62] uppercase tracking-wider">Carga Automática de Identidad</p>
-                    <div className="flex flex-wrap gap-4">
-                      <Button 
-                        variant="outline" 
-                        className="rounded-2xl font-black border-2 border-[#0a3d62] text-[#0a3d62] hover:bg-[#0a3d62] hover:text-white h-14 px-8 shadow-lg"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingLogo}
-                      >
-                        {uploadingLogo ? <Loader2 className="animate-spin mr-3" /> : <Upload className="w-5 h-5 mr-3" />}
-                        SUBIR DESDE ESTE DISPOSITIVO
-                      </Button>
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={handleLogoUpload} 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Enlace Institucional Sincronizado</p>
-                    <Input 
-                      value={formData.logoUrl}
-                      onChange={e => setFormData({...formData, logoUrl: e.target.value})}
-                      className="h-14 rounded-2xl bg-white border-none font-bold shadow-md text-primary" 
-                      placeholder="URL del logo (gestionado por Drive v2.9)"
-                    />
-                    <p className="text-[9px] font-bold text-muted-foreground/60 italic">Este enlace se genera automáticamente al subir el archivo.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Datos Fiscales */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
               <div className="space-y-3">
                 <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
@@ -288,6 +235,17 @@ export default function EmpresaConfigPage() {
                   onChange={e => setFormData({...formData, email: e.target.value})}
                   className="h-14 rounded-2xl bg-secondary/30 border-none font-bold text-lg text-[#0a3d62]" 
                   placeholder="automatizacion.tamer@gmail.com"
+                />
+              </div>
+              <div className="space-y-3 md:col-span-2 pt-6 border-t">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5" /> CLAVE Acceso Informacion (Maestra Obras):
+                </Label>
+                <Input 
+                  value={formData.claveAccesoInfo || ''}
+                  onChange={e => setFormData({...formData, claveAccesoInfo: e.target.value})}
+                  className="h-14 rounded-2xl bg-blue-50 border-none font-black text-lg text-primary" 
+                  placeholder="Contraseña Maestra para visor de Obras"
                 />
               </div>
               <div className="space-y-3 md:col-span-2 pt-6 border-t">

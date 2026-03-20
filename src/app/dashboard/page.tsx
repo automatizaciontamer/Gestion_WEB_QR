@@ -34,14 +34,14 @@ export default function DashboardPage() {
 
   const stats = [
     { name: 'Obras Activas', value: obras?.length || '0', icon: Construction, color: 'text-blue-600', bg: 'bg-blue-100', loading: loadingObras },
-    { 
-      name: 'Usuarios Habilitados', 
-      value: isAdmin ? (clients?.length || '0') : '...', 
-      icon: Users, 
-      color: 'text-purple-600', 
-      bg: 'bg-purple-100', 
+    {
+      name: 'Usuarios Habilitados',
+      value: isAdmin ? (clients?.length || '0') : '...',
+      icon: Users,
+      color: 'text-purple-600',
+      bg: 'bg-purple-100',
       loading: loadingClients,
-      hide: !isAdmin 
+      hide: !isAdmin
     },
     { name: 'Archivos Técnicos', value: '...', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-100' },
     { name: 'Revisiones Mensuales', value: '...', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-100' },
@@ -49,8 +49,8 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-screen space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">
-      
-      <div 
+
+      <div
         className="relative w-full bg-white rounded-[3.5rem] p-8 sm:p-20 shadow-2xl shadow-blue-900/5 border border-white overflow-hidden flex flex-col items-center justify-center text-center min-h-[450px]"
         style={{
           backgroundImage: empresa?.logoUrl ? `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url("${empresa.logoUrl}")` : 'none',
@@ -64,14 +64,14 @@ export default function DashboardPage() {
             <Building2 className="w-4 h-4 text-[#0a3d62]" />
             <span className="text-[12px] font-black uppercase tracking-[0.4em] text-[#0a3d62]">SISTEMA DE GESTIÓN v5.2.0</span>
           </div>
-          
+
           <div className="space-y-4">
             <h2 className="text-3xl sm:text-5xl font-black text-[#0a3d62] leading-tight tracking-tighter uppercase drop-shadow-sm">
               {empresa?.nombre || 'TAMER INDUSTRIAL S.A.'}
             </h2>
             <div className="h-1.5 w-24 bg-primary mx-auto rounded-full" />
           </div>
-          
+
           <p className="text-xs sm:text-base text-muted-foreground font-black max-w-3xl mx-auto uppercase tracking-[0.3em] opacity-80">
             {empresa?.direccion || 'Ingeniería e Instalaciones Industriales'}
           </p>
@@ -149,16 +149,16 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-center py-16 text-muted-foreground font-black uppercase tracking-[0.2em] text-[10px] opacity-40">
-                Aguardando nuevos registros de ingeniería.
+                Aguardando nuevos registros.
               </div>
             )}
           </CardContent>
         </Card>
-        
+
         <Card className="border-none shadow-xl rounded-[3rem] bg-[#0a3d62] text-white relative overflow-hidden group">
           <CardHeader className="p-8 relative z-10">
             <CardTitle className="text-lg font-black uppercase tracking-[0.2em] opacity-90 flex items-center gap-3">
-              <Cloud className="w-5 h-5 text-primary" /> Conectividad Cloud v5.0
+              <Cloud className="w-5 h-5 text-primary" /> Conectividad Cloud
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-8 relative z-10">
@@ -166,12 +166,12 @@ export default function DashboardPage() {
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.8)]"></div>
               <span className="text-[10px] font-black tracking-[0.2em] uppercase">Enlace Directo QR Activo</span>
             </div>
-            
+
             <div className="space-y-6">
               <p className="text-[11px] text-white/70 leading-relaxed font-bold uppercase tracking-wider">
-                Acceso optimizado: Los códigos QR ahora direccionan directamente al visor técnico de cada obra, evitando la página principal.
+                Acceso optimizado: Los códigos QR direccionan directamente al visor técnico de cada obra.
               </p>
-              
+
               <div className="pt-6 border-t border-white/10">
                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary mb-4">Identidad Corporativa v5.2.0</p>
                 <div className="flex items-center gap-4">

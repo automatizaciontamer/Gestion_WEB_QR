@@ -272,10 +272,13 @@ export default function TareasPage() {
 
     const updatedPausas = tarea.pausas.map(p => {
       if (p.id === pauseId) {
-        return { ...p, aprobada: approve, fin: approve ? undefined : Date.now() }; // Si se deniega, la pausa "termina" ya
+        const updated = { ...p, aprobada: approve };
+        if (!approve) updated.fin = Date.now();
+        return updated;
       }
       return p;
     });
+
 
     const updateData: Partial<Tarea> = {
       pausas: updatedPausas,
@@ -361,34 +364,33 @@ export default function TareasPage() {
             Seguimiento de Producción y Tiempos Efectivos
           </p>
         </div>
-        
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {isAdmin && (
             <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
-              <Button onClick={() => setIsNewTaskOpen(true)} className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95">
-                <Plus className="w-6 h-6" /> NUEVA TAREA
+              <Button onClick={() => setIsNewTaskOpen(true)} className="h-14 sm:h-16 w-full sm:w-auto bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-8 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95 text-sm sm:text-base">
+                <Plus className="w-5 h-5 sm:w-6 sm:h-6" /> NUEVA TAREA
               </Button>
-              <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-8 border-none shadow-2xl">
+              <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-6 sm:p-8 border-none shadow-2xl w-[95vw] max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl font-black text-[#0a3d62]">Crear Nueva Tarea</DialogTitle>
+                  <DialogTitle className="text-xl sm:text-2xl font-black text-[#0a3d62]">Crear Nueva Tarea</DialogTitle>
                   <CardDescription>Asigna una tarea a un usuario y define el tiempo estimado.</CardDescription>
                 </DialogHeader>
-                <form onSubmit={handleCreateTask} className="space-y-6 pt-4">
+                <form onSubmit={handleCreateTask} className="space-y-4 sm:space-y-6 pt-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre de la Tarea</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre de la Tarea</Label>
                     <Input 
                       placeholder="Ej. Armado de Tablero Eléctrico" 
-                      className="h-14 rounded-2xl bg-secondary/30"
+                      className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
                       value={formData.nombre}
                       onChange={e => setFormData({...formData, nombre: e.target.value})}
                       required 
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
                       <Select onValueChange={val => setFormData({...formData, usuarioAsignadoId: val})} required>
-                        <SelectTrigger className="h-14 rounded-2xl bg-secondary/30">
+                        <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-secondary/30">
                           <SelectValue placeholder="Seleccionar" />
                         </SelectTrigger>
                         <SelectContent>
@@ -399,11 +401,11 @@ export default function TareasPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
                       <Input 
                         type="number" 
                         placeholder="8" 
-                        className="h-14 rounded-2xl bg-secondary/30"
+                        className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
                         value={formData.tiempoDestinado === 0 ? '' : formData.tiempoDestinado}
                         onChange={e => {
                           const val = e.target.value;
@@ -411,22 +413,21 @@ export default function TareasPage() {
                         }}
                         required 
                       />
-
                     </div>
                   </div>
                   <DialogFooter className="pt-6">
-                    <Button type="submit" className="w-full h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90">CREAR Y ASIGNAR TAREA</Button>
+                    <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90">CREAR Y ASIGNAR TAREA</Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>
           )}
-          <Button onClick={handleExportPDF} variant="outline" className="h-16 border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-3xl font-black px-10 shadow-xl gap-3 transition-all active:scale-95">
-            <FileText className="w-6 h-6 text-primary" /> EXPORTAR PDF
+          <Button onClick={handleExportPDF} variant="outline" className="h-14 sm:h-16 w-full sm:w-auto border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-3xl font-black px-8 shadow-xl gap-3 transition-all active:scale-95 text-sm sm:text-base">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" /> EXPORTAR PDF
           </Button>
         </div>
-
       </div>
+
 
       <div className="bg-white p-4 rounded-3xl shadow-sm border border-secondary flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">

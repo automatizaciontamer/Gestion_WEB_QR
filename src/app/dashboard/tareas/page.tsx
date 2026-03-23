@@ -11,7 +11,9 @@ import {
   ListTodo,
   Clock,
   User,
+  FileText,
   CheckCircle2,
+
   PauseCircle,
   PlayCircle,
   History,
@@ -54,6 +56,9 @@ import { collection, addDoc, doc, deleteDoc, updateDoc, query, orderBy, onSnapsh
 import { useAuth } from '@/lib/auth-context';
 import { calculateEffectiveHours } from '@/lib/time-utils';
 
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export default function TareasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
@@ -78,41 +83,78 @@ export default function TareasPage() {
     return collection(db, 'usuarios_clientes') as any;
   }, [db]);
 
-
   const { data: allUsers } = useCollection<UsuarioHabilitado>(usersQuery);
 
-  const [tareas, setTareas] = useState<Tarea[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Consulta parametrizada según rol
+  const tareasQuery = useMemo(() => {
+    if (!db || !user) return null;
+    const ref = collection(db, 'tareas');
+    return query(ref, orderBy('createdAt', 'desc')) as any;
+  }, [db, user]);
 
-  useEffect(() => {
-    if (!db) return;
-    
-    // Si es admin, ve todas las tareas. Si es usuario, solo las asignadas a él.
-    const tareasRef = collection(db, 'tareas');
-    const q = query(tareasRef, orderBy('createdAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Tarea));
-      if (isAdmin) {
-        setTareas(data);
-      } else {
-        setTareas(data.filter(t => t.usuarioAsignadoId === user?.id));
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [db, isAdmin, user?.id]);
+  const { data: allTareas, loading } = useCollection<Tarea>(tareasQuery);
 
   const filteredTareas = useMemo(() => {
-    return tareas.filter(t => 
+    // Filtrar por permisos y búsqueda
+    let list = allTareas;
+    if (!isAdmin && user) {
+      list = list.filter(t => t.usuarioAsignadoId === user.id);
+    }
+    
+    return list.filter(t => 
       t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.usuarioAsignadoNombre.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [tareas, searchTerm]);
+  }, [allTareas, searchTerm, isAdmin, user]);
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Reporte de Gestión de Tareas - Tamer Industrial", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+
+    const tableData = filteredTareas.map(t => {
+      let efec = t.totalHorasEfectivas || 0;
+      let ratio = t.tiempoDestinado / (efec || 1);
+      let effScore = efec > 0 ? `${Math.min(100, ratio * 100).toFixed(0)}%` : '---';
+      
+      // Calcular total de horas en pausas aprobadas
+      let pauseHrs = t.pausas
+        .filter(p => p.aprobada && p.fin)
+        .reduce((acc, p) => acc + ((p.fin! - p.inicio) / (1000 * 60 * 60)), 0);
+
+      return [
+        t.nombre,
+        t.usuarioAsignadoNombre,
+        t.estado.toUpperCase(),
+        `${t.tiempoDestinado} Hs`,
+        efec > 0 ? `${efec.toFixed(2)} Hs` : '---',
+        pauseHrs > 0 ? `${pauseHrs.toFixed(2)} Hs` : '---',
+        effScore,
+        t.startedAt ? new Date(t.startedAt).toLocaleDateString() : '---',
+        t.finishedAt ? new Date(t.finishedAt).toLocaleDateString() : '---'
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Tarea', 'Usuario', 'Estado', 'Presup.', 'Efectivo', 'Pausas', 'Efic.', 'Inicio', 'Fin']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [10, 61, 98] },
+      styles: { fontSize: 8 },
+    });
+
+
+
+    doc.save(`reporte_tareas_${Date.now()}.pdf`);
+    toast({ title: "PDF Generado", description: "El reporte se ha descargado correctamente." });
+  };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!db) return;
 
     const assignedUser = allUsers?.find(u => u.id === formData.usuarioAsignadoId);
@@ -319,6 +361,10 @@ export default function TareasPage() {
             <Button onClick={() => setIsNewTaskOpen(true)} className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95">
               <Plus className="w-6 h-6" /> NUEVA TAREA
             </Button>
+            <Button onClick={handleExportPDF} variant="outline" className="h-16 border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-3xl font-black px-10 shadow-xl gap-3 transition-all active:scale-95">
+              <FileText className="w-6 h-6 text-primary" /> EXPORTAR PDF
+            </Button>
+
             <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-8 border-none shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black text-[#0a3d62]">Crear Nueva Tarea</DialogTitle>

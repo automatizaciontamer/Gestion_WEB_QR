@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Construction, Users, FileText, Activity, Loader2, ShieldCheck, Building2, Cloud } from 'lucide-react';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, limit, orderBy } from 'firebase/firestore';
-import { Obra } from '@/lib/types';
+import { Obra, Tarea } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 
 export default function DashboardPage() {
@@ -27,13 +27,49 @@ export default function DashboardPage() {
     if (!db) return null;
     return query(collection(db, 'obras'), orderBy('createdAt', 'desc'), limit(5));
   }, [db]);
+  
+  const tareasQuery = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'tareas');
+  }, [db]);
 
-  const { data: obras, loading: loadingObras } = useCollection<Obra>(obrasQuery);
-  const { data: clients, loading: loadingClients } = useCollection(clientsQuery);
-  const { data: recentObras } = useCollection<Obra>(recentObrasQuery);
+  const { data: obras, loading: loadingObras } = useCollection<Obra>(obrasQuery as any);
+  const { data: clients, loading: loadingClients } = useCollection(clientsQuery as any);
+  const { data: recentObras } = useCollection<Obra>(recentObrasQuery as any);
+  const { data: allTareas, loading: loadingTareas } = useCollection<Tarea>(tareasQuery as any);
+
+
+  const efficiency = useMemo(() => {
+    if (!allTareas || allTareas.length === 0) return '0%';
+    
+    // Filtrar tareas que son de este usuario (o todas si es admin) y que están finalizadas
+    const finished = allTareas.filter(t => 
+      (isAdmin || t.usuarioAsignadoId === user?.id) && 
+      t.estado === 'finalizada' && 
+      t.totalHorasEfectivas
+    );
+    
+    if (finished.length === 0) return '---';
+
+    const scores = finished.map(t => {
+      const ratio = t.tiempoDestinado / (t.totalHorasEfectivas || 1);
+      return Math.min(100, ratio * 100);
+    });
+
+    const average = scores.reduce((a, b) => a + b, 0) / scores.length;
+    return `${average.toFixed(0)}%`;
+  }, [allTareas, isAdmin, user?.id]);
 
   const stats = [
     { name: 'Obras Activas', value: obras?.length || '0', icon: Construction, color: 'text-blue-600', bg: 'bg-blue-100', loading: loadingObras },
+    {
+      name: 'Eficiencia Global',
+      value: efficiency,
+      icon: Activity,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-100',
+      loading: loadingTareas
+    },
     {
       name: 'Usuarios Habilitados',
       value: isAdmin ? (clients?.length || '0') : '...',
@@ -44,8 +80,8 @@ export default function DashboardPage() {
       hide: !isAdmin
     },
     { name: 'Archivos Técnicos', value: '...', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { name: 'Revisiones Mensuales', value: '...', icon: Activity, color: 'text-amber-600', bg: 'bg-amber-100' },
   ].filter(s => !s.hide);
+
 
   return (
     <div className="relative min-h-screen space-y-8 pt-10 lg:pt-0 overflow-hidden pb-20">

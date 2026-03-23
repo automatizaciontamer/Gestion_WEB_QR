@@ -75,8 +75,74 @@ export function calculateEffectiveHours(
   return Math.max(0, totalHours - pauseHours);
 }
 
+/**
+ * Agrega horas laborales a una fecha inicial, saltando fines de semana y horas no laborales.
+ */
+export function addWorkingHours(
+  startDate: number,
+  hoursToAdd: number,
+  config: ConfiguracionHorarios = DEFAULT_HORARIOS
+): number {
+  if (hoursToAdd <= 0) return startDate;
+
+  let current = new Date(startDate);
+  let remainingMs = hoursToAdd * 60 * 60 * 1000;
+
+  // SEGURIDAD: Si no hay días habilitados, evitar bucle infinito
+  const hasWorkDays = Object.values(config).some(d => d.habilitado);
+  if (!hasWorkDays) return startDate;
+
+
+  // Si empezamos antes del horario laboral del día, saltar al inicio
+  // Si empezamos después, saltar al día siguiente
+
+  while (remainingMs > 0) {
+    const dayName = getDayName(current.getDay());
+    const dayConfig = config[dayName as keyof ConfiguracionHorarios];
+
+    if (!dayConfig.habilitado) {
+      current.setDate(current.getDate() + 1);
+      current.setHours(0, 0, 0, 0);
+      continue;
+    }
+
+    const [startH, startM] = dayConfig.desde.split(':').map(Number);
+    const [endH, endM] = dayConfig.hasta.split(':').map(Number);
+
+    const workStart = new Date(current);
+    workStart.setHours(startH, startM, 0, 0);
+
+    const workEnd = new Date(current);
+    workEnd.setHours(endH, endM, 0, 0);
+
+    if (current.getTime() >= workEnd.getTime()) {
+      current.setDate(current.getDate() + 1);
+      current.setHours(0, 0, 0, 0);
+      continue;
+    }
+
+    if (current.getTime() < workStart.getTime()) {
+      current.setTime(workStart.getTime());
+    }
+
+    const availableMs = workEnd.getTime() - current.getTime();
+
+    if (remainingMs <= availableMs) {
+      current.setTime(current.getTime() + remainingMs);
+      remainingMs = 0;
+    } else {
+      remainingMs -= availableMs;
+      current.setDate(current.getDate() + 1);
+      current.setHours(0, 0, 0, 0);
+    }
+  }
+
+  return current.getTime();
+}
+
 
 function getDayName(dayIndex: number): string {
   const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   return days[dayIndex];
 }
+

@@ -21,8 +21,10 @@ import {
   Calendar,
   Check,
   X,
-  MessageSquare
+  MessageSquare,
+  Edit
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -48,13 +50,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Tarea, UsuarioHabilitado, TareaEstado, Pausa } from '@/lib/types';
+import { Tarea, UsuarioHabilitado, TareaEstado, Pausa, Obra } from '@/lib/types';
+
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, deleteDoc, updateDoc, query, orderBy, onSnapshot, getDoc } from 'firebase/firestore';
 
 import { useAuth } from '@/lib/auth-context';
-import { calculateEffectiveHours } from '@/lib/time-utils';
+import { calculateEffectiveHours, addWorkingHours } from '@/lib/time-utils';
+
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -64,11 +68,14 @@ import { saveAs } from 'file-saver';
 export default function TareasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isPauseOpen, setIsPauseOpen] = useState(false);
   const [selectedTarea, setSelectedTarea] = useState<Tarea | null>(null);
+  const [editingTarea, setEditingTarea] = useState<Tarea | null>(null);
   const [pauseMotivo, setPauseMotivo] = useState('');
   const [historyDetail, setHistoryDetail] = useState('');
+
 
   const db = useFirestore();
   const { toast } = useToast();
@@ -77,8 +84,10 @@ export default function TareasPage() {
   const [formData, setFormData] = useState({
     nombre: '',
     usuarioAsignadoId: '',
-    tiempoDestinado: 0
+    tiempoDestinado: 0,
+    obraId: ''
   });
+
 
   const usersQuery = useMemo(() => {
     if (!db) return null;
@@ -86,6 +95,14 @@ export default function TareasPage() {
   }, [db]);
 
   const { data: allUsers } = useCollection<UsuarioHabilitado>(usersQuery);
+
+  const obrasRef = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'obras') as any;
+  }, [db]);
+
+  const { data: allObras } = useCollection<Obra>(obrasRef);
+
 
   // Consulta parametrizada según rol
   const tareasQuery = useMemo(() => {
@@ -95,19 +112,41 @@ export default function TareasPage() {
   }, [db, user]);
 
   const { data: allTareas, loading } = useCollection<Tarea>(tareasQuery);
+  const [empresaHorarios, setEmpresaHorarios] = useState<any>(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [displayLimit, setDisplayLimit] = useState(40);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+
+  useEffect(() => {
+    if (!db) return;
+    const ref = doc(db, 'Configuracion', 'Empresa');
+    getDoc(ref).then(snap => {
+      if (snap.exists()) setEmpresaHorarios(snap.data()?.horarios);
+    });
+  }, [db]);
 
   const filteredTareas = useMemo(() => {
-    // Filtrar por permisos y búsqueda
+    if (!allTareas) return [];
     let list = allTareas;
     if (!isAdmin && user) {
       list = list.filter(t => t.usuarioAsignadoId === user.id);
     }
     
     return list.filter(t => 
-      t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.usuarioAsignadoNombre.toLowerCase().includes(searchTerm.toLowerCase())
+      t.nombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      t.usuarioAsignadoNombre.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
-  }, [allTareas, searchTerm, isAdmin, user]);
+  }, [allTareas, debouncedSearchTerm, isAdmin, user]);
+
+  const displayedTareas = useMemo(() => {
+    return filteredTareas.slice(0, displayLimit);
+  }, [filteredTareas, displayLimit]);
+
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -166,8 +205,12 @@ export default function TareasPage() {
     const assignedUser = allUsers?.find(u => u.id === formData.usuarioAsignadoId);
     if (!assignedUser) return;
 
+    const selectedObra = allObras?.find(o => o.id === formData.obraId);
+
     const newTask: Omit<Tarea, 'id'> = {
       nombre: formData.nombre,
+      obraId: selectedObra?.id || '',
+      obraNombre: selectedObra?.nombreObra || '',
       usuarioAsignadoId: assignedUser.id,
       usuarioAsignadoNombre: assignedUser.nombre,
       tiempoDestinado: Number(formData.tiempoDestinado),
@@ -179,19 +222,108 @@ export default function TareasPage() {
     };
 
     try {
+      setIsNewTaskOpen(false); // Cierre inmediato para feedback
       await addDoc(collection(db, 'tareas'), newTask);
-      setIsNewTaskOpen(false);
-      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0 });
+      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '' });
       toast({ title: "Tarea Creada", description: "La tarea ha sido asignada correctamente." });
+
     } catch (error) {
       toast({ title: "Error", description: "No se pudo crear la tarea.", variant: "destructive" });
     }
   };
 
+  const handleEditTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db || !editingTarea) return;
+
+    const assignedUser = allUsers?.find(u => u.id === formData.usuarioAsignadoId);
+    const selectedObra = allObras?.find(o => o.id === formData.obraId);
+
+    const updateData: Partial<Tarea> = {
+      nombre: formData.nombre,
+      obraId: selectedObra?.id || '',
+      obraNombre: selectedObra?.nombreObra || '',
+      usuarioAsignadoId: assignedUser?.id || editingTarea.usuarioAsignadoId,
+      usuarioAsignadoNombre: assignedUser?.nombre || editingTarea.usuarioAsignadoNombre,
+      tiempoDestinado: Number(formData.tiempoDestinado),
+    };
+
+    try {
+      setIsEditTaskOpen(false); // Cierre inmediato
+      setEditingTarea(null);
+      await updateDoc(doc(db, 'tareas', editingTarea.id), updateData);
+      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '' });
+      toast({ title: "Tarea Actualizada", description: "Los cambios se guardaron correctamente." });
+
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo actualizar la tarea.", variant: "destructive" });
+    }
+  };
+
+  const openEditDialog = (tarea: Tarea) => {
+    setEditingTarea(tarea);
+    setFormData({
+      nombre: tarea.nombre,
+      usuarioAsignadoId: tarea.usuarioAsignadoId,
+      tiempoDestinado: tarea.tiempoDestinado,
+      obraId: tarea.obraId || ''
+    });
+    setIsEditTaskOpen(true);
+  };
+
+
+  const estimatedStartTimes = useMemo(() => {
+    if (!allTareas || !allUsers) return {};
+    const map: Record<string, number> = {};
+    const now = Date.now();
+    
+    // Solo procesar usuarios que tienen tareas asignadas o están en la lista de operarios activos
+    const relevantUserIds = new Set(allTareas.map(t => t.usuarioAsignadoId));
+    
+    allUsers.filter(u => relevantUserIds.has(u.id)).forEach(u => {
+      const userTasks = allTareas.filter(t => t.usuarioAsignadoId === u.id && t.estado !== 'finalizada');
+      if (userTasks.length === 0) {
+        map[u.id] = now;
+        return;
+      }
+
+      const activeTask = userTasks.find(t => t.estado === 'en_progreso');
+      const pendingTasks = userTasks.filter(t => t.estado !== 'en_progreso');
+
+      let totalHours = 0;
+      if (activeTask) {
+        totalHours += Math.max(0, activeTask.tiempoDestinado - (activeTask.totalHorasEfectivas || 0));
+      }
+      pendingTasks.forEach(t => { totalHours += t.tiempoDestinado; });
+
+      map[u.id] = addWorkingHours(now, totalHours, empresaHorarios || undefined);
+    });
+    return map;
+  }, [allTareas, allUsers, empresaHorarios]);
+
+
+
+
+
   const handleUpdateStatus = async (tarea: Tarea, newStatus: TareaEstado, detailMsg: string) => {
     if (!db) return;
 
+    // Concurrency Guard: Solo una tarea en progreso por usuario
+    if (newStatus === 'en_progreso') {
+      const activeTask = allTareas?.find(t => t.usuarioAsignadoId === tarea.usuarioAsignadoId && t.estado === 'en_progreso' && t.id !== tarea.id);
+
+      if (activeTask) {
+        toast({ 
+          title: "Usuario Ocupado", 
+          description: `Ya tiene la tarea "${activeTask.nombre}" en ejecución. Debe pausarla o finalizarla primero.`,
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+
     const updateData: Partial<Tarea> = {
+
       estado: newStatus,
       detalles: [
         {
@@ -238,14 +370,18 @@ export default function TareasPage() {
   const handleRequestPause = async () => {
     if (!db || !selectedTarea) return;
 
+    const isSelfAdmin = isAdmin && selectedTarea?.usuarioAsignadoId === user?.id;
+
     const newPause: Pausa = {
       id: Math.random().toString(36).substr(2, 9),
       inicio: Date.now(),
       motivo: pauseMotivo,
-      aprobada: null
+      aprobada: isSelfAdmin ? true : null
     };
 
+
     try {
+      setIsPauseOpen(false); // Cierre inmediato
       await updateDoc(doc(db, 'tareas', selectedTarea.id), {
         estado: 'pausada' as TareaEstado,
         pausas: [newPause, ...selectedTarea.pausas],
@@ -253,15 +389,19 @@ export default function TareasPage() {
           {
             fecha: Date.now(),
             estado: 'pausada',
-            detalle: `Solicitud de pausa: ${pauseMotivo}`,
+            detalle: isSelfAdmin ? `Pausa auto-aprobada (ADMIN): ${pauseMotivo}` : `Solicitud de pausa: ${pauseMotivo}`,
             usuario: user?.nombre || 'Usuario'
           },
           ...selectedTarea.detalles
         ]
       });
-      setIsPauseOpen(false);
       setPauseMotivo('');
-      toast({ title: "Pausa Solicitada", description: "Aguardando aprobación del administrador." });
+      toast({ 
+        title: isSelfAdmin ? "Tarea Pausada" : "Pausa Solicitada", 
+        description: isSelfAdmin ? "La tarea se ha pausado correctamente." : "Aguardando aprobación del administrador." 
+      });
+
+
     } catch (error) {
       toast({ title: "Error", description: "No se pudo solicitar la pausa.", variant: "destructive" });
     }
@@ -386,6 +526,21 @@ export default function TareasPage() {
                       required 
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vincular a Obra</Label>
+                    <Select onValueChange={val => setFormData({...formData, obraId: val})} required>
+                      <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-secondary/30">
+                        <SelectValue placeholder="Seleccionar Proyecto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allObras?.filter(o => o.status !== 'finalizada').map(o => (
+                          <SelectItem key={o.id} value={o.id}>{o.nombreObra} ({o.numeroOT})</SelectItem>
+                        ))}
+                      </SelectContent>
+
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
@@ -413,6 +568,7 @@ export default function TareasPage() {
                         }}
                         required 
                       />
+
                     </div>
                   </div>
                   <DialogFooter className="pt-6">
@@ -448,8 +604,9 @@ export default function TareasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredTareas.map(tarea => (
+          {displayedTareas.map(tarea => (
             <Card key={tarea.id} className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden hover:shadow-2xl transition-all border border-transparent hover:border-primary/20 group">
+
               <div className={`h-2 w-full ${getStatusColor(tarea.estado).split(' ')[0]}`} />
               <CardHeader className="p-8">
                 <div className="flex justify-between items-start">
@@ -464,9 +621,11 @@ export default function TareasPage() {
                         </span>
                       )}
                     </div>
-                    <CardTitle className="text-2xl font-black text-[#0a3d62] uppercase leading-tight group-hover:text-primary transition-colors">
+                    <CardTitle className="text-2xl font-black text-[#0a3d62] uppercase leading-tight group-hover:text-primary transition-colors flex flex-col gap-1">
+                      <span className="text-[10px] text-primary font-black uppercase tracking-widest">{tarea.obraNombre || 'Sin Obra Vinc.'}</span>
                       {tarea.nombre}
                     </CardTitle>
+
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -482,13 +641,22 @@ export default function TareasPage() {
                         <History className="w-5 h-5 text-primary" /> VER HISTORIAL
                       </DropdownMenuItem>
                       {isAdmin && (
-                        <DropdownMenuItem 
-                          className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
-                          onClick={() => handleDelete(tarea.id)}
-                        >
-                          <Trash2 className="w-5 h-5" /> ELIMINAR TAREA
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem 
+                            className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
+                            onClick={() => openEditDialog(tarea)}
+                          >
+                            <Edit className="w-5 h-5 text-blue-600" /> EDITAR TAREA
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
+                            onClick={() => handleDelete(tarea.id)}
+                          >
+                            <Trash2 className="w-5 h-5" /> ELIMINAR TAREA
+                          </DropdownMenuItem>
+                        </>
                       )}
+
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -511,6 +679,20 @@ export default function TareasPage() {
                   </div>
                 </div>
 
+                {tarea.estado === 'pendiente' && (
+                  <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-blue-800">Inicio Estimado (Cola de Trabajo)</p>
+                      <p className="text-xs font-black text-blue-900">
+                        {new Date(estimatedStartTimes[tarea.usuarioAsignadoId] || Date.now()).toLocaleString()}
+                      </p>
+
+                    </div>
+                  </div>
+                )}
+
+
                 {tarea.estado === 'finalizada' && (
                   <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3 text-emerald-700">
@@ -529,33 +711,28 @@ export default function TareasPage() {
                 )}
 
                 <div className="flex flex-wrap gap-3 pt-4">
-                  {/* ACCIONES DE USUARIO */}
-                  {!isAdmin && tarea.estado === 'pendiente' && (
+                  {/* ACCIONES DE USUARIO / ADMIN ASIGNADO */}
+                  {((!isAdmin && tarea.estado === 'pendiente') || (isAdmin && tarea.usuarioAsignadoId === user?.id && tarea.estado === 'pendiente')) && (
                     <Button 
                       className="flex-1 bg-primary text-white font-black rounded-xl h-12 shadow-lg shadow-primary/20"
-                      onClick={() => handleUpdateStatus(tarea, 'en_progreso', 'Tarea aceptada por operario')}
+                      onClick={() => handleUpdateStatus(tarea, 'en_progreso', 'Tarea aceptada')}
                     >
                       ACEPTAR TAREA
                     </Button>
                   )}
-                  {!isAdmin && tarea.estado === 'en_progreso' && (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 border-[#0a3d62] text-[#0a3d62] font-black rounded-xl h-12"
-                        onClick={() => { setSelectedTarea(tarea); setIsPauseOpen(true); }}
-                      >
-                        SOLICITAR PAUSA
-                      </Button>
-                      <Button 
-                        className="flex-1 bg-emerald-600 text-white font-black rounded-xl h-12 shadow-lg shadow-emerald-200"
-                        onClick={() => handleUpdateStatus(tarea, 'finalizada', 'Tarea completada y finalizada')}
-                      >
-                        FINALIZAR
-                      </Button>
-                    </>
+                  {tarea.estado === 'en_progreso' && (
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 border-[#0a3d62] text-[#0a3d62] font-black rounded-xl h-12"
+                      onClick={() => { setSelectedTarea(tarea); setIsPauseOpen(true); }}
+                    >
+                      {isAdmin && tarea.usuarioAsignadoId === user?.id ? 'PAUSAR TAREA' : 'SOLICITAR PAUSA'}
+                    </Button>
                   )}
-                  {!isAdmin && tarea.estado === 'pausada' && tarea.pausas[0]?.aprobada === true && (
+                  {tarea.estado === 'pausada' && (
+                    (isAdmin && tarea.usuarioAsignadoId === user?.id) || 
+                    (!isAdmin && tarea.pausas[0]?.aprobada === true)
+                  ) && (
                     <Button 
                       className="flex-1 bg-[#0a3d62] text-white font-black rounded-xl h-12 shadow-lg shadow-[#0a3d62]/20"
                       onClick={() => handleResumeTask(tarea)}
@@ -564,8 +741,19 @@ export default function TareasPage() {
                     </Button>
                   )}
 
-                  {/* ACCIONES DE ADMIN (APROBAR PAUSAS) */}
+
+                  {/* ACCIONES DE ADMIN (APROBAR PAUSAS / FINALIZAR TAREA) */}
+                  {isAdmin && tarea.estado === 'en_progreso' && (
+                    <Button 
+                      className="flex-1 bg-emerald-600 text-white font-black rounded-xl h-12 shadow-lg shadow-emerald-200"
+                      onClick={() => handleUpdateStatus(tarea, 'finalizada', 'Tarea finalizada por administrador')}
+                    >
+                      FINALIZAR TAREA
+                    </Button>
+                  )}
+
                   {isAdmin && tarea.estado === 'pausada' && tarea.pausas[0]?.aprobada === null && (
+
                     <div className="flex w-full gap-4 p-4 bg-orange-50 rounded-2xl border border-orange-200">
                       <p className="text-xs font-bold text-orange-800 flex-1 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" /> Solicitud de pausa pendiente: "{tarea.pausas[0].motivo}"
@@ -595,6 +783,18 @@ export default function TareasPage() {
           ))}
         </div>
       )}
+
+      {filteredTareas.length > displayLimit && (
+        <div className="mt-8 flex justify-center">
+          <Button 
+            onClick={() => setDisplayLimit(prev => prev + 40)}
+            className="bg-[#0a3d62] text-white font-black rounded-2xl h-14 px-10 shadow-lg"
+          >
+            CARGAR MÁS TAREAS ({filteredTareas.length - displayLimit} pendientes)
+          </Button>
+        </div>
+      )}
+
 
       {/* DIALOGO DE PAUSA */}
       <Dialog open={isPauseOpen} onOpenChange={setIsPauseOpen}>
@@ -680,6 +880,75 @@ export default function TareasPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* DIÁLOGO DE EDICIÓN DE TAREA */}
+      <Dialog open={isEditTaskOpen} onOpenChange={setIsEditTaskOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-6 sm:p-8 border-none shadow-2xl w-[95vw] max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl sm:text-2xl font-black text-[#0a3d62]">Editar Tarea</DialogTitle>
+            <CardDescription>Modifica los detalles de la tarea asignada.</CardDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditTask} className="space-y-4 sm:space-y-6 pt-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre de la Tarea</Label>
+              <Input 
+                placeholder="Ej. Armado de Tablero Eléctrico" 
+                className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                value={formData.nombre}
+                onChange={e => setFormData({...formData, nombre: e.target.value})}
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Vincular a Obra</Label>
+              <Select value={formData.obraId} onValueChange={val => setFormData({...formData, obraId: val})} required>
+                <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-secondary/30">
+                  <SelectValue placeholder="Seleccionar Proyecto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allObras?.filter(o => o.status !== 'finalizada').map(o => (
+                    <SelectItem key={o.id} value={o.id}>{o.nombreObra} ({o.numeroOT})</SelectItem>
+                  ))}
+                </SelectContent>
+
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
+                <Select value={formData.usuarioAsignadoId} onValueChange={val => setFormData({...formData, usuarioAsignadoId: val})} required>
+                  <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-secondary/30">
+                    <SelectValue placeholder="Seleccionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers?.map(u => (
+                      <SelectItem key={u.id} value={u.id}>{u.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
+                <Input 
+                  type="number" 
+                  placeholder="8" 
+                  className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                  value={formData.tiempoDestinado === 0 ? '' : formData.tiempoDestinado}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData({...formData, tiempoDestinado: val === '' ? 0 : Number(val)});
+                  }}
+                  required 
+                />
+              </div>
+            </div>
+            <DialogFooter className="pt-6">
+              <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90 shadow-lg transition-all active:scale-95">GUARDAR CAMBIOS</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }

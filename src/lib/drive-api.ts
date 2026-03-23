@@ -73,6 +73,37 @@ export async function deleteFolderFromDrive(folderName: string): Promise<any> {
 }
 
 /**
+ * Crea una CARPETA en Google Drive.
+ * El script de GAS debe manejar la acción 'createFolder'.
+ */
+export async function createFolderOnDrive(folderName: string): Promise<any> {
+  if (!folderName) return { status: 'ignored' };
+  
+  try {
+    const payload = {
+      action: 'upload',
+      base64: 'IA==', // Un espacio simple en base64
+      fileName: '.drive_ignore',
+      mimeType: 'text/plain',
+      folderName: folderName,
+    };
+
+    const response = await fetch(DRIVE_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) throw new Error("Fallo en comunicación con Google Drive");
+    return await response.json();
+  } catch (error: any) {
+    console.warn('Error creando carpeta (shadow upload) en Drive:', error);
+    return { status: 'error', message: error.message };
+  }
+}
+
+
+
+/**
  * Elimina un archivo individual de Google Drive por su ID.
  */
 export async function deleteFromDrive(fileId: string): Promise<any> {

@@ -163,11 +163,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
-        const userData = { ...docSnap.data(), id: docSnap.id, role: 'user', email: normalizedIdentifier };
-        setIsAdmin(false);
+        const docData = docSnap.data() as any;
+        const userData = { ...docData, id: docSnap.id, role: 'user', email: normalizedIdentifier };
+        setIsAdmin(docData.isAdmin === true);
+
+
         setIsUser(true);
         setUser(userData);
         sessionStorage.setItem('tamer_session', JSON.stringify(userData));
+
         router.push('/dashboard');
         return true;
       }
@@ -212,8 +216,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = JSON.parse(session);
         setUser(data);
         setIsUser(true);
-        setIsAdmin(data.role === 'admin');
+        setIsAdmin(data.role === 'admin' || data.isAdmin === true);
         if (auth) signInAnonymously(auth).catch(() => null);
+
       } catch (e) {
         sessionStorage.removeItem('tamer_session');
       }
@@ -221,11 +226,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, [auth]);
 
+  const authValue = React.useMemo(() => ({
+    isAdmin,
+    isUser,
+    user,
+    login,
+    logout,
+    loading,
+    empresa
+  }), [isAdmin, isUser, user, login, logout, loading, empresa]);
+
   return (
-    <AuthContext.Provider value={{ isAdmin, isUser, user, login, logout, loading, empresa }}>
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {

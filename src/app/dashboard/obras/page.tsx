@@ -12,8 +12,10 @@ import {
   Loader2,
   Construction,
   Copy,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -24,21 +26,27 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, deleteDoc, doc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+
 import { Obra } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { deleteFolderFromDrive } from '@/lib/drive-api';
+import { useAuth } from '@/lib/auth-context';
+
 
 export default function ObrasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const db = useFirestore();
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
+
   
   const obrasQuery = useMemo(() => {
     if (!db) return null;
-    return collection(db, 'obras');
+    return collection(db, 'obras') as any;
+
   }, [db]);
 
   const { data: obras, loading } = useCollection<Obra>(obrasQuery);
@@ -61,6 +69,7 @@ export default function ObrasPage() {
     const confirmMessage = `¿Estás SEGURO de eliminar la obra "${obra.nombreObra}"?\n\nEsta acción eliminará permanentemente la CARPETA en Google Drive y el registro en el sistema.`;
     
     if (!confirm(confirmMessage)) return;
+
 
     toast({
       title: "Eliminando obra...",
@@ -107,6 +116,28 @@ export default function ObrasPage() {
     }
   };
 
+  const handleToggleStatus = async (obra: Obra) => {
+    if (!db) return;
+    const isFinalized = obra.status === 'finalizada';
+    const newStatus = isFinalized ? 'activa' : 'finalizada';
+    const confirmMsg = !isFinalized 
+      ? `¿Desea dar por FINALIZADA la obra "${obra.nombreObra}"?` 
+      : `¿Desea volver a marcar la obra "${obra.nombreObra}" como ACTIVA?`;
+    
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await updateDoc(doc(db, 'obras', obra.id), { status: newStatus });
+      toast({ 
+        title: isFinalized ? "Obra Reactivada" : "Obra Finalizada", 
+        description: `El estado de la obra ha sido actualizado correctamente.` 
+      });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo actualizar el estado de la obra.", variant: "destructive" });
+    }
+  };
+
+
   return (
     <div className="space-y-6 pt-16 lg:pt-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,8 +176,20 @@ export default function ObrasPage() {
               <div key={obra.id} className="bg-white rounded-2xl border border-secondary shadow-sm p-5 flex justify-between items-start hover:shadow-md transition-all relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-[#0a3d62] opacity-50 group-hover:opacity-100 transition-opacity" />
                 <div className="flex flex-col gap-2 flex-1 pr-4">
-                  <h3 className="font-black text-xl text-[#0a3d62] leading-tight break-words">{obra.nombreObra}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-xl text-[#0a3d62] leading-tight break-words">{obra.nombreObra}</h3>
+                    {obra.status === 'finalizada' ? (
+                      <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-lg text-[10px] font-black border border-emerald-200 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> FINALIZADA
+                      </span>
+                    ) : (
+                      <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg text-[10px] font-black border border-blue-200">
+                        ACTIVA
+                      </span>
+                    )}
+                  </div>
                   <div className="space-y-1 mt-1">
+
                     <p className="text-sm font-bold text-gray-700">Cliente: <span className="font-normal text-muted-foreground">{obra.cliente}</span></p>
                     <p className="text-xs font-bold text-gray-700">OF: <strong className="font-black font-mono text-primary">{obra.numeroOF}</strong></p>
                     <p className="text-xs font-bold text-gray-700">OT: <strong className="font-black font-mono text-primary">{obra.numeroOT}</strong></p>
@@ -171,12 +214,34 @@ export default function ObrasPage() {
                         </Link>
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem 
-                        className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
-                        onClick={() => handleDelete(obra)}
-                      >
-                        <Trash2 className="w-4 h-4" /> ELIMINAR OBRA
-                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem 
+                          className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer"
+                          onClick={() => handleToggleStatus(obra)}
+                        >
+                          {obra.status === 'finalizada' ? (
+                            <>
+                              <Construction className="w-4 h-4 text-blue-600" /> REACTIVAR OBRA
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> FINALIZAR OBRA
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      )}
+
+
+                      {isAdmin && (
+                        <DropdownMenuItem 
+                          className="text-destructive flex items-center gap-3 font-black px-4 py-3 rounded-xl cursor-pointer"
+                          onClick={() => handleDelete(obra)}
+                        >
+                          <Trash2 className="w-4 h-4" /> ELIMINAR OBRA
+                        </DropdownMenuItem>
+                      )}
+
+
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

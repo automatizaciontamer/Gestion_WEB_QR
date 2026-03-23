@@ -21,14 +21,18 @@ export interface Obra {
   files?: ObraFile[]; // Lista de objetos con nombre, ID y URL
   driveFolderUrl?: string;
   authorizedEmails: Array<{ email: string; password?: string }>;
+  status?: 'activa' | 'finalizada';
 }
+
 
 export interface UsuarioHabilitado {
   id: string;
   nombre: string;
   email: string;
   password?: string;
+  isAdmin?: boolean;
 }
+
 
 export interface Empresa {
   id: string;
@@ -67,6 +71,8 @@ export type TareaEstado = 'pendiente' | 'en_progreso' | 'pausada' | 'finalizada'
 export interface Tarea {
   id: string;
   nombre: string;
+  obraId?: string;
+  obraNombre?: string;
   usuarioAsignadoId: string;
   usuarioAsignadoNombre: string;
   tiempoDestinado: number; // Horas planeadas
@@ -79,6 +85,7 @@ export interface Tarea {
   detalles: TareaDetalle[];
   pausas: Pausa[];
 }
+
 
 export interface HorarioDia {
   habilitado: boolean;

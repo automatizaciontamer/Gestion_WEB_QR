@@ -20,8 +20,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { uploadToDrive } from '@/lib/drive-api';
+import { uploadToDrive, createFolderOnDrive } from '@/lib/drive-api';
 import { useFirestore } from '@/firebase';
+
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { Progress } from '@/components/ui/progress';
 import { ObraFile } from '@/lib/types';
@@ -74,7 +75,12 @@ export default function NewObraPage() {
     
     try {
       const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
+      
+      // Asegurar creación de carpeta en Drive v5.2.0
+      await createFolderOnDrive(folderName);
+
       const uploadedFiles: ObraFile[] = [];
+
       
       if (filesToUpload.length > 0) {
         for (let i = 0; i < filesToUpload.length; i++) {

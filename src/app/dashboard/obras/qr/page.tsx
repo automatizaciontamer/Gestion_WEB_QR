@@ -142,11 +142,19 @@ function QRPosterContent() {
   }
 
   const handlePrint = () => {
-    // Safari/Mobile workaround: allow UI to settle before invoking native print dialogue
+    // Sugerir nombre de archivo para el PDF (v5.2.0)
+    const originalTitle = document.title;
+    document.title = `(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'})`;
+    
     setTimeout(() => {
       window.print();
+      // Restaurar título original después del diálogo de impresión
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 1000);
     }, 150);
   };
+
 
   const qrImageSrc = qrUrl 
     ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&color=0a3d62`

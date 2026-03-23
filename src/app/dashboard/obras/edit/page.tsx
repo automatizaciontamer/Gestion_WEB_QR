@@ -23,8 +23,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useDoc } from '@/firebase';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { Obra, ObraFile } from '@/lib/types';
-import { uploadToDrive, deleteFromDrive } from '@/lib/drive-api';
+import { uploadToDrive, deleteFromDrive, createFolderOnDrive } from '@/lib/drive-api';
 import { Progress } from '@/components/ui/progress';
+
 
 function EditObraContent() {
   const searchParams = useSearchParams();
@@ -96,11 +97,14 @@ function EditObraContent() {
 
   const removeExistingFile = (index: number) => {
     const fileToRemove = existingFiles[index];
+    if (!confirm(`¿Deseas eliminar permanentemente el archivo "${fileToRemove.name || 'documento'}"?`)) return;
+    
     if (fileToRemove.id) {
       setFilesToDeleteFromDrive(prev => [...prev, fileToRemove.id]);
     }
     setExistingFiles(prev => prev.filter((_, i) => i !== index));
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +123,12 @@ function EditObraContent() {
       }
 
       const folderName = `${formData.codigoCliente.trim()}-${formData.numeroOF.trim()}-${formData.numeroOT.trim()}`;
+      
+      // Asegurar existencia de carpeta en Drive v5.2.0
+      await createFolderOnDrive(folderName);
+
       const newUploadedFiles: ObraFile[] = [];
+
       
       if (newFilesToUpload.length > 0) {
         for (let i = 0; i < newFilesToUpload.length; i++) {

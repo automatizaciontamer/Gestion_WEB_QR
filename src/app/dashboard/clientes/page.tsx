@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+
 
 import { 
   DropdownMenu, 
@@ -56,8 +58,10 @@ export default function UsuariosHabilitadosPage() {
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
-    password: ''
+    password: '',
+    isAdmin: false
   });
+
 
   useEffect(() => {
     if (!isAdmin) {
@@ -67,7 +71,8 @@ export default function UsuariosHabilitadosPage() {
 
   const usersQuery = useMemo(() => {
     if (!db) return null;
-    return collection(db, 'usuarios_clientes');
+    return collection(db, 'usuarios_clientes') as any;
+
   }, [db]);
 
   const { data: users, loading } = useCollection<UsuarioHabilitado>(usersQuery);
@@ -82,7 +87,7 @@ export default function UsuariosHabilitadosPage() {
 
   const handleOpenNew = () => {
     setEditingUserId(null);
-    setFormData({ nombre: '', email: '', password: '' });
+    setFormData({ nombre: '', email: '', password: '', isAdmin: false });
     setIsDialogOpen(true);
   };
 
@@ -91,10 +96,12 @@ export default function UsuariosHabilitadosPage() {
     setFormData({ 
       nombre: user.nombre || '', 
       email: user.email || '', 
-      password: user.password || '' 
+      password: user.password || '',
+      isAdmin: user.isAdmin || false
     });
     setIsDialogOpen(true);
   };
+
 
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,8 +109,10 @@ export default function UsuariosHabilitadosPage() {
 
     const dataToSave = {
       ...formData,
-      email: formData.email.toLowerCase().trim()
+      email: formData.email.toLowerCase().trim(),
+      isAdmin: formData.isAdmin || false
     };
+
 
     if (editingUserId) {
       const docRef = doc(db, 'usuarios_clientes', editingUserId);
@@ -231,7 +240,20 @@ export default function UsuariosHabilitadosPage() {
                   </Button>
                 </div>
               </div>
+              
+              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-2xl border border-secondary/50">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-black text-[#0a3d62]">Acceso de Administrador</Label>
+                  <p className="text-[10px] text-muted-foreground font-bold leading-tight uppercase tracking-tighter">Habilita permisos para gestionar obras y tareas.</p>
+                </div>
+                <Switch 
+                  checked={formData.isAdmin} 
+                  onCheckedChange={(val) => setFormData(prev => ({ ...prev, isAdmin: val }))} 
+                />
+              </div>
+
               <DialogFooter className="pt-6 gap-3">
+
                 <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
                 <Button type="submit" className="rounded-xl font-black bg-primary px-8">
                   {editingUserId ? 'GUARDAR CAMBIOS' : 'HABILITAR ACCESO'}
@@ -269,7 +291,11 @@ export default function UsuariosHabilitadosPage() {
                   <h3 className="font-black text-xl text-gray-800 leading-tight">{user.nombre}</h3>
                   <div className="mt-2">
                     <p className="text-sm font-bold text-gray-700">Email: <span className="font-normal break-all text-primary">{user.email}</span></p>
+                    {user.isAdmin && (
+                      <span className="inline-block bg-[#0a3d62] text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest mt-2">ADMINISTRADOR</span>
+                    )}
                   </div>
+
                 </div>
                 <div>
                   <DropdownMenu>

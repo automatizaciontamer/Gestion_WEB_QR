@@ -9,8 +9,10 @@ import {
   LogOut,
   Menu,
   UserCheck,
-  Building2
+  Building2,
+  ListTodo
 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -25,9 +27,11 @@ export function NavSidebar() {
   const navItems = [
     { name: 'Panel Principal', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Gestión de Obras', href: '/dashboard/obras', icon: Construction, adminOnly: false },
+    { name: 'Tareas', href: '/dashboard/tareas', icon: ListTodo, adminOnly: false },
     { name: 'Usuarios Habilitados', href: '/dashboard/clientes', icon: UserCheck, adminOnly: true },
     { name: 'Datos de Empresa', href: '/dashboard/empresa', icon: Building2, adminOnly: true },
   ];
+
 
   const filteredItems = navItems.filter(item => !item.adminOnly || isAdmin);
 

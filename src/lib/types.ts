@@ -42,4 +42,56 @@ export interface Empresa {
   logoUrl?: string;
   web?: string;
   claveAccesoInfo?: string;
+  horarios?: ConfiguracionHorarios;
+}
+
+
+export interface TareaDetalle {
+  fecha: number;
+  estado: string;
+  detalle: string;
+  usuario: string;
+}
+
+export interface Pausa {
+  id: string;
+  inicio: number;
+  fin?: number;
+  motivo: string;
+  aprobada: boolean | null;
+  respuestaAdmin?: string;
+}
+
+export type TareaEstado = 'pendiente' | 'en_progreso' | 'pausada' | 'finalizada';
+
+export interface Tarea {
+  id: string;
+  nombre: string;
+  usuarioAsignadoId: string;
+  usuarioAsignadoNombre: string;
+  tiempoDestinado: number; // Horas planeadas
+  estado: TareaEstado;
+  aceptada: boolean;
+  createdAt: number;
+  startedAt?: number;
+  finishedAt?: number;
+  totalHorasEfectivas?: number;
+  detalles: TareaDetalle[];
+  pausas: Pausa[];
+}
+
+export interface HorarioDia {
+  habilitado: boolean;
+  desde: string; // "HH:MM"
+  hasta: string; // "HH:MM"
+}
+
+export interface ConfiguracionHorarios {
+  lunes: HorarioDia;
+  martes: HorarioDia;
+  miercoles: HorarioDia;
+  jueves: HorarioDia;
+  viernes: HorarioDia;
+  sabado: HorarioDia;
+  domingo: HorarioDia;
 }

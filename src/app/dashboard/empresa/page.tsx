@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudUpload, Info, ShieldCheck } from 'lucide-react';
+import { Building2, Loader2, Upload, Globe, Phone, Mail, FileCheck, CloudUpload, Info, ShieldCheck, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,8 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { uploadToDrive } from '@/lib/drive-api';
+import { DEFAULT_HORARIOS } from '@/lib/time-utils';
+
 
 export default function EmpresaConfigPage() {
   const db = useFirestore();
@@ -56,10 +58,18 @@ export default function EmpresaConfigPage() {
     // Escucha en tiempo real para la configuración de empresa v2.9
     const unsubscribe = onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
-        setFormData({ ...snap.data(), id: snap.id } as Empresa);
+        const data = snap.data();
+        setFormData({ 
+          ...data, 
+          id: snap.id,
+          horarios: data.horarios || DEFAULT_HORARIOS 
+        } as Empresa);
+      } else {
+        setFormData(prev => ({ ...prev, horarios: DEFAULT_HORARIOS }));
       }
       setLoading(false);
     }, (error) => {
+
       setLoading(false);
     });
 
@@ -288,7 +298,80 @@ export default function EmpresaConfigPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* --- NUEVA SECCIÓN: HORARIOS LABORALES --- */}
+        <Card className="border-none shadow-2xl rounded-[3.5rem] bg-white overflow-hidden mt-8">
+          <CardHeader className="bg-[#0a3d62] text-white p-10">
+            <div className="flex items-center gap-4 mb-2">
+              <Clock className="w-6 h-6 text-primary" />
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">Horarios Laborales</CardTitle>
+            </div>
+            <CardDescription className="text-white/70 font-bold uppercase tracking-widest text-[10px]">
+              Configuración para cálculo de Tiempos Efectivos en Tareas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {formData.horarios && Object.entries(formData.horarios).map(([dia, config]) => (
+                <div key={dia} className="p-6 bg-secondary/20 rounded-[2rem] space-y-4 border border-transparent hover:border-primary/20 transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-[#0a3d62] uppercase tracking-widest text-sm">{dia}</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={config.habilitado}
+                        onChange={e => {
+                          const newHorarios = { ...formData.horarios };
+                          newHorarios[dia as keyof typeof formData.horarios] = { ...config, habilitado: e.target.checked };
+                          setFormData({ ...formData, horarios: newHorarios as any });
+                        }}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+                  
+                  {config.habilitado ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Desde</Label>
+                        <Input 
+                          type="time" 
+                          value={config.desde}
+                          onChange={e => {
+                            const newHorarios = { ...formData.horarios };
+                            newHorarios[dia as keyof typeof formData.horarios] = { ...config, desde: e.target.value };
+                            setFormData({ ...formData, horarios: newHorarios as any });
+                          }}
+                          className="h-10 rounded-xl bg-white border-none text-xs font-bold"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Hasta</Label>
+                        <Input 
+                          type="time" 
+                          value={config.hasta}
+                          onChange={e => {
+                            const newHorarios = { ...formData.horarios };
+                            newHorarios[dia as keyof typeof formData.horarios] = { ...config, hasta: e.target.value };
+                            setFormData({ ...formData, horarios: newHorarios as any });
+                          }}
+                          className="h-10 rounded-xl bg-white border-none text-xs font-bold"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-[52px] flex items-center justify-center bg-gray-100/50 rounded-xl border border-dashed border-gray-300">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin Atención</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+

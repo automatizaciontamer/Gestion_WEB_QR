@@ -148,9 +148,19 @@ export default function TareasPage() {
 
 
 
-    doc.save(`reporte_tareas_${Date.now()}.pdf`);
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `reporte_tareas_${Date.now()}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     toast({ title: "PDF Generado", description: "El reporte se ha descargado correctamente." });
   };
+
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -356,64 +366,70 @@ export default function TareasPage() {
           </p>
         </div>
         
-        {isAdmin && (
-          <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
-            <Button onClick={() => setIsNewTaskOpen(true)} className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95">
-              <Plus className="w-6 h-6" /> NUEVA TAREA
-            </Button>
-            <Button onClick={handleExportPDF} variant="outline" className="h-16 border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-3xl font-black px-10 shadow-xl gap-3 transition-all active:scale-95">
-              <FileText className="w-6 h-6 text-primary" /> EXPORTAR PDF
-            </Button>
-
-            <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-8 border-none shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-black text-[#0a3d62]">Crear Nueva Tarea</DialogTitle>
-                <CardDescription>Asigna una tarea a un usuario y define el tiempo estimado.</CardDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateTask} className="space-y-6 pt-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre de la Tarea</Label>
-                  <Input 
-                    placeholder="Ej. Armado de Tablero Eléctrico" 
-                    className="h-14 rounded-2xl bg-secondary/30"
-                    value={formData.nombre}
-                    onChange={e => setFormData({...formData, nombre: e.target.value})}
-                    required 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-4">
+          {isAdmin && (
+            <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
+              <Button onClick={() => setIsNewTaskOpen(true)} className="h-16 bg-[#0a3d62] hover:bg-[#0a3d62]/90 rounded-3xl font-black px-10 shadow-2xl shadow-[#0a3d62]/20 gap-3 transition-all active:scale-95">
+                <Plus className="w-6 h-6" /> NUEVA TAREA
+              </Button>
+              <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-8 border-none shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-black text-[#0a3d62]">Crear Nueva Tarea</DialogTitle>
+                  <CardDescription>Asigna una tarea a un usuario y define el tiempo estimado.</CardDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateTask} className="space-y-6 pt-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
-                    <Select onValueChange={val => setFormData({...formData, usuarioAsignadoId: val})} required>
-                      <SelectTrigger className="h-14 rounded-2xl bg-secondary/30">
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allUsers?.map(u => (
-                          <SelectItem key={u.id} value={u.id}>{u.nombre}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre de la Tarea</Label>
                     <Input 
-                      type="number" 
-                      placeholder="8" 
+                      placeholder="Ej. Armado de Tablero Eléctrico" 
                       className="h-14 rounded-2xl bg-secondary/30"
-                      value={formData.tiempoDestinado}
-                      onChange={e => setFormData({...formData, tiempoDestinado: Number(e.target.value)})}
+                      value={formData.nombre}
+                      onChange={e => setFormData({...formData, nombre: e.target.value})}
                       required 
                     />
                   </div>
-                </div>
-                <DialogFooter className="pt-6">
-                  <Button type="submit" className="w-full h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90">CREAR Y ASIGNAR TAREA</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Asignar A</Label>
+                      <Select onValueChange={val => setFormData({...formData, usuarioAsignadoId: val})} required>
+                        <SelectTrigger className="h-14 rounded-2xl bg-secondary/30">
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allUsers?.map(u => (
+                            <SelectItem key={u.id} value={u.id}>{u.nombre}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
+                      <Input 
+                        type="number" 
+                        placeholder="8" 
+                        className="h-14 rounded-2xl bg-secondary/30"
+                        value={formData.tiempoDestinado === 0 ? '' : formData.tiempoDestinado}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setFormData({...formData, tiempoDestinado: val === '' ? 0 : Number(val)});
+                        }}
+                        required 
+                      />
+
+                    </div>
+                  </div>
+                  <DialogFooter className="pt-6">
+                    <Button type="submit" className="w-full h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90">CREAR Y ASIGNAR TAREA</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Button onClick={handleExportPDF} variant="outline" className="h-16 border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-3xl font-black px-10 shadow-xl gap-3 transition-all active:scale-95">
+            <FileText className="w-6 h-6 text-primary" /> EXPORTAR PDF
+          </Button>
+        </div>
+
       </div>
 
       <div className="bg-white p-4 rounded-3xl shadow-sm border border-secondary flex flex-col md:flex-row items-center gap-4">

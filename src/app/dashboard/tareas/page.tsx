@@ -58,6 +58,8 @@ import { calculateEffectiveHours } from '@/lib/time-utils';
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { saveAs } from 'file-saver';
+
 
 export default function TareasPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -149,17 +151,11 @@ export default function TareasPage() {
 
 
     const pdfBlob = doc.output('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `reporte_tareas_${Date.now()}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    saveAs(pdfBlob, `reporte_tareas_${Date.now()}.pdf`);
 
     toast({ title: "PDF Generado", description: "El reporte se ha descargado correctamente." });
   };
+
 
 
   const handleCreateTask = async (e: React.FormEvent) => {

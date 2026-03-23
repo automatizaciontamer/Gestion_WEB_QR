@@ -108,6 +108,14 @@ function QRPosterContent() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (obra) {
+      const fileName = `(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'})`;
+      document.title = fileName;
+    }
+  }, [obra]);
+
+
   const handleCopyLink = () => {
     if (!qrUrl) return;
     navigator.clipboard.writeText(qrUrl);
@@ -147,18 +155,10 @@ function QRPosterContent() {
   }
 
   const handlePrint = () => {
-    // Sugerir nombre de archivo para el PDF (v5.2.0)
-    const originalTitle = document.title;
-    document.title = `(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'})`;
-    
-    setTimeout(() => {
-      window.print();
-      // Restaurar título original después del diálogo de impresión
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 1000);
-    }, 150);
+    // El título ya fue establecido por el useEffect al cargar la obra
+    window.print();
   };
+
 
 
   const qrImageSrc = qrUrl 
@@ -167,7 +167,9 @@ function QRPosterContent() {
 
   return (
     <div className="space-y-6 print:space-y-0 w-full mx-auto pb-20 print:pb-0">
+      <h1 className="sr-only">{`(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'})`}</h1>
       <style>{`
+
         @media print {
           @page { size: A6 portrait; margin: 0; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

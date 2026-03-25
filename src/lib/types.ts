@@ -84,6 +84,8 @@ export interface Tarea {
   totalHorasEfectivas?: number;
   detalles: TareaDetalle[];
   pausas: Pausa[];
+  fechaInicioAsignada?: number;
+  fechaFinAsignada?: number;
 }
 
 

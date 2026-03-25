@@ -81,14 +81,20 @@ export default function TareasPage() {
   const { toast } = useToast();
   const { isAdmin, user } = useAuth();
 
+  // 1. Estados
   const [formData, setFormData] = useState({
     nombre: '',
     usuarioAsignadoId: '',
     tiempoDestinado: 0,
-    obraId: ''
+    obraId: '',
+    fechaInicioAsignada: '',
+    fechaFinAsignada: ''
   });
+  const [empresaHorarios, setEmpresaHorarios] = useState<any>(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [displayLimit, setDisplayLimit] = useState(40);
 
-
+  // 2. Memos de Datos (Firebase)
   const usersQuery = useMemo(() => {
     if (!db) return null;
     return collection(db, 'usuarios_clientes') as any;
@@ -103,8 +109,6 @@ export default function TareasPage() {
 
   const { data: allObras } = useCollection<Obra>(obrasRef);
 
-
-  // Consulta parametrizada según rol
   const tareasQuery = useMemo(() => {
     if (!db || !user) return null;
     const ref = collection(db, 'tareas');
@@ -112,24 +116,8 @@ export default function TareasPage() {
   }, [db, user]);
 
   const { data: allTareas, loading } = useCollection<Tarea>(tareasQuery);
-  const [empresaHorarios, setEmpresaHorarios] = useState<any>(null);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [displayLimit, setDisplayLimit] = useState(40);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-
-  useEffect(() => {
-    if (!db) return;
-    const ref = doc(db, 'Configuracion', 'Empresa');
-    getDoc(ref).then(snap => {
-      if (snap.exists()) setEmpresaHorarios(snap.data()?.horarios);
-    });
-  }, [db]);
-
+  // 3. Memos de Lógica de Negocio
   const filteredTareas = useMemo(() => {
     if (!allTareas) return [];
     let list = allTareas;
@@ -146,6 +134,71 @@ export default function TareasPage() {
   const displayedTareas = useMemo(() => {
     return filteredTareas.slice(0, displayLimit);
   }, [filteredTareas, displayLimit]);
+
+  const estimatedStartTimes = useMemo(() => {
+    if (!allTareas || !allUsers) return {};
+    const map: Record<string, number> = {};
+    const now = Date.now();
+    
+    const relevantUserIds = new Set(allTareas.map(t => t.usuarioAsignadoId));
+    
+    allUsers.filter(u => relevantUserIds.has(u.id)).forEach(u => {
+      const userTasks = allTareas.filter(t => t.usuarioAsignadoId === u.id && t.estado !== 'finalizada');
+      if (userTasks.length === 0) {
+        map[u.id] = now;
+        return;
+      }
+
+      const activeTask = userTasks.find(t => t.estado === 'en_progreso');
+      const pendingTasks = userTasks.filter(t => t.estado !== 'en_progreso');
+
+      let totalHours = 0;
+      if (activeTask) {
+        totalHours += Math.max(0, activeTask.tiempoDestinado - (activeTask.totalHorasEfectivas || 0));
+      }
+      pendingTasks.forEach(t => { totalHours += t.tiempoDestinado; });
+
+      map[u.id] = addWorkingHours(now, totalHours, empresaHorarios || undefined);
+    });
+    return map;
+  }, [allTareas, allUsers, empresaHorarios]);
+
+  // 4. Efectos (Side Effects)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (!db) return;
+    const ref = doc(db, 'Configuracion', 'Empresa');
+    getDoc(ref).then(snap => {
+      if (snap.exists()) setEmpresaHorarios(snap.data()?.horarios);
+    });
+  }, [db]);
+
+  useEffect(() => {
+    if (formData.usuarioAsignadoId && !formData.fechaInicioAsignada && !isEditTaskOpen) {
+      const nextAvailable = estimatedStartTimes[formData.usuarioAsignadoId];
+      if (nextAvailable) {
+        setFormData(prev => ({ 
+          ...prev, 
+          fechaInicioAsignada: new Date(nextAvailable).toISOString().slice(0, 16) 
+        }));
+      }
+    }
+  }, [formData.usuarioAsignadoId, estimatedStartTimes, isEditTaskOpen]);
+
+  useEffect(() => {
+    if (formData.fechaInicioAsignada && formData.fechaFinAsignada) {
+      const start = new Date(formData.fechaInicioAsignada).getTime();
+      const end = new Date(formData.fechaFinAsignada).getTime();
+      if (start < end) {
+        const hours = calculateEffectiveHours(start, end, empresaHorarios || undefined);
+        setFormData(prev => ({ ...prev, tiempoDestinado: Number(hours.toFixed(2)) }));
+      }
+    }
+  }, [formData.fechaInicioAsignada, formData.fechaFinAsignada, empresaHorarios]);
 
 
   const handleExportPDF = () => {
@@ -218,13 +271,15 @@ export default function TareasPage() {
       aceptada: false,
       createdAt: Date.now(),
       detalles: [],
-      pausas: []
+      pausas: [],
+      fechaInicioAsignada: formData.fechaInicioAsignada ? new Date(formData.fechaInicioAsignada).getTime() : undefined,
+      fechaFinAsignada: formData.fechaFinAsignada ? new Date(formData.fechaFinAsignada).getTime() : undefined,
     };
 
     try {
       setIsNewTaskOpen(false); // Cierre inmediato para feedback
       await addDoc(collection(db, 'tareas'), newTask);
-      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '' });
+      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '', fechaInicioAsignada: '', fechaFinAsignada: '' });
       toast({ title: "Tarea Creada", description: "La tarea ha sido asignada correctamente." });
 
     } catch (error) {
@@ -246,13 +301,15 @@ export default function TareasPage() {
       usuarioAsignadoId: assignedUser?.id || editingTarea.usuarioAsignadoId,
       usuarioAsignadoNombre: assignedUser?.nombre || editingTarea.usuarioAsignadoNombre,
       tiempoDestinado: Number(formData.tiempoDestinado),
+      fechaInicioAsignada: formData.fechaInicioAsignada ? new Date(formData.fechaInicioAsignada).getTime() : undefined,
+      fechaFinAsignada: formData.fechaFinAsignada ? new Date(formData.fechaFinAsignada).getTime() : undefined,
     };
 
     try {
       setIsEditTaskOpen(false); // Cierre inmediato
       setEditingTarea(null);
       await updateDoc(doc(db, 'tareas', editingTarea.id), updateData);
-      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '' });
+      setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '', fechaInicioAsignada: '', fechaFinAsignada: '' });
       toast({ title: "Tarea Actualizada", description: "Los cambios se guardaron correctamente." });
 
     } catch (error) {
@@ -266,40 +323,14 @@ export default function TareasPage() {
       nombre: tarea.nombre,
       usuarioAsignadoId: tarea.usuarioAsignadoId,
       tiempoDestinado: tarea.tiempoDestinado,
-      obraId: tarea.obraId || ''
+      obraId: tarea.obraId || '',
+      fechaInicioAsignada: tarea.fechaInicioAsignada ? new Date(tarea.fechaInicioAsignada).toISOString().slice(0, 16) : '',
+      fechaFinAsignada: tarea.fechaFinAsignada ? new Date(tarea.fechaFinAsignada).toISOString().slice(0, 16) : ''
     });
     setIsEditTaskOpen(true);
   };
 
 
-  const estimatedStartTimes = useMemo(() => {
-    if (!allTareas || !allUsers) return {};
-    const map: Record<string, number> = {};
-    const now = Date.now();
-    
-    // Solo procesar usuarios que tienen tareas asignadas o están en la lista de operarios activos
-    const relevantUserIds = new Set(allTareas.map(t => t.usuarioAsignadoId));
-    
-    allUsers.filter(u => relevantUserIds.has(u.id)).forEach(u => {
-      const userTasks = allTareas.filter(t => t.usuarioAsignadoId === u.id && t.estado !== 'finalizada');
-      if (userTasks.length === 0) {
-        map[u.id] = now;
-        return;
-      }
-
-      const activeTask = userTasks.find(t => t.estado === 'en_progreso');
-      const pendingTasks = userTasks.filter(t => t.estado !== 'en_progreso');
-
-      let totalHours = 0;
-      if (activeTask) {
-        totalHours += Math.max(0, activeTask.tiempoDestinado - (activeTask.totalHorasEfectivas || 0));
-      }
-      pendingTasks.forEach(t => { totalHours += t.tiempoDestinado; });
-
-      map[u.id] = addWorkingHours(now, totalHours, empresaHorarios || undefined);
-    });
-    return map;
-  }, [allTareas, allUsers, empresaHorarios]);
 
 
 
@@ -556,19 +587,39 @@ export default function TareasPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
-                      <Input 
-                        type="number" 
-                        placeholder="8" 
-                        className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
-                        value={formData.tiempoDestinado === 0 ? '' : formData.tiempoDestinado}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setFormData({...formData, tiempoDestinado: val === '' ? 0 : Number(val)});
-                        }}
-                        required 
-                      />
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tiempo Estimado (Hs)</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="8" 
+                          className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                          value={formData.tiempoDestinado === 0 ? '' : formData.tiempoDestinado}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setFormData({...formData, tiempoDestinado: val === '' ? 0 : Number(val)});
+                          }}
+                          required 
+                        />
+                    </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha de Comienzo</Label>
+                      <Input 
+                        type="datetime-local" 
+                        className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                        value={formData.fechaInicioAsignada}
+                        onChange={e => setFormData({...formData, fechaInicioAsignada: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha de Fin</Label>
+                      <Input 
+                        type="datetime-local" 
+                        className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                        value={formData.fechaFinAsignada}
+                        onChange={e => setFormData({...formData, fechaFinAsignada: e.target.value})}
+                      />
                     </div>
                   </div>
                   <DialogFooter className="pt-6">
@@ -710,15 +761,39 @@ export default function TareasPage() {
                   </div>
                 )}
 
+                {tarea.fechaInicioAsignada && tarea.fechaFinAsignada && (
+                  <div className="bg-secondary/20 p-4 rounded-2xl space-y-2 border border-secondary/50">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Calendar className="w-3 h-3" /> Período Asignado
+                    </p>
+                    <div className="flex justify-between text-[11px] font-bold text-[#0a3d62]">
+                      <span>{new Date(tarea.fechaInicioAsignada).toLocaleString()}</span>
+                      <span className="text-primary">→</span>
+                      <span>{new Date(tarea.fechaFinAsignada).toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-3 pt-4">
                   {/* ACCIONES DE USUARIO / ADMIN ASIGNADO */}
                   {((!isAdmin && tarea.estado === 'pendiente') || (isAdmin && tarea.usuarioAsignadoId === user?.id && tarea.estado === 'pendiente')) && (
-                    <Button 
-                      className="flex-1 bg-primary text-white font-black rounded-xl h-12 shadow-lg shadow-primary/20"
-                      onClick={() => handleUpdateStatus(tarea, 'en_progreso', 'Tarea aceptada')}
-                    >
-                      ACEPTAR TAREA
-                    </Button>
+                    <div className="w-full space-y-3">
+                      {allTareas?.some(t => t.usuarioAsignadoId === tarea.usuarioAsignadoId && t.estado === 'en_progreso') ? (
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-3">
+                          <AlertCircle className="w-5 h-5 text-amber-600" />
+                          <p className="text-xs font-bold text-amber-800">
+                            Debe pausar la tarea "{allTareas.find(t => t.usuarioAsignadoId === tarea.usuarioAsignadoId && t.estado === 'en_progreso')?.nombre}" para poder aceptar esta.
+                          </p>
+                        </div>
+                      ) : (
+                        <Button 
+                          className="w-full bg-primary text-white font-black rounded-xl h-12 shadow-lg shadow-primary/20"
+                          onClick={() => handleUpdateStatus(tarea, 'en_progreso', 'Tarea aceptada')}
+                        >
+                          ACEPTAR TAREA
+                        </Button>
+                      )}
+                    </div>
                   )}
                   {tarea.estado === 'en_progreso' && (
                     <Button 
@@ -942,6 +1017,28 @@ export default function TareasPage() {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha de Comienzo</Label>
+                <Input 
+                  type="datetime-local" 
+                  className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                  value={formData.fechaInicioAsignada}
+                  onChange={e => setFormData({...formData, fechaInicioAsignada: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha de Fin</Label>
+                <Input 
+                  type="datetime-local" 
+                  className="h-12 sm:h-14 rounded-2xl bg-secondary/30"
+                  value={formData.fechaFinAsignada}
+                  onChange={e => setFormData({...formData, fechaFinAsignada: e.target.value})}
+                />
+              </div>
+            </div>
+
             <DialogFooter className="pt-6">
               <Button type="submit" className="w-full h-12 sm:h-14 rounded-2xl bg-[#0a3d62] font-black text-white hover:bg-[#0a3d62]/90 shadow-lg transition-all active:scale-95">GUARDAR CAMBIOS</Button>
             </DialogFooter>

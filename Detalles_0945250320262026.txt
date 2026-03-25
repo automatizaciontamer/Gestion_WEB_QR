@@ -1,0 +1,80 @@
+Intalar dependencias
+npm install
+compilar
+npm run build
+
+
+Desplegar
+firebase deploy --only hosting --project gestion-tamer-ind-s-a
+
+Scrip Google
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    
+    // ACCIÓN: SUBIR ARCHIVO
+    if (data.action === 'upload') {
+      var bytes = Utilities.base64Decode(data.base64);
+      var blob = Utilities.newBlob(bytes, data.mimeType, data.fileName);
+      
+      var targetFolder = DriveApp.getRootFolder();
+      
+      if (data.folderName) {
+        var folders = DriveApp.getFoldersByName(data.folderName);
+        if (folders.hasNext()) {
+          targetFolder = folders.next();
+        } else {
+          targetFolder = DriveApp.createFolder(data.folderName);
+        }
+      }
+      
+      var file = targetFolder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      var fileId = file.getId();
+      var downloadUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success",
+        "fileId": fileId,
+        "url": downloadUrl
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACCIÓN: ELIMINAR CARPETA COMPLETA
+    if (data.action === 'deleteFolder') {
+      var folders = DriveApp.getFoldersByName(data.folderName);
+      var count = 0;
+      while (folders.hasNext()) {
+        var folder = folders.next();
+        folder.setTrashed(true);
+        count++;
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success",
+        "message": "Se eliminaron " + count + " carpetas."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACCIÓN: ELIMINAR ARCHIVO INDIVIDUAL
+    if (data.action === 'delete') {
+      var file = DriveApp.getFileById(data.fileId);
+      file.setTrashed(true);
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": "Acción no reconocida"
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (f) {
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": f.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}

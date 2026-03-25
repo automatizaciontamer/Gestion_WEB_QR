@@ -4,16 +4,18 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer, Loader2, AlertCircle, Info, Copy, ExternalLink } from 'lucide-react';
-import { useMemo, Suspense, useEffect, useState } from 'react';
+import { useMemo, Suspense, useEffect, useState, useRef } from 'react';
+import { toPng } from 'html-to-image';
+import { saveAs } from 'file-saver';
 import { Obra } from '@/lib/types';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
-function A6Poster({ obra, qrImageSrc }: { obra: Obra, qrImageSrc: string }) {
+function A6Poster({ obra, qrImageSrc, posterRef }: { obra: Obra, qrImageSrc: string, posterRef: React.RefObject<HTMLDivElement | null> }) {
   return (
-    <div className="bg-white mx-auto border overflow-hidden w-[105mm] h-[148mm] print:w-[105mm] print:h-[148mm] p-0 flex flex-col font-sans shrink-0 border-gray-300">
+    <div ref={posterRef} className="bg-white mx-auto border overflow-hidden w-[105mm] h-[148mm] print:w-[105mm] print:h-[148mm] p-0 flex flex-col font-sans shrink-0 border-gray-300">
 
       <div className="bg-[#0a3d62] text-white py-3 px-2 text-center">
         <h1 className="text-sm font-black tracking-widest uppercase mb-0.5">TAMER INDUSTRIAL S.A.</h1>
@@ -24,7 +26,8 @@ function A6Poster({ obra, qrImageSrc }: { obra: Obra, qrImageSrc: string }) {
       <div className="px-4 py-3 flex flex-col items-center">
         <div className="w-full space-y-1 text-center mb-2">
           <p className="text-[#0a3d62] font-black text-[8px] uppercase tracking-[0.3em]">PROYECTO DE INGENIERÍA</p>
-          <h2 className="text-xs font-black uppercase border-b-2 border-[#0a3d62] inline-block pb-0.5 px-2 truncate max-w-[90mm]">{obra.nombreObra}</h2>
+          <h2 className="text-xs font-black uppercase border-[#0a3d62] block px-4 w-full break-words leading-tight">{obra.nombreObra}</h2>
+          <div className="border-b-2 border-[#0a3d62] w-24 mx-auto mt-1 opacity-50"></div>
         </div>
 
           
@@ -74,11 +77,14 @@ function A6Poster({ obra, qrImageSrc }: { obra: Obra, qrImageSrc: string }) {
 
 
 
-      <div className="bg-[#0a3d62] text-white py-2 px-2 text-center mt-auto">
+      <div className="bg-[#0a3d62] text-white py-2 px-3 text-center mt-auto min-h-[40px] flex flex-col justify-center">
         <p className="text-[8px] font-bold uppercase tracking-tighter">
           ACCESO EXCLUSIVO PERSONAL DE OBRA
         </p>
-        <p className="text-[5px] opacity-60 font-black uppercase tracking-widest">Cloud Tamer Industrial v5.2.0</p>
+        <p className="text-[7px] font-black uppercase tracking-tight mt-1 leading-tight break-words">
+          {obra.nombreObra}
+        </p>
+        <p className="text-[5px] opacity-60 font-black uppercase tracking-widest mt-1.5">Cloud Tamer Industrial v5.2.0</p>
       </div>
     </div>
   );
@@ -92,6 +98,7 @@ function QRPosterContent() {
   const db = useFirestore();
   const { toast } = useToast();
   const [qrUrl, setQrUrl] = useState('');
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const obraDocRef = useMemo(() => {
     if (!db || !id) return null;
@@ -154,12 +161,43 @@ function QRPosterContent() {
     );
   }
 
-  const handlePrint = () => {
-    // El título ya fue establecido por el useEffect al cargar la obra
+
+  const handlePrint = async () => {
+    if (posterRef.current) {
+        try {
+            const dataUrl = await toPng(posterRef.current, { 
+                quality: 1.0, 
+                pixelRatio: 4, // High resolution
+                backgroundColor: '#ffffff',
+                skipFonts: true, // Prevents SecurityError from cross-origin stylesheets
+                filter: (node) => {
+                  // Skip link elements that reference external stylesheets
+                  if (node instanceof HTMLLinkElement && node.rel === 'stylesheet') {
+                    try { node.sheet?.cssRules; } catch { return false; }
+                  }
+                  return true;
+                },
+            });
+            const fileName = `(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'}).png`;
+            saveAs(dataUrl, fileName);
+            
+            toast({
+              title: "Imagen Generada",
+              description: "La versión PNG se ha descargado correctamente.",
+            });
+        } catch (err) {
+            console.error('Error generating PNG:', err);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "No se pudo generar la imagen PNG.",
+            });
+        }
+    }
+
+    // Still trigger the PDF print dialog
     window.print();
   };
-
-
 
   const qrImageSrc = qrUrl 
     ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&color=0a3d62`
@@ -169,11 +207,22 @@ function QRPosterContent() {
     <div className="space-y-6 print:space-y-0 w-full mx-auto pb-20 print:pb-0">
       <h1 className="sr-only">{`(${obra.codigoCliente || 'OBRA'}-${obra.numeroOF || 'OF'}-${obra.numeroOT || 'OT'})`}</h1>
       <style>{`
-
         @media print {
           @page { size: A6 portrait; margin: 0; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .print-container { width: 105mm; height: 148mm; overflow: hidden; }
+          html, body {
+            width: 105mm;
+            height: 148mm;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            width: 105mm !important;
+            height: 148mm !important;
+            overflow: hidden;
+            margin: 0 auto;
+          }
         }
       `}</style>
 
@@ -197,7 +246,7 @@ function QRPosterContent() {
 
       <div className="flex flex-col lg:flex-row items-center justify-center gap-8 print:gap-0 print:block mx-auto">
          <div className="shadow-2xl print:shadow-none bg-white print-container">
-           <A6Poster obra={obra} qrImageSrc={qrImageSrc} />
+           <A6Poster obra={obra} qrImageSrc={qrImageSrc} posterRef={posterRef} />
          </div>
       </div>
 

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
@@ -14,7 +13,9 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Edit
+  Edit,
+  Clock,
+  ListTodo
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,24 +33,27 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter,
-  DialogTrigger 
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { UsuarioHabilitado } from '@/lib/types';
+import { UsuarioHabilitado, Tarea } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { recalculateUserQueue } from '@/lib/queue-utils';
 
 export default function UsuariosHabilitadosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [empresaHorarios, setEmpresaHorarios] = useState<any>(null);
+
   const db = useFirestore();
   const { toast } = useToast();
   const { isAdmin } = useAuth();
@@ -72,10 +76,24 @@ export default function UsuariosHabilitadosPage() {
   const usersQuery = useMemo(() => {
     if (!db) return null;
     return collection(db, 'usuarios_clientes') as any;
-
   }, [db]);
 
   const { data: users, loading } = useCollection<UsuarioHabilitado>(usersQuery);
+
+  const tareasRef = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'tareas') as any;
+  }, [db]);
+
+  const { data: allTareas } = useCollection<Tarea>(tareasRef);
+
+  useEffect(() => {
+    if (!db) return;
+    const ref = doc(db, 'Configuracion', 'Empresa');
+    getDoc(ref).then(snap => {
+      if (snap.exists()) setEmpresaHorarios(snap.data()?.horarios);
+    });
+  }, [db]);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
@@ -166,6 +184,21 @@ export default function UsuariosHabilitadosPage() {
     });
   };
 
+  const handleRecalculateAll = async () => {
+    if (!db || !users || !allTareas || !empresaHorarios) return;
+    setIsRecalculating(true);
+    try {
+      for (const u of users) {
+        await recalculateUserQueue(db, u.id, allTareas, empresaHorarios);
+      }
+      toast({ title: "Colas Recalculadas", description: "Se han actualizado los tiempos de todos los usuarios." });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudieron recalcular las colas.", variant: "destructive" });
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   if (!isAdmin) return null;
 
   return (
@@ -179,89 +212,100 @@ export default function UsuariosHabilitadosPage() {
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-1">Sincronización de Accesos con App Android</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <Button onClick={handleOpenNew} className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
-            <UserPlus className="w-5 h-5" /> NUEVO USUARIO
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <Button 
+            disabled={isRecalculating || loading} 
+            onClick={handleRecalculateAll} 
+            variant="outline" 
+            className="border-[#0a3d62] text-[#0a3d62] hover:bg-secondary rounded-2xl h-14 px-6 font-black shadow-lg transition-all active:scale-95 gap-2"
+          >
+            {isRecalculating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Clock className="w-5 h-5" />}
+            RECALCULAR COLAS
           </Button>
-          <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-none shadow-2xl p-8">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-[#0a3d62]">
-                {editingUserId ? 'Editar Usuario' : 'Habilitar Usuario'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSaveUser} className="space-y-5 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre Completo</Label>
-                <Input 
-                  id="nombre" 
-                  placeholder="Ej. Roberto Sánchez" 
-                  className="rounded-xl h-12 bg-secondary/30"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Correo Electrónico</Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Button onClick={handleOpenNew} className="bg-[#0a3d62] hover:bg-[#0a3d62]/90 flex items-center gap-2 rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#0a3d62]/20 transition-all active:scale-95">
+              <UserPlus className="w-5 h-5" /> NUEVO USUARIO
+            </Button>
+            <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-none shadow-2xl p-8">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-black text-[#0a3d62]">
+                  {editingUserId ? 'Editar Usuario' : 'Habilitar Usuario'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSaveUser} className="space-y-5 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nombre Completo</Label>
                   <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="usuario@tamer.com" 
-                    className="pl-12 rounded-xl h-12 bg-secondary/30" 
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    id="nombre" 
+                    placeholder="Ej. Roberto Sánchez" 
+                    className="rounded-xl h-12 bg-secondary/30"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
                     required 
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Contraseña</Label>
-                <div className="relative">
-                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                  <Input 
-                    id="password" 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
-                    className="pl-12 pr-12 rounded-xl h-12 bg-secondary/30"
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    required 
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Correo Electrónico</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="usuario@tamer.com" 
+                      className="pl-12 rounded-xl h-12 bg-secondary/30" 
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      required 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Contraseña</Label>
+                  <div className="relative">
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                    <Input 
+                      id="password" 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="pl-12 pr-12 rounded-xl h-12 bg-secondary/30"
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      required 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent text-muted-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-2xl border border-secondary/50">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-black text-[#0a3d62]">Acceso de Administrador</Label>
+                    <p className="text-[10px] text-muted-foreground font-bold leading-tight uppercase tracking-tighter">Habilita permisos para gestionar obras y tareas.</p>
+                  </div>
+                  <Switch 
+                    checked={formData.isAdmin} 
+                    onCheckedChange={(val) => setFormData(prev => ({ ...prev, isAdmin: val }))} 
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent text-muted-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </div>
+
+                <DialogFooter className="pt-6 gap-3">
+                  <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
+                  <Button type="submit" className="rounded-xl font-black bg-primary px-8">
+                    {editingUserId ? 'GUARDAR CAMBIOS' : 'HABILITAR ACCESO'}
                   </Button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-2xl border border-secondary/50">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-black text-[#0a3d62]">Acceso de Administrador</Label>
-                  <p className="text-[10px] text-muted-foreground font-bold leading-tight uppercase tracking-tighter">Habilita permisos para gestionar obras y tareas.</p>
-                </div>
-                <Switch 
-                  checked={formData.isAdmin} 
-                  onCheckedChange={(val) => setFormData(prev => ({ ...prev, isAdmin: val }))} 
-                />
-              </div>
-
-              <DialogFooter className="pt-6 gap-3">
-
-                <Button type="button" variant="ghost" className="rounded-xl font-bold" onClick={() => setIsDialogOpen(false)}>CANCELAR</Button>
-                <Button type="submit" className="rounded-xl font-black bg-primary px-8">
-                  {editingUserId ? 'GUARDAR CAMBIOS' : 'HABILITAR ACCESO'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-3xl shadow-sm border border-secondary flex items-center gap-4">
@@ -296,6 +340,32 @@ export default function UsuariosHabilitadosPage() {
                     )}
                   </div>
 
+                  <div className="mt-4 pt-4 border-t border-secondary space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0a3d62] flex items-center gap-2">
+                      <ListTodo className="w-3 h-3" /> Tareas en Cola
+                    </p>
+                    <div className="space-y-2">
+                      {allTareas?.filter(t => t.usuarioAsignadoId === user.id && t.estado !== 'finalizada')
+                        .sort((a, b) => (a.fechaInicioAsignada || a.createdAt) - (b.fechaInicioAsignada || b.createdAt))
+                        .slice(0, 3)
+                        .map(t => (
+                          <div key={t.id} className="bg-secondary/20 p-2 rounded-xl border border-secondary/50">
+                            <p className="text-[10px] font-bold text-[#0a3d62] truncate">{t.nombre}</p>
+                            <div className="flex justify-between text-[9px] font-black text-muted-foreground mt-1">
+                              <span>{t.fechaInicioAsignada ? new Date(t.fechaInicioAsignada).toLocaleDateString() : 'Pend.'}</span>
+                              <span className="text-primary mx-1">→</span>
+                              <span>{t.fechaFinAsignada ? new Date(t.fechaFinAsignada).toLocaleDateString() : 'Pend.'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      {(!allTareas?.some(t => t.usuarioAsignadoId === user.id && t.estado !== 'finalizada')) && (
+                        <p className="text-[10px] italic text-muted-foreground">Sin tareas pendientes</p>
+                      )}
+                      {(allTareas?.filter(t => t.usuarioAsignadoId === user.id && t.estado !== 'finalizada').length || 0) > 3 && (
+                        <p className="text-[9px] font-black text-primary text-center pt-1 uppercase tracking-tighter">Ver más en Tareas ({allTareas?.filter(t => t.usuarioAsignadoId === user.id && t.estado !== 'finalizada').length} total)</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <DropdownMenu>

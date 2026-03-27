@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
@@ -13,7 +12,6 @@ import {
   User,
   FileText,
   CheckCircle2,
-
   PauseCircle,
   PlayCircle,
   History,
@@ -54,10 +52,11 @@ import { Tarea, UsuarioHabilitado, TareaEstado, Pausa, Obra } from '@/lib/types'
 
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, addDoc, doc, deleteDoc, updateDoc, query, orderBy, onSnapshot, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc, query, orderBy, getDoc, writeBatch } from 'firebase/firestore';
 
 import { useAuth } from '@/lib/auth-context';
 import { calculateEffectiveHours, addWorkingHours } from '@/lib/time-utils';
+import { recalculateUserQueue } from '@/lib/queue-utils';
 
 
 import { jsPDF } from "jspdf";
@@ -135,30 +134,46 @@ export default function TareasPage() {
     return filteredTareas.slice(0, displayLimit);
   }, [filteredTareas, displayLimit]);
 
-  const estimatedStartTimes = useMemo(() => {
+  const estimatedTaskStarts = useMemo(() => {
     if (!allTareas || !allUsers) return {};
     const map: Record<string, number> = {};
     const now = Date.now();
     
-    const relevantUserIds = new Set(allTareas.map(t => t.usuarioAsignadoId));
-    
-    allUsers.filter(u => relevantUserIds.has(u.id)).forEach(u => {
+    allUsers.forEach(u => {
+      // 1. Obtener tareas no finalizadas del usuario
       const userTasks = allTareas.filter(t => t.usuarioAsignadoId === u.id && t.estado !== 'finalizada');
-      if (userTasks.length === 0) {
-        map[u.id] = now;
-        return;
-      }
+      if (userTasks.length === 0) return;
 
+      // 2. Separar activa y pendientes
       const activeTask = userTasks.find(t => t.estado === 'en_progreso');
-      const pendingTasks = userTasks.filter(t => t.estado !== 'en_progreso');
+      const pendingTasks = userTasks.filter(t => t.estado !== 'en_progreso')
+        .sort((a, b) => {
+          // Prioridad: fechaInicioAsignada asc, luego createdAt asc
+          if (a.fechaInicioAsignada && b.fechaInicioAsignada) return a.fechaInicioAsignada - b.fechaInicioAsignada;
+          if (a.fechaInicioAsignada) return -1;
+          if (b.fechaInicioAsignada) return 1;
+          return a.createdAt - b.createdAt;
+        });
 
-      let totalHours = 0;
+      let runningEndTime = now;
+
+      // 3. Procesar tarea activa (si existe)
       if (activeTask) {
-        totalHours += Math.max(0, activeTask.tiempoDestinado - (activeTask.totalHorasEfectivas || 0));
+        const hoursSpent = calculateEffectiveHours(activeTask.startedAt || activeTask.createdAt, now, empresaHorarios || undefined, activeTask.pausas);
+        const remainingHours = Math.max(0, activeTask.tiempoDestinado - hoursSpent);
+        runningEndTime = addWorkingHours(now, remainingHours, empresaHorarios || undefined);
+        // La tarea activa no necesita "inicio estimado" ya empezó
       }
-      pendingTasks.forEach(t => { totalHours += t.tiempoDestinado; });
 
-      map[u.id] = addWorkingHours(now, totalHours, empresaHorarios || undefined);
+      // 4. Procesar tareas pendientes en cola
+      pendingTasks.forEach(t => {
+        const programmedStart = t.fechaInicioAsignada || 0;
+        const estimatedStart = Math.max(runningEndTime, programmedStart);
+        map[t.id] = estimatedStart;
+        
+        // Actualizar el fin para la siguiente tarea
+        runningEndTime = addWorkingHours(estimatedStart, t.tiempoDestinado, empresaHorarios || undefined);
+      });
     });
     return map;
   }, [allTareas, allUsers, empresaHorarios]);
@@ -179,7 +194,18 @@ export default function TareasPage() {
 
   useEffect(() => {
     if (formData.usuarioAsignadoId && !formData.fechaInicioAsignada && !isEditTaskOpen) {
-      const nextAvailable = estimatedStartTimes[formData.usuarioAsignadoId];
+      // Para la sugerencia en Nueva Tarea, usamos el "next available slot" que es el runningEndTime final de ese usuario
+      const userTasks = allTareas?.filter(t => t.usuarioAsignadoId === formData.usuarioAsignadoId && t.estado !== 'finalizada') || [];
+      let totalRemainingHours = 0;
+      const activeTask = userTasks.find(t => t.estado === 'en_progreso');
+      if (activeTask) {
+        const spent = calculateEffectiveHours(activeTask.startedAt || activeTask.createdAt, Date.now(), empresaHorarios || undefined, activeTask.pausas);
+        totalRemainingHours += Math.max(0, activeTask.tiempoDestinado - spent);
+      }
+      userTasks.filter(t => t.estado !== 'en_progreso').forEach(t => { totalRemainingHours += t.tiempoDestinado; });
+      
+      const nextAvailable = addWorkingHours(Date.now(), totalRemainingHours, empresaHorarios || undefined);
+      
       if (nextAvailable) {
         setFormData(prev => ({ 
           ...prev, 
@@ -187,7 +213,7 @@ export default function TareasPage() {
         }));
       }
     }
-  }, [formData.usuarioAsignadoId, estimatedStartTimes, isEditTaskOpen]);
+  }, [formData.usuarioAsignadoId, allTareas, empresaHorarios, isEditTaskOpen]);
 
   useEffect(() => {
     if (formData.fechaInicioAsignada && formData.fechaFinAsignada) {
@@ -199,6 +225,12 @@ export default function TareasPage() {
       }
     }
   }, [formData.fechaInicioAsignada, formData.fechaFinAsignada, empresaHorarios]);
+
+  // Helper para recalcular la cola de un usuario usando la utility compartida
+  const triggerRecalculate = async (userId: string) => {
+    if (!db || !allTareas) return;
+    await recalculateUserQueue(db, userId, allTareas, empresaHorarios);
+  };
 
 
   const handleExportPDF = () => {
@@ -213,7 +245,6 @@ export default function TareasPage() {
       let ratio = t.tiempoDestinado / (efec || 1);
       let effScore = efec > 0 ? `${Math.min(100, ratio * 100).toFixed(0)}%` : '---';
       
-      // Calcular total de horas en pausas aprobadas
       let pauseHrs = t.pausas
         .filter(p => p.aprobada && p.fin)
         .reduce((acc, p) => acc + ((p.fin! - p.inicio) / (1000 * 60 * 60)), 0);
@@ -278,9 +309,29 @@ export default function TareasPage() {
 
     try {
       setIsNewTaskOpen(false); // Cierre inmediato para feedback
+      
+      // Calcular fechas iniciales antes de crear para mantener la cola
+      const userTasks = allTareas?.filter(t => t.usuarioAsignadoId === assignedUser.id && t.estado !== 'finalizada') || [];
+      let lastEnd = Date.now();
+      
+      const activeTask = userTasks.find(t => t.estado === 'en_progreso');
+      if (activeTask) {
+        const spent = calculateEffectiveHours(activeTask.startedAt || activeTask.createdAt, Date.now(), empresaHorarios || undefined, activeTask.pausas);
+        const remaining = Math.max(0, activeTask.tiempoDestinado - spent);
+        lastEnd = addWorkingHours(Date.now(), remaining, empresaHorarios || undefined);
+      }
+      
+      const otherTasks = userTasks.filter(t => t.estado !== 'en_progreso').sort((a, b) => (a.fechaInicioAsignada || a.createdAt) - (b.fechaInicioAsignada || b.createdAt));
+      otherTasks.forEach(t => {
+        lastEnd = addWorkingHours(lastEnd, t.tiempoDestinado, empresaHorarios || undefined);
+      });
+
+      newTask.fechaInicioAsignada = lastEnd;
+      newTask.fechaFinAsignada = addWorkingHours(lastEnd, newTask.tiempoDestinado, empresaHorarios || undefined);
+
       await addDoc(collection(db, 'tareas'), newTask);
       setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '', fechaInicioAsignada: '', fechaFinAsignada: '' });
-      toast({ title: "Tarea Creada", description: "La tarea ha sido asignada correctamente." });
+      toast({ title: "Tarea Creada", description: "La tarea ha sido asignada al final de la cola." });
 
     } catch (error) {
       toast({ title: "Error", description: "No se pudo crear la tarea.", variant: "destructive" });
@@ -307,10 +358,20 @@ export default function TareasPage() {
 
     try {
       setIsEditTaskOpen(false); // Cierre inmediato
-      setEditingTarea(null);
+      const oldUserId = editingTarea.usuarioAsignadoId;
+      const newUserId = assignedUser?.id || editingTarea.usuarioAsignadoId;
+
       await updateDoc(doc(db, 'tareas', editingTarea.id), updateData);
+      
+      // Recalcular colas
+      await triggerRecalculate(newUserId);
+      if (oldUserId !== newUserId) {
+        await triggerRecalculate(oldUserId);
+      }
+
+      setEditingTarea(null);
       setFormData({ nombre: '', usuarioAsignadoId: '', tiempoDestinado: 0, obraId: '', fechaInicioAsignada: '', fechaFinAsignada: '' });
-      toast({ title: "Tarea Actualizada", description: "Los cambios se guardaron correctamente." });
+      toast({ title: "Tarea Actualizada", description: "Los cambios se guardaron y la cola fue recalculada." });
 
     } catch (error) {
       toast({ title: "Error", description: "No se pudo actualizar la tarea.", variant: "destructive" });
@@ -332,10 +393,6 @@ export default function TareasPage() {
 
 
 
-
-
-
-
   const handleUpdateStatus = async (tarea: Tarea, newStatus: TareaEstado, detailMsg: string) => {
     if (!db) return;
 
@@ -354,7 +411,6 @@ export default function TareasPage() {
     }
 
     const updateData: Partial<Tarea> = {
-
       estado: newStatus,
       detalles: [
         {
@@ -373,7 +429,6 @@ export default function TareasPage() {
     }
 
     if (newStatus === 'finalizada') {
-      // Obtener configuración de horarios de la empresa para el cálculo
       const empresaRef = doc(db, 'Configuracion', 'Empresa');
       const empresaSnap = await getDoc(empresaRef);
       const empresaData = empresaSnap.data();
@@ -393,6 +448,11 @@ export default function TareasPage() {
       await updateDoc(doc(db, 'tareas', tarea.id), updateData);
       setHistoryDetail('');
       toast({ title: "Tarea Actualizada", description: `Estado cambiado a ${newStatus}` });
+
+      // Si se finaliza, recalcular la cola para que las demás suban
+      if (newStatus === 'finalizada') {
+        await triggerRecalculate(tarea.usuarioAsignadoId);
+      }
     } catch (error) {
       toast({ title: "Error", description: "No se pudo actualizar la tarea.", variant: "destructive" });
     }
@@ -413,7 +473,8 @@ export default function TareasPage() {
 
     try {
       setIsPauseOpen(false); // Cierre inmediato
-      await updateDoc(doc(db, 'tareas', selectedTarea.id), {
+      
+      const updatePayload: any = {
         estado: 'pausada' as TareaEstado,
         pausas: [newPause, ...selectedTarea.pausas],
         detalles: [
@@ -425,13 +486,24 @@ export default function TareasPage() {
           },
           ...selectedTarea.detalles
         ]
-      });
+      };
+
+      if (isSelfAdmin) {
+        // Mover al final de las pendientes
+        updatePayload.fechaInicioAsignada = Date.now() + (1000 * 60 * 60 * 24 * 365); // 1 año al futuro temporalmente
+      }
+
+      await updateDoc(doc(db, 'tareas', selectedTarea.id), updatePayload);
+      
+      if (isSelfAdmin) {
+        await triggerRecalculate(selectedTarea.usuarioAsignadoId);
+      }
+
       setPauseMotivo('');
       toast({ 
         title: isSelfAdmin ? "Tarea Pausada" : "Pausa Solicitada", 
-        description: isSelfAdmin ? "La tarea se ha pausado correctamente." : "Aguardando aprobación del administrador." 
+        description: isSelfAdmin ? "La tarea se ha movido al final de la cola." : "Aguardando aprobación del administrador." 
       });
-
 
     } catch (error) {
       toast({ title: "Error", description: "No se pudo solicitar la pausa.", variant: "destructive" });
@@ -466,8 +538,18 @@ export default function TareasPage() {
     };
 
     try {
+      if (approve) {
+        // Si se aprueba, mover al final de la cola
+        updateData.fechaInicioAsignada = Date.now() + (1000 * 60 * 60 * 24 * 365);
+      }
+
       await updateDoc(doc(db, 'tareas', tarea.id), updateData);
-      toast({ title: approve ? "Pausa Aprobada" : "Pausa Denegada" });
+      
+      if (approve) {
+        await triggerRecalculate(tarea.usuarioAsignadoId);
+      }
+
+      toast({ title: approve ? "Pausa Aprobada (Moviendo al final)" : "Pausa Denegada" });
     } catch (error) {
       toast({ title: "Error", description: "No se pudo procesar la solicitud.", variant: "destructive" });
     }
@@ -484,19 +566,24 @@ export default function TareasPage() {
     });
 
     try {
+      // Reanudar y mover al final para mantener el orden secuencial de reactivación
       await updateDoc(doc(db, 'tareas', tarea.id), {
         estado: 'en_progreso' as TareaEstado,
         pausas: updatedPausas,
+        fechaInicioAsignada: Date.now() + (1000 * 60 * 60 * 24 * 365), // Forzar al final antes de recalcular
         detalles: [
           {
             fecha: Date.now(),
             estado: 'en_progreso',
-            detalle: 'Tarea reanudada',
+            detalle: 'Tarea reanudada (Moviendo al final de pendientes)',
             usuario: user?.nombre || 'Usuario'
           },
           ...tarea.detalles
         ]
       });
+      
+      await triggerRecalculate(tarea.usuarioAsignadoId);
+
       toast({ title: "Tarea Reanudada" });
     } catch (error) {
       toast({ title: "Error", description: "No se pudo reanudar la tarea.", variant: "destructive" });
@@ -568,7 +655,6 @@ export default function TareasPage() {
                           <SelectItem key={o.id} value={o.id}>{o.nombreObra} ({o.numeroOT})</SelectItem>
                         ))}
                       </SelectContent>
-
                     </Select>
                   </div>
 
@@ -676,7 +762,6 @@ export default function TareasPage() {
                       <span className="text-[10px] text-primary font-black uppercase tracking-widest">{tarea.obraNombre || 'Sin Obra Vinc.'}</span>
                       {tarea.nombre}
                     </CardTitle>
-
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -707,7 +792,6 @@ export default function TareasPage() {
                           </DropdownMenuItem>
                         </>
                       )}
-
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -736,9 +820,8 @@ export default function TareasPage() {
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-widest text-blue-800">Inicio Estimado (Cola de Trabajo)</p>
                       <p className="text-xs font-black text-blue-900">
-                        {new Date(estimatedStartTimes[tarea.usuarioAsignadoId] || Date.now()).toLocaleString()}
+                        {estimatedTaskStarts[tarea.id] ? new Date(estimatedTaskStarts[tarea.id]).toLocaleString() : 'En espera...'}
                       </p>
-
                     </div>
                   </div>
                 )}
@@ -775,7 +858,6 @@ export default function TareasPage() {
                 )}
 
                 <div className="flex flex-wrap gap-3 pt-4">
-                  {/* ACCIONES DE USUARIO / ADMIN ASIGNADO */}
                   {((!isAdmin && tarea.estado === 'pendiente') || (isAdmin && tarea.usuarioAsignadoId === user?.id && tarea.estado === 'pendiente')) && (
                     <div className="w-full space-y-3">
                       {allTareas?.some(t => t.usuarioAsignadoId === tarea.usuarioAsignadoId && t.estado === 'en_progreso') ? (
@@ -816,8 +898,6 @@ export default function TareasPage() {
                     </Button>
                   )}
 
-
-                  {/* ACCIONES DE ADMIN (APROBAR PAUSAS / FINALIZAR TAREA) */}
                   {isAdmin && tarea.estado === 'en_progreso' && (
                     <Button 
                       className="flex-1 bg-emerald-600 text-white font-black rounded-xl h-12 shadow-lg shadow-emerald-200"
@@ -828,7 +908,6 @@ export default function TareasPage() {
                   )}
 
                   {isAdmin && tarea.estado === 'pausada' && tarea.pausas[0]?.aprobada === null && (
-
                     <div className="flex w-full gap-4 p-4 bg-orange-50 rounded-2xl border border-orange-200">
                       <p className="text-xs font-bold text-orange-800 flex-1 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" /> Solicitud de pausa pendiente: "{tarea.pausas[0].motivo}"
@@ -870,8 +949,6 @@ export default function TareasPage() {
         </div>
       )}
 
-
-      {/* DIALOGO DE PAUSA */}
       <Dialog open={isPauseOpen} onOpenChange={setIsPauseOpen}>
         <DialogContent className="rounded-[2.5rem] p-8">
           <DialogHeader>
@@ -893,7 +970,6 @@ export default function TareasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOGO DE DETALLE / HISTORIAL */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
           <div className="bg-[#0a3d62] p-8 text-white">
@@ -956,7 +1032,6 @@ export default function TareasPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIÁLOGO DE EDICIÓN DE TAREA */}
       <Dialog open={isEditTaskOpen} onOpenChange={setIsEditTaskOpen}>
         <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-6 sm:p-8 border-none shadow-2xl w-[95vw] max-w-[500px]">
           <DialogHeader>
@@ -985,7 +1060,6 @@ export default function TareasPage() {
                     <SelectItem key={o.id} value={o.id}>{o.nombreObra} ({o.numeroOT})</SelectItem>
                   ))}
                 </SelectContent>
-
               </Select>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1046,6 +1120,5 @@ export default function TareasPage() {
         </DialogContent>
       </Dialog>
     </div>
-
   );
 }

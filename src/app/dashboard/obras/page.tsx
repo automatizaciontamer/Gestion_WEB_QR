@@ -13,7 +13,8 @@ import {
   Construction,
   Copy,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  User
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -211,6 +212,11 @@ export default function ObrasPage() {
                       <DropdownMenuItem asChild>
                         <Link href={`/dashboard/obras/qr?id=${obra.id}`} className="flex items-center gap-3 font-bold px-4 py-3 rounded-xl cursor-pointer">
                           <QrCode className="w-4 h-4 text-primary" /> GENERAR QR / FICHA
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/obras/qr-cliente?id=${obra.id}`} className="flex items-center gap-3 font-black px-4 py-3 rounded-xl shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 cursor-pointer mt-1">
+                          <User className="w-4 h-4 text-emerald-600" /> COMPARTIR QR CLIENTE
                         </Link>
                       </DropdownMenuItem>
 

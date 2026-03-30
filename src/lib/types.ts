@@ -17,6 +17,8 @@ export interface Obra {
   imageUrl?: string;
   usuarioAcceso: string;
   claveAcceso: string;
+  usuarioCliente?: string;
+  claveCliente?: string;
   createdAt: number;
   files?: ObraFile[]; // Lista de objetos con nombre, ID y URL
   driveFolderUrl?: string;

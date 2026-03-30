@@ -35,6 +35,7 @@ export default function NewObraPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [showClientPassword, setShowClientPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     numeroOF: '',
@@ -46,6 +47,8 @@ export default function NewObraPage() {
     descripcion: '',
     usuarioAcceso: '',
     claveAcceso: '',
+    usuarioCliente: '',
+    claveCliente: '',
     driveFolderUrl: ''
   });
 
@@ -128,6 +131,8 @@ export default function NewObraPage() {
         descripcion: formData.descripcion || '',
         usuarioAcceso: (formData.usuarioAcceso || '').toLowerCase().trim(),
         claveAcceso: formData.claveAcceso || '',
+        usuarioCliente: (formData.usuarioCliente || '').toLowerCase().trim(),
+        claveCliente: formData.claveCliente || '',
         driveFolderUrl: formData.driveFolderUrl || '',
         files: uploadedFiles,
         createdAt: Date.now(),
@@ -264,6 +269,29 @@ export default function NewObraPage() {
                   <Input id="claveAcceso" type={showPassword ? "text" : "password"} value={formData.claveAcceso} onChange={handleInputChange} className="h-14 rounded-2xl bg-white/10 border-none font-bold pr-12" required />
                   <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-2xl rounded-[3rem] bg-emerald-700 text-white overflow-hidden">
+            <CardHeader className="p-8 border-b border-white/10">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6 text-emerald-300" /> Acceso Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase opacity-60 ml-2">Usuario Cliente</Label>
+                <Input id="usuarioCliente" type="text" value={formData.usuarioCliente} onChange={handleInputChange} className="h-14 rounded-2xl bg-white/10 border-none font-bold" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase opacity-60 ml-2">Clave Cliente</Label>
+                <div className="relative">
+                  <Input id="claveCliente" type={showClientPassword ? "text" : "password"} value={formData.claveCliente} onChange={handleInputChange} className="h-14 rounded-2xl bg-white/10 border-none font-bold pr-12" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowClientPassword(!showClientPassword)}>
+                    {showClientPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </Button>
                 </div>
               </div>

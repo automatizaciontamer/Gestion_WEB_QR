@@ -37,6 +37,7 @@ function EditObraContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [showClientPassword, setShowClientPassword] = useState(false);
   
   const [formData, setFormData] = useState({
     codigoCliente: '',
@@ -48,7 +49,9 @@ function EditObraContent() {
     usuarioAcceso: '',
     claveAcceso: '',
     driveFolderUrl: '',
-    direccion: ''
+    direccion: '',
+    usuarioCliente: '',
+    claveCliente: ''
   });
   
   const [existingFiles, setExistingFiles] = useState<ObraFile[]>([]);
@@ -74,7 +77,9 @@ function EditObraContent() {
         usuarioAcceso: obra.usuarioAcceso || '',
         claveAcceso: obra.claveAcceso || '',
         driveFolderUrl: obra.driveFolderUrl || '',
-        direccion: obra.direccion || ''
+        direccion: obra.direccion || '',
+        usuarioCliente: obra.usuarioCliente || '',
+        claveCliente: obra.claveCliente || ''
       });
       setExistingFiles(obra.files || []);
     }
@@ -157,6 +162,8 @@ function EditObraContent() {
         usuarioAcceso: (formData.usuarioAcceso || '').toLowerCase().trim(),
         claveAcceso: formData.claveAcceso || '',
         driveFolderUrl: formData.driveFolderUrl || '',
+        usuarioCliente: (formData.usuarioCliente || '').toLowerCase().trim(),
+        claveCliente: formData.claveCliente || '',
         files: [...existingFiles, ...newUploadedFiles],
         updatedAt: Date.now()
       };
@@ -336,6 +343,27 @@ function EditObraContent() {
             </div>
           </Card>
           
+          <Card className="rounded-[3.5rem] bg-emerald-700 text-white p-10 space-y-8 shadow-2xl border-none mt-8">
+            <h3 className="font-black text-xl tracking-tight flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-300" /> ACCESO CLIENTE
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Usuario Cliente</Label>
+                <Input id="usuarioCliente" value={formData.usuarioCliente || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 ml-2">Contraseña</Label>
+                <div className="relative">
+                  <Input id="claveCliente" type={showClientPassword ? "text" : "password"} value={formData.claveCliente || ''} onChange={handleInputChange} className="bg-white/10 border-none h-14 rounded-2xl font-bold pr-12" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40" onClick={() => setShowClientPassword(!showClientPassword)}>
+                    {showClientPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
           <div className="space-y-4">
             {isSaving && <Progress value={uploadProgress} className="h-2 rounded-full" />}
             <Button type="submit" className="w-full h-24 rounded-[2.5rem] font-black text-2xl bg-primary shadow-2xl shadow-primary/30 transition-all active:scale-95" disabled={isSaving}>

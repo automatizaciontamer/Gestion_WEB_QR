@@ -5,7 +5,7 @@
 
 const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec';
 
-export async function uploadToDrive(file: File, folderName: string): Promise<any> {
+export async function uploadToDrive(file: File, folderName: string, parentFolderName?: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -18,6 +18,7 @@ export async function uploadToDrive(file: File, folderName: string): Promise<any
           fileName: file.name,
           mimeType: file.type,
           folderName: folderName,
+          parentFolderName: parentFolderName || '',
         };
 
         // No enviamos Content-Type para evitar preflight OPTIONS que GAS no maneja
@@ -76,7 +77,7 @@ export async function deleteFolderFromDrive(folderName: string): Promise<any> {
  * Crea una CARPETA en Google Drive.
  * El script de GAS debe manejar la acción 'createFolder'.
  */
-export async function createFolderOnDrive(folderName: string): Promise<any> {
+export async function createFolderOnDrive(folderName: string, parentFolderName?: string): Promise<any> {
   if (!folderName) return { status: 'ignored' };
   
   try {
@@ -86,6 +87,7 @@ export async function createFolderOnDrive(folderName: string): Promise<any> {
       fileName: '.drive_ignore',
       mimeType: 'text/plain',
       folderName: folderName,
+      parentFolderName: parentFolderName || '',
     };
 
     const response = await fetch(DRIVE_SCRIPT_URL, {

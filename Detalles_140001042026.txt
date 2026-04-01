@@ -7,7 +7,7 @@ npm run build
 Desplegar
 firebase deploy --only hosting --project gestion-tamer-ind-s-a
 
-Scrip Google
+Scrip Google (https://script.google.com/home?hl=es-419&pli=1)
 
 function doPost(e) {
   try {
@@ -18,15 +18,40 @@ function doPost(e) {
       var bytes = Utilities.base64Decode(data.base64);
       var blob = Utilities.newBlob(bytes, data.mimeType, data.fileName);
       
-      var targetFolder = DriveApp.getRootFolder();
+      var targetFolder = null;
+      var rootFolder = DriveApp.getRootFolder();
       
       if (data.folderName) {
-        var folders = DriveApp.getFoldersByName(data.folderName);
-        if (folders.hasNext()) {
-          targetFolder = folders.next();
+        if (data.parentFolderName) {
+          // Nueva lógica con carpeta padre
+          var parents = DriveApp.getFoldersByName(data.parentFolderName);
+          var parentFolder = null;
+          
+          if (parents.hasNext()) {
+            parentFolder = parents.next();
+          } else {
+            parentFolder = rootFolder.createFolder(data.parentFolderName);
+          }
+          
+          // Buscar la subcarpeta "INFO CLIENTE" dentro de la carpeta padre
+          var folders = parentFolder.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = parentFolder.createFolder(data.folderName);
+          }
         } else {
-          targetFolder = DriveApp.createFolder(data.folderName);
+          // Lógica anterior global para no romper compatibilidad
+          targetFolder = rootFolder;
+          var folders = DriveApp.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = DriveApp.createFolder(data.folderName);
+          }
         }
+      } else {
+        targetFolder = rootFolder;
       }
       
       var file = targetFolder.createFile(blob);
@@ -78,3 +103,110 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+Script 01042026
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    
+    // ACCIÓN: SUBIR ARCHIVO
+    if (data.action === 'upload') {
+      var bytes = Utilities.base64Decode(data.base64);
+      var blob = Utilities.newBlob(bytes, data.mimeType, data.fileName);
+      
+      var targetFolder = null;
+      var rootFolder = DriveApp.getRootFolder();
+      
+      if (data.folderName) {
+        if (data.parentFolderName) {
+          // Nueva lógica con carpeta padre (ej: la Obra)
+          var parents = DriveApp.getFoldersByName(data.parentFolderName);
+          var parentFolder = null;
+          
+          if (parents.hasNext()) {
+            parentFolder = parents.next();
+          } else {
+            parentFolder = rootFolder.createFolder(data.parentFolderName);
+          }
+          
+          // Buscar la subcarpeta (ej: "INFO CLIENTE") SOLO dentro de la carpeta padre
+          var folders = parentFolder.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = parentFolder.createFolder(data.folderName);
+          }
+        } else {
+          // Lógica anterior global para seguir siendo compatible con el resto del sistema
+          targetFolder = rootFolder;
+          var folders = DriveApp.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = DriveApp.createFolder(data.folderName);
+          }
+        }
+      } else {
+        targetFolder = rootFolder;
+      }
+      
+      var file = targetFolder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      var fileId = file.getId();
+      var downloadUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success",
+        "fileId": fileId,
+        "url": downloadUrl
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACCIÓN: ELIMINAR CARPETA COMPLETA
+    if (data.action === 'deleteFolder') {
+      var folders = DriveApp.getFoldersByName(data.folderName);
+      var count = 0;
+      while (folders.hasNext()) {
+        var folder = folders.next();
+        folder.setTrashed(true);
+        count++;
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success",
+        "message": "Se eliminaron " + count + " carpetas."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACCIÓN: ELIMINAR ARCHIVO INDIVIDUAL
+    if (data.action === 'delete') {
+      var file = DriveApp.getFileById(data.fileId);
+      file.setTrashed(true);
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": "Acción no reconocida"
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (f) {
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": f.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+ID de implementacion
+AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1
+
+App web
+url
+https://script.google.com/macros/s/AKfycbyNQSOvY0Yy7JSNtLZNOKXY_KM6kyoHdgbkg6TciqbYPMZemuLVJV-HB8P8NnjXrNe1/exec
+
+Biblioteca
+url
+https://script.google.com/macros/library/d/1M2WLKPqg3Phgk0O1An6T4Gx5fprm7lYieoiaTsFfIzDr5AydCrYM4ewk/6

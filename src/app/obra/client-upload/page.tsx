@@ -100,15 +100,15 @@ function ClientUploadContent() {
 
     try {
       // Formato plano solicitado por el usuario para Drive: INFO CLIENTE - CODIGO-OF-OT
-      const baseFolderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
-      const folderName = `INFO CLIENTE - ${baseFolderName}`;
+      const parentFolderName = `${obra.codigoCliente?.trim()}-${obra.numeroOF?.trim()}-${obra.numeroOT?.trim()}`;
+      const folderName = `INFO CLIENTE`;
       
-      await createFolderOnDrive(folderName);
+      await createFolderOnDrive(folderName, parentFolderName);
 
       const newUploadedFiles: ObraFile[] = [];
 
       for (let i = 0; i < filesToUpload.length; i++) {
-        const result = await uploadToDrive(filesToUpload[i], folderName);
+        const result = await uploadToDrive(filesToUpload[i], folderName, parentFolderName);
         
         if (result && result.status === 'success') {
           newUploadedFiles.push({

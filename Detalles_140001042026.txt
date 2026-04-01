@@ -164,6 +164,41 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
     
+    // ACCIÓN: CREAR CARPETA SOLAMENTE (SIN ARCHIVOS)
+    if (data.action === 'createFolder') {
+      var rootFolder = DriveApp.getRootFolder();
+      var targetFolder = null;
+      if (data.folderName) {
+        if (data.parentFolderName) {
+          var parents = DriveApp.getFoldersByName(data.parentFolderName);
+          var parentFolder = null;
+          if (parents.hasNext()) {
+            parentFolder = parents.next();
+          } else {
+            parentFolder = rootFolder.createFolder(data.parentFolderName);
+          }
+          var folders = parentFolder.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = parentFolder.createFolder(data.folderName);
+          }
+        } else {
+          var folders = DriveApp.getFoldersByName(data.folderName);
+          if (folders.hasNext()) {
+            targetFolder = folders.next();
+          } else {
+            targetFolder = rootFolder.createFolder(data.folderName);
+          }
+        }
+      } else {
+        targetFolder = rootFolder;
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     // ACCIÓN: ELIMINAR CARPETA COMPLETA
     if (data.action === 'deleteFolder') {
       var folders = DriveApp.getFoldersByName(data.folderName);

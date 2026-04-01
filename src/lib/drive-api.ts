@@ -82,10 +82,7 @@ export async function createFolderOnDrive(folderName: string, parentFolderName?:
   
   try {
     const payload = {
-      action: 'upload',
-      base64: 'IA==', // Un espacio simple en base64
-      fileName: '.drive_ignore',
-      mimeType: 'text/plain',
+      action: 'createFolder',
       folderName: folderName,
       parentFolderName: parentFolderName || '',
     };
